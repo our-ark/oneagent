@@ -39,8 +39,10 @@ runtime bridge, generic tools, and a runnable notes example.
 ## Telegram + three travel websites
 
 Browse flights, hotels, and activities with the same personal agent alongside each app.
-Each website keeps its own catalog and saved selections. Only the agent chat
-carries context between sites; ask it to compare options, budgets, and timing.
+Each website keeps its own catalog, saved selections, and visible chat. Telegram
+is your private home conversation: website exchanges sync back there, while the
+agent remembers preferences and decisions across sites. Restarting the agent or
+travel service clears the visible website chats without clearing that memory.
 
 ```sh
 npm --prefix examples/travel/web ci
@@ -50,8 +52,8 @@ ONEAGENT_PYTHON="$PWD/.venv/bin/python" bin/oneagent-travel
 
 Airside (flights), Staywell (hotels), and Daylight (activities) run at ports
 8080, 8081, and 8082. Add `--telegram` with your bot configured, then send
-`/traveldemo` to receive personal links that connect all three sites to the same
-conversation and receive website exchanges back in Telegram. An existing
+`/traveldemo` to receive personal links that connect all three sites to your
+agent and receive website exchanges back in Telegram. An existing
 OneAgent Telegram daemon can use the local control
 bridge instead of a second poller. See the [travel walkthrough](docs/travel-demo.md)
 for installation, the recording story, model setup, and prototype boundaries.

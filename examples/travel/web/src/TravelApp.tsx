@@ -124,6 +124,7 @@ export function TravelApp({ site }: { site: SiteId }) {
   });
   const [transcript, setTranscript] = useState<Transcript>(emptyTranscript);
   const [error, setError] = useState("");
+  const [connectionError, setConnectionError] = useState("");
   const [toast, setToast] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -174,9 +175,10 @@ export function TravelApp({ site }: { site: SiteId }) {
         if (!cancelled) {
           setTranscript(messages);
           setSaved(updated);
+          setConnectionError("");
         }
       } catch (e) {
-        if (!cancelled) setError((e as Error).message);
+        if (!cancelled) setConnectionError((e as Error).message);
       } finally {
         if (!cancelled) timer = setTimeout(refresh, 1400);
       }
@@ -820,10 +822,16 @@ export function TravelApp({ site }: { site: SiteId }) {
           {toast}
         </div>
       )}
-      {error && (
+      {(error || connectionError) && (
         <div role="alert" className="error-toast">
-          <span>{error}</span>
-          <button aria-label="Dismiss error" onClick={() => setError("")}>
+          <span>{error || connectionError}</span>
+          <button
+            aria-label="Dismiss error"
+            onClick={() => {
+              setError("");
+              setConnectionError("");
+            }}
+          >
             <X size={18} />
           </button>
         </div>

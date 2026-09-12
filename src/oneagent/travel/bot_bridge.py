@@ -14,6 +14,7 @@ from oneagent.collaboration.handoff import HandoffStore, digest
 from oneagent.collaboration.store import encoded, identifier, object_value
 from .agent import TravelResponder
 from .domain import TripStore, travel_tools
+from .routing import confirmation_command, is_telegram_reply
 
 
 def local_request(url, token, body, *, timeout=650):
@@ -122,7 +123,7 @@ class BotTravelBridge(ThreadingHTTPServer):
 
     def notify(self, owner, chat_id, event, output):
         self.check_owner(owner, chat_id)
-        if event.get("app_id") not in {"flights", "hotels", "activities"}:
+        if event.get("app_id") not in {"flights", "hotels", "activities"} or is_telegram_reply(event.get("event_id")):
             raise PermissionError("Only website-originated exchanges can be mirrored")
         app, event_id = event["app_id"], identifier(event["event_id"])
         if output.get("in_reply_to") != event["message"]["id"]:
@@ -137,10 +138,15 @@ class BotTravelBridge(ThreadingHTTPServer):
             label += " · " + selected["name"] + (" " + selected["code"] if selected.get("code") else "")
         text = f"{label}\n\nYou: {event['message']['text']}\n\nOneAgent: {output['text']}"
         key = "travel-mirror:" + digest(f"{owner}:{app}:{event_id}")
+        parts = [(f"{key}:{index}", text[start:start + 3500]) for index, start in enumerate(range(0, len(text), 3500))]
+        if json.loads(row[1]).get("proposal"):
+            # Keep existing exchange payloads/IDs unchanged so an upgrade can
+            # recover older notification records without an intent conflict.
+            parts.append((f"{key}:confirmation", f"{label}\n\nConfirm this change here with:\n{confirmation_command(app, event_id)}\n\nYou can also use the confirmation button on this website."))
         # Stable per-part IDs also protect long exchanges from partial-send retries.
         with self.bot._notification_order_lock:
-            for index, start in enumerate(range(0, len(text), 3500)):
-                result = self.bot.notifications.send(chat_id, text[start:start + 3500], idempotency_key=f"{key}:{index}")
+            for notification_id, part in parts:
+                result = self.bot.notifications.send(chat_id, part, idempotency_key=notification_id)
                 if not result.delivered:
                     return {"delivered": False, "terminal": result.terminal}
         return {"delivered": True}

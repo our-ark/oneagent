@@ -11,8 +11,7 @@ from urllib.request import Request, urlopen
 
 from oneagent.collaboration.handoff import digest
 from oneagent.collaboration.store import encoded
-
-LABELS = {"flights": "Airside — flights", "hotels": "Staywell — hotels", "activities": "Daylight — activities"}
+from .routing import LABELS, SITES, TELEGRAM_REPLY_PREFIX, confirmation_command
 
 
 class TelegramDemo:
@@ -43,7 +42,8 @@ class TelegramDemo:
                     raise ValueError("Conflicting Telegram message ID")
                 return cached[1]
             if command == "/traveldemo":
-                action = text.split(maxsplit=1)[1].strip().lower() if len(text.split(maxsplit=1)) == 2 else ""
+                arguments = text.split(maxsplit=1)[1].strip() if len(text.split(maxsplit=1)) == 2 else ""
+                action = arguments.lower()
                 if action == "stop":
                     self.hub.handoffs.stop(principal)
                     reply = "Travel demo mode is off in Telegram. Your trip is saved; /traveldemo resumes it and /traveldemo reset starts fresh."
@@ -56,39 +56,52 @@ class TelegramDemo:
                     links = self.hub.links(owner)
                     reply = ("Travel demo mode is on. We’re planning Tokyo, Nov 6–9, 2026. Tell me your budget and preferences here, then open any site:\n\n"
                              + "\n\n".join(f"{LABELS[app]}\n{url}" for app, url in links.items())
-                             + "\n\nI’ll remember our conversation and saved trip across all three sites. Each link works once and expires in 15 minutes; /traveldemo gives you fresh links. Demo selections are not bookings.\n\n/traveldemo reset — new trip\n/traveldemo stop — leave demo mode")
+                             + "\n\nThis Telegram chat is private. Each website has its own chat; its exchanges sync back here, never to the other websites. I’ll remember your preferences across them. Restarting the agent or travel service clears the visible website chats while preserving my memory and your selections. Each link works once and expires in 15 minutes; /traveldemo gives you fresh links. Demo selections are not bookings.\n\n/traveldemo reply hotels <request> — send a request and reply to Staywell only (also supports flights or activities)\n/traveldemo reset — new trip\n/traveldemo stop — leave demo mode")
+                elif action.split(maxsplit=1)[0] == "reply":
+                    parts = arguments.split(maxsplit=2)
+                    if len(parts) != 3 or parts[1].lower() not in SITES:
+                        reply = "Use /traveldemo reply <flights|hotels|activities> <request>. Only the chosen website will receive that request and my answer."
+                    elif not owner:
+                        reply = "Send /traveldemo first to resume your demo, then send your website request."
+                    else:
+                        app = parts[1].lower()
+                        reply = f"Sent to {LABELS[app]} only.\n\n" + self.reply(owner, app, TELEGRAM_REPLY_PREFIX + str(message_id), parts[2])
                 else:
-                    reply = "Use /traveldemo for links, /traveldemo reset for a fresh trip, or /traveldemo stop to leave demo mode."
+                    reply = "Use /traveldemo for links, /traveldemo reply <flights|hotels|activities> <request> for a website reply, /traveldemo reset for a fresh trip, or /traveldemo stop to leave demo mode."
             elif command == "/travelconfirm":
-                event_id = text.split(maxsplit=1)[1].strip() if len(text.split(maxsplit=1)) == 2 else ""
+                parts = text.split()[1:]
+                app, event_id = ("telegram", parts[0]) if len(parts) == 1 else (parts if len(parts) == 2 else ("", ""))
                 try:
-                    trip = self.hub.confirm(owner, "telegram", event_id)
+                    if app not in (*SITES, "telegram"):
+                        raise ValueError("Unknown proposal source")
+                    trip = self.hub.confirm(owner, app, event_id)
                     reply = f"Confirmed. Your saved trip total is ${trip['total_cents'] / 100:,.0f}, with ${trip['remaining_cents'] / 100:,.0f} remaining. These are demo selections, not bookings."
                 except ValueError:
                     reply = "That proposal is unavailable. Ask me for a new proposal, then use its exact /travelconfirm command."
             else:
-                session = self.hub.channel(owner, "telegram")
-                event_id = f"tg-{message_id}"
-                self.hub.submit(owner, "telegram", {"id": event_id, "session_id": session, "text": text, "context": {}})
-                deadline = time.monotonic() + 610
-                while time.monotonic() < deadline:
-                    transcript = self.hub.transcript(owner, "telegram", session)
-                    output = next((o for o in transcript["outputs"] if o["in_reply_to"] == event_id), None)
-                    if output:
-                        reply = output["text"]
-                        if output.get("proposal"):
-                            reply += f"\n\nTo confirm this change, send:\n/travelconfirm {event_id}"
-                        break
-                    if transcript["error"]:
-                        raise RuntimeError(transcript["error"])
-                    time.sleep(.1)
-                else:
-                    raise RuntimeError("The travel agent is still processing. Retry this message shortly.")
+                reply = self.reply(owner, "telegram", f"tg-{message_id}", text)
             # Persist before network delivery so transport retries never run a
             # model or reset a trip twice. This private outbox contains links.
             with self.hub.handoffs.connect() as db:
                 db.execute("INSERT INTO telegram_receipts VALUES (?,?,?,?)", (key, event, text, reply))
             return reply
+
+    def reply(self, owner, app, event_id, text):
+        session = self.hub.channel(owner, app)
+        self.hub.submit(owner, app, {"id": event_id, "session_id": session, "text": text, "context": {}})
+        deadline = time.monotonic() + 610
+        while time.monotonic() < deadline:
+            transcript = self.hub.transcript(owner, app, session)
+            output = next((o for o in transcript["outputs"] if o["in_reply_to"] == event_id), None)
+            if output:
+                reply = output["text"]
+                if output.get("proposal"):
+                    reply += f"\n\nTo confirm this change, send:\n{confirmation_command(app, event_id)}"
+                return reply
+            if transcript["error"]:
+                raise RuntimeError(transcript["error"])
+            time.sleep(.1)
+        raise RuntimeError("The travel agent is still processing. Retry this message shortly.")
 
 
 def connect_existing_bot(application, config_path):
