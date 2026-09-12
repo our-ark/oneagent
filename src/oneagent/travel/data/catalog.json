@@ -82,10 +82,15 @@
         "HND": 55,
         "NRT": 85
       },
-      "amenities": ["Breakfast included", "Garden courtyard", "Free Wi-Fi"],
+      "amenities": [
+        "Breakfast included",
+        "Garden courtyard",
+        "Free Wi-Fi"
+      ],
       "quiet": true,
       "description": "A small neighborhood retreat with a courtyard and slow mornings. Reception closes at 10 pm.",
-      "image": "/images/room.jpg"
+      "image": "/images/room.jpg",
+      "image_alt": "Warm bedroom with a patterned headboard and curtains; illustrative photo"
     },
     {
       "id": "aoi-central",
@@ -102,10 +107,15 @@
         "HND": 35,
         "NRT": 75
       },
-      "amenities": ["24-hour reception", "Luggage storage", "Near the metro"],
+      "amenities": [
+        "24-hour reception",
+        "Luggage storage",
+        "Near the metro"
+      ],
       "quiet": false,
       "description": "Stay close to the city's restaurants and transport. A 24-hour front desk makes late arrivals simple.",
-      "image": "/images/room.jpg"
+      "image": "/images/aoi-central.jpg",
+      "image_alt": "City-view room with a large window and dark curtains; illustrative photo"
     },
     {
       "id": "sora-retreat",
@@ -128,8 +138,9 @@
         "Breakfast included"
       ],
       "quiet": true,
-      "description": "A peaceful base near gardens and independent caf\u00e9s, with flexible arrival and a little more room.",
-      "image": "/images/room.jpg"
+      "description": "A peaceful base near gardens and independent cafés, with flexible arrival and a little more room.",
+      "image": "/images/sora-retreat.jpg",
+      "image_alt": "Minimal bedroom with pale wood flooring and soft linen; illustrative photo"
     },
     {
       "id": "machi-stay",
@@ -146,10 +157,15 @@
         "HND": 50,
         "NRT": 65
       },
-      "amenities": ["Near the station", "Free Wi-Fi", "Luggage storage"],
+      "amenities": [
+        "Near the station",
+        "Free Wi-Fi",
+        "Luggage storage"
+      ],
       "quiet": false,
       "description": "A compact room near Ueno Station. A practical choice when you want to spend more on exploring.",
-      "image": "/images/room.jpg"
+      "image": "/images/machi-stay.jpg",
+      "image_alt": "Compact single room with simple wooden furniture; illustrative photo"
     }
   ],
   "activities": [

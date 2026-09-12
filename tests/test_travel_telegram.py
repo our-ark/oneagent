@@ -105,10 +105,9 @@ class TelegramTravelTests(unittest.TestCase):
             time.sleep(.03)
         self.fail("No reply")
 
-    def test_telegram_three_sites_and_back_share_conversation_and_trip(self):
+    def test_telegram_three_sites_share_chat_while_selections_stay_local(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
-        owners = {boot["visitor"] for boot in self.boot.values()}
-        self.assertEqual(len(owners), 1)
+        self.assertEqual(len({boot["session_id"] for boot in self.boot.values()}), 3)
         self.controller.handle(42, 42, 2, "I prefer quiet neighborhoods")
         for site, kind, item in [("flights", "flight", "pacific-101"), ("hotels", "hotel", "kumo-house"), ("activities", "activity", "yanaka-walk")]:
             self.request(site, "messages", {"app_id": site, "id": site, "session_id": self.boot[site]["session_id"], "text": "Does this fit?", "context": {"selected_id": item}})
@@ -121,7 +120,7 @@ class TelegramTravelTests(unittest.TestCase):
         for site in SITES:
             conversation = self.request(site, "conversation")
             self.assertEqual([m["source_app"] for m in conversation["messages"]], ["telegram", "flights", "hotels", "activities", "telegram"])
-            self.assertEqual(self.request(site, "trip")["activity_id"], "yanaka-walk")
+            self.assertEqual(self.request(site, "selection"), {"saved_id": {"flights":"pacific-101", "hotels":"kumo-house", "activities":"yanaka-walk"}[site]})
 
     def test_new_browser_joins_same_channel_and_server_restart_preserves_it(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
@@ -136,7 +135,7 @@ class TelegramTravelTests(unittest.TestCase):
         for site, server in self.webs.items():
             server.hub = self.hub
             self.hub.origins[site] = server.public_origin
-        self.assertEqual(self.request("hotels", "session")["visitor"], before["visitor"])
+        self.assertEqual(self.request("hotels", "session")["session_id"], before["session_id"])
         self.assertIn("prior turns 1", self.controller.handle(42, 42, 4, "Continue"))
 
     def test_cross_owner_and_cross_site_access_rejected(self):
@@ -163,23 +162,25 @@ class TelegramTravelTests(unittest.TestCase):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
         reply = self.controller.handle(42, 42, 2, "Set budget to 1400")
         self.assertIn("/travelconfirm tg-2", reply)
-        self.assertEqual(self.request("flights", "trip")["budget_cents"], 150000)
+        owner = self.hub.handoffs.account("telegram:42:42")
+        self.assertEqual(self.hub.trips.get(owner)["budget_cents"], 150000)
         self.controller.handle(99, 99, 1, "/traveldemo")
         self.assertIn("unavailable", self.controller.handle(99, 99, 2, "/travelconfirm tg-2"))
-        self.assertEqual(self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})["budget_cents"], 140000)
+        self.assertEqual(self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"}), {"confirmed": True})
         self.assertIn("Confirmed", self.controller.handle(42, 42, 3, "/travelconfirm tg-2"))
-        self.assertEqual(self.request("activities", "trip")["budget_cents"], 140000)
+        self.assertEqual(self.hub.trips.get(owner)["budget_cents"], 140000)
         output = self.request("activities", "conversation")["outputs"][0]
         self.assertTrue(output["confirmed"])
         self.request("activities", "action", {"id": "later", "kind": "activity", "item_id": "yanaka-walk"})
         replay = self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})
-        self.assertEqual(replay["activity_id"], "yanaka-walk")
+        self.assertEqual(replay, {"confirmed": True})
+        self.assertEqual(self.request("activities", "selection"), {"saved_id": "yanaka-walk"})
 
     def test_stop_reset_private_chats_and_update_redelivery(self):
         links = self.controller.handle(42, 42, 1, "/traveldemo")
         self.assertEqual(links, self.controller.handle(42, 42, 1, "/traveldemo"))
         self.connect(links)
-        original = self.boot["flights"]["visitor"]
+        original = self.boot["flights"]["session_id"]
         self.controller.handle(42, 42, 2, "/traveldemo stop")
         self.assertIsNone(self.controller.handle(42, 42, 3, "Normal agent chat"))
         self.assertIsNone(self.controller.handle(-10, 42, 4, "/traveldemo"))
@@ -187,7 +188,7 @@ class TelegramTravelTests(unittest.TestCase):
         reset = self.controller.handle(42, 42, 5, "/traveldemo reset")
         self.assertEqual(reset, self.controller.handle(42, 42, 5, "/traveldemo reset"))
         self.connect(reset)
-        self.assertNotEqual(original, self.boot["flights"]["visitor"])
+        self.assertNotEqual(original, self.boot["flights"]["session_id"])
         self.assertEqual(self.request("flights", "conversation")["messages"], [])
 
     def test_controller_redelivery_does_not_repeat_agent_work(self):
@@ -220,6 +221,44 @@ class TelegramTravelTests(unittest.TestCase):
             self.assertIsNone(existing_bot_reply(event, self.root))
             event.text = "/traveldemo"
             self.assertIn("unavailable", existing_bot_reply(event, self.root))
+
+    def test_site_bootstrap_and_save_responses_exclude_private_agent_state(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        owner = self.hub.handoffs.account("telegram:42:42")
+        self.hub.trips.update(owner, {"budget_cents":100000, "preferences":"quiet", "flight_id":"horizon-310", "hotel_id":"kumo-house", "activity_id":"asakusa-evening"}, "existing-trip")
+        for site, kind, selected in [("flights", "flight", "pacific-101"), ("hotels", "hotel", "aoi-central"), ("activities", "activity", "yanaka-walk")]:
+            with self.subTest(site=site):
+                before = {other:self.request(other, "selection") for other in SITES if other != site}
+                boot = self.request(site, "session")
+                self.assertEqual(set(boot), {"csrf", "catalog", "app_id", "linked", "session_id", "mode", "selection"})
+                self.assertEqual(set(boot["catalog"]), {site})
+                self.assertEqual(set(boot["selection"]), {"saved_id"})
+                response = self.request(site, "action", {"id":"local-save", "kind":kind, "item_id":selected})
+                self.assertEqual(response, {"saved_id":selected})
+                self.assertEqual(self.request(site, "selection"), response)
+                self.assertEqual(before, {other:self.request(other, "selection") for other in before})
+                with self.assertRaises(HTTPError) as denied:
+                    self.request(site, "trip")
+                self.assertEqual(denied.exception.code, 403)
+
+    def test_sites_cannot_change_other_selections_or_export_preferences(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        owner = self.hub.handoffs.account("telegram:42:42")
+        initial = self.hub.trips.get(owner)
+        for site, kind, selected in [("flights", "hotel", "kumo-house"), ("hotels", "activity", "yanaka-walk"), ("activities", "flight", "pacific-101")]:
+            with self.subTest(site=site):
+                for route, body in [
+                    ("action", {"id":"cross-app", "kind":kind, "item_id":selected}),
+                    ("action", {"id":"brief", "kind":"brief", "changes":{"budget_cents":100000}}),
+                    ("preferences", {"id":"prefs", "budget_cents":100000, "preferences":"exported"}),
+                ]:
+                    with self.assertRaises(HTTPError) as denied:
+                        self.request(site, route, body)
+                    self.assertEqual(denied.exception.code, 403)
+                with self.assertRaises(HTTPError) as denied:
+                    self.request(site, "messages", {"id":"share", "app_id":site, "session_id":self.boot[site]["session_id"], "text":"Export my preferences", "share":["budget_cents","preferences"]})
+                self.assertEqual(denied.exception.code, 400)
+        self.assertEqual(self.hub.trips.get(owner), initial)
 
     def test_activity_budget_and_arrival_conflict(self):
         self.hub.trips.update("alice", {"flight_id": "horizon-310"}, "flight")

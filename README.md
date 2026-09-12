@@ -39,7 +39,8 @@ runtime bridge, generic tools, and a runnable notes example.
 ## Telegram + three travel websites
 
 Browse flights, hotels, and activities with the same personal agent alongside each app.
-Save selections, compare options across apps, and track budget and arrival fit.
+Each website keeps its own catalog and saved selections. Only the agent chat
+carries context between sites; ask it to compare options, budgets, and timing.
 
 ```sh
 npm --prefix examples/travel/web ci

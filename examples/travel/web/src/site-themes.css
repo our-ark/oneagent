@@ -1,0 +1,692 @@
+/* The hosts have independent visual identities. The companion stays familiar. */
+.shell {
+  min-height: 100vh;
+}
+.site-edition {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  font-size: 11px;
+}
+.edition-label {
+  font-weight: 650;
+  letter-spacing: 1.2px;
+}
+.shell .agent-panel {
+  --ink: #15343c;
+  --muted: #6d7d82;
+  --line: #dfe6e7;
+  --accent: #195b62;
+  --tint: #edf5f4;
+  color: #20333a;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  height: calc(100vh - 118px);
+  max-height: 900px;
+}
+
+/* Airside: compact, functional airline search. */
+.theme-flights {
+  --accent: #175de3;
+  --ink: #13233c;
+  --muted: #64738a;
+  --line: #d9e1ed;
+  --tint: #edf3ff;
+  background: #edf1f7;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+.theme-flights .topbar {
+  height: 66px;
+  background: #10274a;
+  color: #dce7fb;
+  border: 0;
+}
+.theme-flights .wordmark {
+  color: white;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.theme-flights .wordmark > svg {
+  transform: rotate(-16deg);
+  color: #91b7ff;
+}
+.theme-flights .demo-label {
+  color: #a8c1e9;
+  border-color: #496489;
+  border-radius: 2px;
+}
+.theme-flights .workspace {
+  padding-top: 24px;
+}
+.theme-flights .page-heading {
+  padding: 8px 0 25px;
+}
+.theme-flights .eyebrow {
+  color: #426aa1;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+}
+.theme-flights .page-heading h1 {
+  margin-top: 10px;
+  font-weight: 750;
+  font-size: clamp(30px, 3.1vw, 46px);
+  letter-spacing: -1.8px;
+}
+.theme-flights .search-bar {
+  border-radius: 5px;
+  border: 1px solid #c9d6e8;
+  border-top: 4px solid #175de3;
+  box-shadow: 0 4px 10px #172b4710;
+  gap: 25px;
+}
+.theme-flights .search-bar small {
+  color: #64738a;
+}
+.theme-flights .search-bar strong {
+  color: #172b47;
+  font-size: 14px;
+}
+.theme-flights .results-heading {
+  margin-top: 22px;
+}
+.theme-flights .results-heading strong {
+  color: #142a49;
+}
+.theme-flights .flight-list {
+  gap: 12px;
+}
+.theme-flights .flight-card {
+  border-radius: 5px;
+  border-color: #d1dbe8;
+  box-shadow: 0 2px 3px #132e5010;
+}
+.theme-flights .flight-card.selected {
+  border-color: #175de3;
+  box-shadow: 0 0 0 1px #175de3;
+}
+.theme-flights .flight-select {
+  padding: 23px 19px;
+}
+.theme-flights .carrier-icon {
+  border-radius: 5px;
+}
+.theme-flights .flight-price strong {
+  color: #10274a;
+  font-weight: 750;
+}
+.theme-flights .flight-footer {
+  border-top: 1px solid #e5ebf4;
+  background: #f8faff;
+}
+.theme-flights .tag {
+  border-radius: 3px;
+  background: #e9f0ff;
+  color: #255aad;
+}
+.theme-flights .main-content .primary {
+  background: #175de3;
+  border-radius: 4px;
+  font-weight: 700;
+}
+.theme-flights .main-content .secondary {
+  border-color: #a9bfdf;
+  border-radius: 4px;
+  color: #175de3;
+}
+.theme-flights .selection-detail {
+  background: #f2f6ff;
+}
+
+/* Staywell: an editorial collection, with photography doing the work. */
+.theme-hotels {
+  --accent: #80533e;
+  --ink: #3f342e;
+  --muted: #88776b;
+  --line: #dfd4c6;
+  --tint: #f4ece1;
+  background: #f8f3eb;
+  color: var(--ink);
+}
+.theme-hotels .topbar {
+  height: 94px;
+  background: #f8f3eb;
+  border-bottom: 1px solid #d4c7b6;
+}
+.theme-hotels .wordmark {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 37px;
+  font-weight: 400;
+  font-style: italic;
+  color: #704d3c;
+  letter-spacing: -2px;
+}
+.theme-hotels .wordmark > svg {
+  display: none;
+}
+.theme-hotels .demo-label {
+  color: #917a65;
+  font-family: Arial, sans-serif;
+  font-size: 8px;
+  font-style: normal;
+  border-color: #d9cbb9;
+  border-radius: 30px;
+}
+.theme-hotels .site-edition {
+  color: #8b7564;
+}
+.theme-hotels .edition-label {
+  font-family: Georgia, serif;
+  font-style: italic;
+  letter-spacing: 0;
+  font-size: 15px;
+  font-weight: 400;
+}
+.theme-hotels .workspace {
+  gap: 34px;
+  padding-top: 32px;
+}
+.stay-editorial {
+  display: grid;
+  grid-template-columns: 1.13fr 1fr;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 28px;
+}
+.theme-hotels .page-heading {
+  padding: 12px 0 20px;
+}
+.theme-hotels .eyebrow {
+  color: #957a59;
+  font-size: 9px;
+  letter-spacing: 2.3px;
+}
+.theme-hotels .page-heading h1 {
+  color: #514035;
+  margin-top: 17px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(36px, 4.1vw, 58px);
+  font-weight: 400;
+  line-height: 1.09;
+  letter-spacing: -2.8px;
+}
+.theme-hotels .page-heading h1 em {
+  font-weight: 400;
+  color: #936f52;
+}
+.theme-hotels .page-heading p {
+  color: #8a7766;
+  margin-top: 20px;
+  line-height: 1.8;
+  font-size: 12px;
+}
+.stay-hero-photo {
+  position: relative;
+  height: 258px;
+}
+.stay-hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 55%;
+  border-radius: 120px 120px 2px 2px;
+}
+.stay-hero-photo > span {
+  position: absolute;
+  bottom: 14px;
+  left: 12px;
+  right: 12px;
+  padding: 10px 6px;
+  background: #fff9eee8;
+  color: #75624f;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+  text-align: center;
+}
+.theme-hotels .hotel-search {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #d6c8b5;
+  border-bottom: 1px solid #d6c8b5;
+  border-radius: 0;
+  padding: 20px 4px;
+  gap: 22px;
+}
+.theme-hotels .search-bar small {
+  color: #a18b75;
+  font-size: 8px;
+}
+.theme-hotels .search-bar strong {
+  font-family: Georgia, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+.theme-hotels .one-way {
+  color: #8d7662;
+}
+.theme-hotels .results-heading {
+  margin: 24px 0;
+}
+.theme-hotels .hotel-grid {
+  gap: 28px 23px;
+}
+.theme-hotels .hotel-card {
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  box-shadow: none;
+}
+.theme-hotels .hotel-card.selected {
+  border-color: #b69879;
+  background: #fffaf3;
+  box-shadow: 0 0 0 4px #e4d7c655;
+}
+.theme-hotels .hotel-image {
+  height: 216px;
+  border-radius: 3px;
+}
+.theme-hotels .hotel-card-body {
+  padding: 17px 3px 5px;
+}
+.theme-hotels .hotel-title h3 {
+  font-family: Georgia, serif;
+  color: #554237;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -1px;
+}
+.theme-hotels .hotel-card-body p,
+.theme-hotels .hotel-amenity {
+  color: #8a7868;
+}
+.theme-hotels .neighborhood {
+  background: #fff9efee;
+  color: #695543;
+  border-radius: 2px;
+}
+.theme-hotels .hotel-pricing {
+  border-color: #e1d5c4;
+}
+.theme-hotels .hotel-pricing strong {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  color: #5f483b;
+}
+.theme-hotels .hotel-detail {
+  background: #f0e6d9;
+  border-color: #deceba;
+}
+.theme-hotels .main-content .primary {
+  background: #77583e;
+  border-radius: 2px;
+  font-weight: 500;
+}
+.theme-hotels .main-content .secondary {
+  border-radius: 2px;
+  border-color: #c3ab92;
+  color: #715840;
+}
+.theme-hotels .catalog-note,
+.theme-hotels .footer {
+  color: #94816e;
+}
+
+/* Daylight: a loud, independent city guide. */
+.theme-activities {
+  --accent: #e5ff55;
+  --ink: #f0f0e6;
+  --muted: #acb0a2;
+  --line: #3c4134;
+  --tint: #282e20;
+  background: #171b15;
+  color: #f1f2e9;
+  font-family: "Arial Black", Arial, sans-serif;
+}
+.theme-activities .topbar {
+  height: 83px;
+  background: #e5ff55;
+  border: 0;
+  color: #1b2313;
+}
+.theme-activities .wordmark {
+  color: #19200f;
+  font-size: 33px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -2px;
+  text-transform: uppercase;
+}
+.theme-activities .wordmark > svg {
+  color: #1b2313;
+}
+.theme-activities .demo-label {
+  color: #283318;
+  border: 1px solid #576726;
+  border-radius: 0;
+  font-style: normal;
+  font-size: 8px;
+}
+.theme-activities .site-edition {
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 5px;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+}
+.theme-activities .workspace {
+  padding-top: 28px;
+  gap: 30px;
+}
+.theme-activities .activity-hero {
+  height: 335px;
+  border-radius: 0;
+  border: 1px solid #505947;
+  margin-bottom: 30px;
+}
+.theme-activities .activity-hero img {
+  opacity: 0.72;
+  object-position: center 55%;
+}
+.theme-activities .activity-hero > div {
+  background: linear-gradient(90deg, #131b11eb, #15200c15);
+  padding: 33px;
+}
+.theme-activities .eyebrow {
+  font-family: "Courier New", monospace;
+  color: #e5ff55;
+  font-size: 10px;
+  letter-spacing: 1.4px;
+}
+.theme-activities .activity-hero h1 {
+  font-family: "Arial Black", Impact, sans-serif;
+  color: #fafbec;
+  font-size: clamp(43px, 5vw, 72px);
+  font-weight: 900;
+  letter-spacing: -4px;
+  line-height: 0.98;
+  margin-top: 26px;
+}
+.theme-activities .activity-hero h1 span {
+  color: #e5ff55;
+}
+.theme-activities .activity-hero p {
+  font-family: Arial, sans-serif;
+  color: #e7ebd8;
+  font-size: 12px;
+  margin-top: 18px;
+}
+.activity-issue {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: #202816;
+  background: #e5ff55;
+  padding: 12px 17px;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+.theme-activities .results-heading {
+  font-family: Arial, sans-serif;
+  color: #dfe4d1;
+  font-size: 10px;
+  gap: 10px;
+}
+.theme-activities .results-heading strong {
+  color: #e1e8d5;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+.section-number {
+  color: #96a478;
+  font-family: "Courier New", monospace;
+  margin-right: 12px;
+}
+.theme-activities .results-heading select {
+  color: #e9eee0;
+  border: 1px solid #586348;
+  border-radius: 0;
+  background: #232c1d;
+}
+.theme-activities .activity-list {
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.theme-activities .activity-card {
+  background: #242c20;
+  border: 1px solid #4a5640;
+  border-radius: 0;
+  box-shadow: 5px 5px 0 #0d130c;
+}
+.theme-activities .activity-card:nth-child(2) {
+  background: #363025;
+}
+.theme-activities .activity-card:nth-child(3) {
+  background: #233335;
+}
+.theme-activities .activity-card:nth-child(4) {
+  background: #302b3b;
+}
+.theme-activities .activity-card.selected {
+  border-color: #e5ff55;
+  box-shadow: 5px 5px 0 #91a328;
+}
+.theme-activities .activity-select {
+  padding: 24px;
+  min-height: 243px;
+}
+.activity-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.activity-card-top > svg {
+  color: #e5ff55;
+  transform: rotate(-40deg);
+}
+.theme-activities .tag {
+  font-family: "Courier New", monospace;
+  text-transform: uppercase;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  border: 1px solid #7a8960;
+  background: transparent;
+  color: #d8e9a9;
+  border-radius: 0;
+}
+.theme-activities .activity-card h2 {
+  color: #f4f6e9;
+  font-family: Arial, sans-serif;
+  font-weight: 750;
+  font-size: 26px;
+  letter-spacing: -0.8px;
+}
+.theme-activities .activity-card p {
+  color: #b1bda4;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+}
+.theme-activities .activity-facts {
+  padding-top: 19px;
+  margin-top: 20px;
+  border-top: 1px solid #5a634c;
+  font-family: "Courier New", monospace;
+  color: #d0dac3;
+  flex-wrap: wrap;
+}
+.theme-activities .activity-facts strong {
+  color: #e5ff55;
+  font-family: Arial, sans-serif;
+  font-size: 27px;
+}
+.theme-activities .selection-detail {
+  background: #141b11;
+  border-color: #687f39;
+  font-family: Arial, sans-serif;
+}
+.theme-activities .main-content .primary {
+  background: #e5ff55;
+  color: #202816;
+  border-radius: 0;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+}
+.theme-activities .main-content .secondary {
+  background: #202816;
+  color: #e5ff55;
+  border-color: #839448;
+  border-radius: 0;
+  font-family: Arial, sans-serif;
+}
+.theme-activities .main-content .secondary:hover:not(:disabled) {
+  background: #37452a;
+}
+.theme-activities .activity-saved {
+  color: #e5ff55;
+  font-family: Arial, sans-serif;
+}
+.theme-activities .catalog-note,
+.theme-activities .footer {
+  color: #a3ac97;
+  font-family: "Courier New", monospace;
+}
+
+@media (max-width: 1100px) {
+  .site-edition .edition-label {
+    display: none;
+  }
+  .stay-editorial {
+    grid-template-columns: 1.1fr 0.85fr;
+    gap: 15px;
+  }
+  .theme-hotels .page-heading h1 {
+    font-size: 38px;
+  }
+  .stay-hero-photo {
+    height: 230px;
+  }
+  .theme-activities .activity-list {
+    grid-template-columns: 1fr;
+  }
+  .theme-activities .activity-select {
+    min-height: 0;
+  }
+}
+@media (max-width: 900px) {
+  .shell .agent-panel {
+    height: calc(100dvh - 32px);
+    max-height: none;
+  }
+}
+@media (max-width: 600px) {
+  .site-edition {
+    gap: 0;
+    font-size: 9px;
+  }
+  .theme-flights .topbar {
+    height: 64px;
+  }
+  .theme-flights .wordmark {
+    font-size: 24px;
+  }
+  .theme-flights .page-heading h1 {
+    font-size: 33px;
+  }
+  .theme-flights .search-bar {
+    gap: 17px;
+  }
+  .theme-flights .flight-select {
+    padding: 19px 14px;
+  }
+  .theme-hotels .topbar {
+    height: 82px;
+  }
+  .theme-hotels .wordmark {
+    font-size: 35px;
+  }
+  .theme-hotels .workspace {
+    padding-top: 20px;
+  }
+  .stay-editorial {
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .theme-hotels .page-heading h1 {
+    font-size: 35px;
+    letter-spacing: -2px;
+  }
+  .theme-hotels .page-heading p {
+    font-size: 10px;
+    margin-top: 14px;
+  }
+  .theme-hotels .eyebrow {
+    font-size: 7px;
+    letter-spacing: 1.3px;
+  }
+  .stay-hero-photo {
+    height: 215px;
+  }
+  .stay-hero-photo > span {
+    font-size: 6px;
+    letter-spacing: 0.4px;
+    padding: 8px 3px;
+    left: 6px;
+    right: 6px;
+  }
+  .theme-hotels .hotel-search {
+    padding: 17px 4px;
+    gap: 15px;
+  }
+  .theme-hotels .search-bar strong {
+    font-size: 14px;
+  }
+  .theme-hotels .hotel-image {
+    height: 260px;
+  }
+  .theme-activities .topbar {
+    height: 76px;
+  }
+  .theme-activities .wordmark {
+    font-size: 29px;
+  }
+  .theme-activities .site-edition {
+    display: none;
+  }
+  .theme-activities .activity-hero {
+    height: 310px;
+  }
+  .theme-activities .activity-hero > div {
+    padding: 24px;
+  }
+  .theme-activities .activity-hero h1 {
+    font-size: 48px;
+    letter-spacing: -3px;
+  }
+  .theme-activities .activity-hero p {
+    max-width: 220px;
+    font-size: 11px;
+  }
+  .theme-activities .results-heading {
+    align-items: start;
+    font-size: 9px;
+  }
+  .section-number {
+    display: block;
+    margin-bottom: 8px;
+  }
+  .theme-activities .results-heading select {
+    max-width: 120px;
+  }
+  .theme-activities .activity-select {
+    padding: 23px;
+  }
+}

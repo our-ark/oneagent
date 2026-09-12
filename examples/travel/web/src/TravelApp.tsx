@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
-  ArrowUp,
   Check,
   ChevronRight,
   Clock3,
@@ -11,15 +10,11 @@ import {
   MessageCircle,
   Orbit,
   Plane,
-  Plus,
-  RotateCcw,
-  ShieldCheck,
-  Sparkles,
   Star,
-  Wallet,
   X,
 } from "lucide-react";
 import "./style.css";
+import "./site-themes.css";
 import {
   CompanionPanel,
   type AgentOutput as Output,
@@ -69,31 +64,16 @@ type Stay = {
   quiet: boolean;
   description: string;
   image: string;
+  image_alt: string;
 };
-type Trip = {
-  budget_cents: number;
-  preferences: string;
-  flight_id: string | null;
-  hotel_id: string | null;
-  flight: Flight | null;
-  hotel: Stay | null;
-  activity: Activity | null;
-  activity_id: string | null;
-  total_cents: number;
-  remaining_cents: number;
-  warnings: string[];
-  nights: number;
-  estimated_hotel_arrival?: string;
-};
+type Selection = { saved_id: string | null };
 type Bootstrap = {
-  visitor: string;
   csrf: string;
-  trip: Trip;
+  selection: Selection;
   catalog: { flights?: Flight[]; hotels?: Stay[]; activities?: Activity[] };
   app_id: SiteId;
   linked: boolean;
   session_id: string;
-  origins: Record<SiteId, string>;
   mode: string;
 };
 let csrfToken = "";
@@ -133,7 +113,7 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 const id = () => crypto.randomUUID();
 export function TravelApp({ site }: { site: SiteId }) {
   const [boot, setBoot] = useState<Bootstrap | null>(null);
-  const [trip, setTrip] = useState<Trip | null>(null);
+  const [saved, setSaved] = useState<Selection>({ saved_id: null });
   const app: AppId = site;
   const appRef = useRef(app);
   const [selected, setSelected] = useState<Record<AppId, string | null>>({
@@ -147,10 +127,7 @@ export function TravelApp({ site }: { site: SiteId }) {
   const [toast, setToast] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [sharing, setSharing] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
-  const [budget, setBudget] = useState("1500");
-  const [preferences, setPreferences] = useState("");
   const [sort, setSort] = useState("recommended");
   const [quietOnly, setQuietOnly] = useState(false);
   const [actionPending, setActionPending] = useState(false);
@@ -169,9 +146,7 @@ export function TravelApp({ site }: { site: SiteId }) {
       if (data.app_id !== site)
         throw new Error("Open this website using its own Telegram link.");
       setBoot(data);
-      setTrip(data.trip);
-      setBudget(String(data.trip.budget_cents / 100));
-      setPreferences(data.trip.preferences);
+      setSaved(data.selection);
     }
     connect().catch((e) => setError(e.message));
   }, [site]);
@@ -194,11 +169,11 @@ export function TravelApp({ site }: { site: SiteId }) {
       try {
         const [messages, updated] = await Promise.all([
           api<Transcript>("conversation"),
-          api<Trip>("trip"),
+          api<Selection>("selection"),
         ]);
         if (!cancelled) {
           setTranscript(messages);
-          setTrip(updated);
+          setSaved(updated);
         }
       } catch (e) {
         if (!cancelled) setError((e as Error).message);
@@ -244,7 +219,7 @@ export function TravelApp({ site }: { site: SiteId }) {
         session_id: session,
         text: text.trim(),
         context: { selected_id: selected[target], revision: Date.now() },
-        share: sharing ? ["budget_cents", "preferences"] : [],
+        share: [],
       });
       if (appRef.current === target)
         setTranscript((previous) => ({
@@ -272,14 +247,14 @@ export function TravelApp({ site }: { site: SiteId }) {
   async function save(kind: "flight" | "hotel" | "activity", itemId: string) {
     setActionPending(true);
     try {
-      const updated = await api<Trip>("action", {
+      const updated = await api<Selection>("action", {
         id: id(),
         kind,
         item_id: itemId,
       });
-      setTrip(updated);
+      setSaved(updated);
       setToast(
-        `${kind === "flight" ? "Flight" : kind === "hotel" ? "Hotel" : "Activity"} saved to your trip`,
+        `${kind === "flight" ? "Flight" : kind === "hotel" ? "Hotel" : "Activity"} saved on ${titles[site]}`,
       );
     } catch (e) {
       setError((e as Error).message);
@@ -290,46 +265,23 @@ export function TravelApp({ site }: { site: SiteId }) {
   async function confirmProposal(output: Output) {
     setActionPending(true);
     try {
-      const updated = await api<Trip>("confirm", {
+      await api("confirm", {
         source_app: output.source_app,
         event_id: output.in_reply_to,
       });
-      setTrip(updated);
-      setBudget(String(updated.budget_cents / 100));
-      setPreferences(updated.preferences);
-      setToast("Confirmed. Your trip is updated.");
+      setSaved(await api<Selection>("selection"));
+      setToast("Confirmed with OneAgent.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setActionPending(false);
     }
   }
-  async function updateBrief() {
-    const value = Number(budget);
-    if (!Number.isFinite(value) || value < 100 || value > 50000) {
-      setError("Enter a budget between $100 and $50,000.");
-      return;
-    }
-    setActionPending(true);
-    try {
-      const updated = await api<Trip>("preferences", {
-        id: id(),
-        budget_cents: Math.round(value * 100),
-        preferences,
-      });
-      setTrip(updated);
-      setToast("Your trip brief is updated");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setActionPending(false);
-    }
-  }
-  if (!boot || !trip)
+  if (!boot)
     return (
       <main className="loading">
         <Orbit size={38} />
-        <h1>Opening your trip</h1>
+        <h1>Opening {titles[app]}</h1>
         <p>{error || "Connecting your personal agent…"}</p>
         {error && <button onClick={() => location.reload()}>Try again</button>}
       </main>
@@ -382,85 +334,38 @@ export function TravelApp({ site }: { site: SiteId }) {
           {titles[app].toLowerCase()}
           <span className="demo-label">DEMO</span>
         </a>
-        <div className="top-right">
-          <span className="trip-location">
-            <MapPin size={15} /> Tokyo, Japan
-          </span>
-          <span className="connected-badge">
-            <Orbit size={16} /> OneAgent connected
-          </span>
+        <div className="site-edition">
+          {site === "flights" ? (
+            <>
+              <span className="edition-label">FLIGHT SEARCH</span>
+              <span>USD · One-way fares</span>
+            </>
+          ) : site === "hotels" ? (
+            <>
+              <span className="edition-label">
+                A considered collection of stays
+              </span>
+              <span>Tokyo, Japan</span>
+            </>
+          ) : (
+            <>
+              <span className="edition-label">GO SOMEWHERE GOOD.</span>
+              <span>TOKYO CITY GUIDE / VOL. 01</span>
+            </>
+          )}
         </div>
       </header>
       <div className="workspace">
         <main className="main-content">
-          <details className="trip-brief">
-            <summary>
-              <Wallet size={17} /> Your trip brief · {money(trip.budget_cents)}{" "}
-              budget
-            </summary>
-            <section className="brief-card">
-              <div className="brief-intro">
-                <div className="icon-box">
-                  <Wallet size={23} />
-                </div>
-                <h3>What matters to you?</h3>
-                <p>
-                  Your agent carries these details into every connected app.
-                </p>
-              </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  updateBrief();
-                }}
-                className="brief-form"
-              >
-                <label>
-                  Trip budget <span className="field-note">USD</span>
-                  <div className="money-input">
-                    <span>$</span>
-                    <input
-                      aria-label="Trip budget in dollars"
-                      type="number"
-                      min="100"
-                      max="50000"
-                      step="1"
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
-                    />
-                  </div>
-                </label>
-                <label>
-                  Travel preferences
-                  <textarea
-                    maxLength={2000}
-                    value={preferences}
-                    onChange={(e) => setPreferences(e.target.value)}
-                    placeholder="Quiet neighborhoods, a relaxed first day, good coffee…"
-                    rows={2}
-                  />
-                </label>
-                <button className="primary" disabled={actionPending}>
-                  Update trip brief <ArrowRight size={17} />
-                </button>
-              </form>
-            </section>
-          </details>
           {app === "flights" && (
             <>
-              <div className="app-heading">
-                <span className="app-brand">
-                  <Plane size={24} /> airside
-                  <span>FLIGHTS, WITHOUT THE FUSS.</span>
-                </span>
-                <span className="connected-badge">
-                  <Check size={14} /> Connected to OneAgent
-                </span>
-              </div>
               <div className="page-heading">
-                <span className="eyebrow">THE JOURNEY STARTS HERE</span>
-                <h1>Find your way to Tokyo.</h1>
-                <p>Choose a flight. Your agent can help with the trade-offs.</p>
+                <span className="eyebrow">YOUR NEXT DEPARTURE</span>
+                <h1>Tokyo, here you come.</h1>
+                <p>
+                  Compare nonstop flights from San Francisco. Pick your way
+                  there.
+                </p>
               </div>
               <div className="search-bar">
                 <div>
@@ -544,9 +449,9 @@ export function TravelApp({ site }: { site: SiteId }) {
                     <div className="flight-footer">
                       <span className="tag">{flight.tag}</span>
                       <span>{flight.baggage}</span>
-                      {trip.flight_id === flight.id && (
+                      {saved.saved_id === flight.id && (
                         <span className="saved-label">
-                          <Check size={14} /> Saved to trip
+                          <Check size={14} /> Saved on {titles[app]}
                         </span>
                       )}
                     </div>
@@ -566,11 +471,11 @@ export function TravelApp({ site }: { site: SiteId }) {
                           <button
                             className="primary small"
                             disabled={
-                              actionPending || trip.flight_id === flight.id
+                              actionPending || saved.saved_id === flight.id
                             }
                             onClick={() => save("flight", flight.id)}
                           >
-                            {trip.flight_id === flight.id
+                            {saved.saved_id === flight.id
                               ? "Saved"
                               : "Save flight"}
                             <Check size={16} />
@@ -589,20 +494,31 @@ export function TravelApp({ site }: { site: SiteId }) {
           )}
           {app === "hotels" && (
             <>
-              <div className="app-heading">
-                <span className="app-brand stay-brand">
-                  <Hotel size={24} /> staywell
-                  <span>A PLACE THAT FEELS LIKE YOU.</span>
-                </span>
-                <span className="connected-badge">
-                  <Check size={14} /> Connected to OneAgent
-                </span>
-              </div>
-              <div className="page-heading">
-                <span className="eyebrow">MAKE YOURSELF AT HOME</span>
-                <h1>Somewhere to slow down.</h1>
-                <p>Find your neighborhood, then find your stay.</p>
-              </div>
+              <section className="stay-editorial">
+                <div className="page-heading">
+                  <span className="eyebrow">THE TOKYO COLLECTION</span>
+                  <h1>
+                    Somewhere
+                    <br />
+                    <em>to slow down.</em>
+                  </h1>
+                  <p>
+                    Good neighborhoods. Thoughtful spaces.
+                    <br />A place that feels a little like you.
+                  </p>
+                </div>
+                <div className="stay-hero-photo">
+                  <img
+                    src={
+                      boot.catalog.hotels?.find(
+                        (hotel) => hotel.id === "sora-retreat",
+                      )?.image
+                    }
+                    alt="Soft linen and natural materials in an illustrative bedroom"
+                  />
+                  <span>FOUR STAYS, EACH WITH ITS OWN STORY</span>
+                </div>
+              </section>
               <div className="search-bar hotel-search">
                 <div>
                   <small>DESTINATION</small>
@@ -655,15 +571,12 @@ export function TravelApp({ site }: { site: SiteId }) {
                       aria-label={`View ${hotel.name}`}
                     >
                       <div className="hotel-image">
-                        <img
-                          src={hotel.image}
-                          alt="Illustrative hotel bedroom; demo properties are fictional"
-                        />
+                        <img src={hotel.image} alt={hotel.image_alt} />
                         <span className="neighborhood">
                           <MapPin size={13} />
                           {hotel.neighborhood}
                         </span>
-                        {trip.hotel_id === hotel.id && (
+                        {saved.saved_id === hotel.id && (
                           <span className="image-saved">
                             <Check size={15} /> Saved
                           </span>
@@ -717,11 +630,13 @@ export function TravelApp({ site }: { site: SiteId }) {
                           <button
                             className="primary small"
                             disabled={
-                              actionPending || trip.hotel_id === hotel.id
+                              actionPending || saved.saved_id === hotel.id
                             }
                             onClick={() => save("hotel", hotel.id)}
                           >
-                            {trip.hotel_id === hotel.id ? "Saved" : "Save stay"}
+                            {saved.saved_id === hotel.id
+                              ? "Saved"
+                              : "Save stay"}
                             <Check size={15} />
                           </button>
                         </div>
@@ -732,7 +647,7 @@ export function TravelApp({ site }: { site: SiteId }) {
               </div>
               <p className="catalog-note">
                 Fictional properties and ratings. Three-night totals include
-                mock taxes. Room photo is illustrative.
+                mock taxes. Photos are illustrative.
               </p>
             </>
           )}
@@ -744,16 +659,23 @@ export function TravelApp({ site }: { site: SiteId }) {
                   alt="Tokyo skyline with Tokyo Tower"
                 />
                 <div>
-                  <span className="eyebrow light">TOKYO, AT YOUR OWN PACE</span>
+                  <span className="eyebrow light">
+                    LESS SCROLLING. MORE STORIES.
+                  </span>
                   <h1>
-                    Make room for
-                    <br />a little discovery.
+                    OUT THERE.
+                    <br />
+                    <span>IN TOKYO.</span>
                   </h1>
-                  <p>November 6–9 · One traveler</p>
+                  <p>Walk it. Taste it. Ride it. Find your next good day.</p>
+                  <span className="activity-issue">NOV 6—9, 2026 ↗</span>
                 </div>
               </section>
               <div className="results-heading">
-                <strong>Four ways to spend a day</strong>
+                <strong>
+                  <span className="section-number">01—04</span> PICK YOUR KIND
+                  OF DAY
+                </strong>
                 <label>
                   Sort by{" "}
                   <select
@@ -787,7 +709,10 @@ export function TravelApp({ site }: { site: SiteId }) {
                         aria-pressed={selected.activities === activity.id}
                         aria-label={`View ${activity.name}`}
                       >
-                        <span className="tag">{activity.category}</span>
+                        <span className="activity-card-top">
+                          <span className="tag">{activity.category}</span>
+                          <ArrowRight size={24} />
+                        </span>
                         <h2>{activity.name}</h2>
                         <p>
                           <MapPin size={15} /> {activity.neighborhood} ·{" "}
@@ -819,12 +744,11 @@ export function TravelApp({ site }: { site: SiteId }) {
                             <button
                               className="primary small"
                               disabled={
-                                actionPending ||
-                                trip.activity_id === activity.id
+                                actionPending || saved.saved_id === activity.id
                               }
                               onClick={() => save("activity", activity.id)}
                             >
-                              {trip.activity_id === activity.id
+                              {saved.saved_id === activity.id
                                 ? "Saved"
                                 : "Save activity"}
                               <Check size={16} />
@@ -832,9 +756,9 @@ export function TravelApp({ site }: { site: SiteId }) {
                           </div>
                         </div>
                       )}
-                      {trip.activity_id === activity.id && (
+                      {saved.saved_id === activity.id && (
                         <span className="saved-label activity-saved">
-                          <Check size={14} /> Saved to trip
+                          <Check size={14} /> Saved on {titles[app]}
                         </span>
                       )}
                     </article>
@@ -846,24 +770,6 @@ export function TravelApp({ site }: { site: SiteId }) {
               </p>
             </>
           )}
-          <section className="budget-strip">
-            <div>
-              <Wallet size={19} />
-              <span>Saved trip total</span>
-              <strong>{money(trip.total_cents)}</strong>
-            </div>
-            <span className={trip.remaining_cents < 0 ? "over-budget" : ""}>
-              {money(Math.abs(trip.remaining_cents))}{" "}
-              {trip.remaining_cents < 0 ? "over budget" : "remaining"}{" "}
-              <small>of {money(trip.budget_cents)}</small>
-            </span>
-          </section>
-          {trip.warnings.map((warning) => (
-            <div className="trip-warning" key={warning}>
-              <Clock3 size={17} />
-              <span>{warning}</span>
-            </div>
-          ))}
           <footer className="footer">
             <span>{titles[app]} · Tokyo demo</span>
             <span>Demo data. Saved selections are not bookings.</span>
@@ -890,8 +796,6 @@ export function TravelApp({ site }: { site: SiteId }) {
               .catch((e) => setError(e.message))
           }
           suggestions={prompts}
-          sharing={sharing}
-          onSharing={setSharing}
           mobileOpen={mobileChat}
           onMobileOpen={setMobileChat}
           testMode={boot.mode !== "live"}
@@ -907,20 +811,6 @@ export function TravelApp({ site }: { site: SiteId }) {
                   Open {titles[target]} <ArrowRight size={13} />
                 </button>
               ))}
-          </div>
-          <div className="saved-overview">
-            <span>
-              <Plane size={13} />{" "}
-              {trip.flight
-                ? `${trip.flight.code} · ${money(trip.flight.price_cents)}`
-                : "No saved flight"}
-            </span>
-            <span>
-              <Hotel size={13} /> {trip.hotel?.name || "No saved hotel"}
-            </span>
-            <span>
-              <Compass size={13} /> {trip.activity?.name || "No saved activity"}
-            </span>
           </div>
         </CompanionPanel>
       </div>
