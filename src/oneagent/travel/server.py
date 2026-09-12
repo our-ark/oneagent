@@ -54,7 +54,8 @@ class Hub:
         self.executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="oneagent-travel")
         self.responder_factory = responder_factory
         for app_id in APPS:
-            store = TravelMessageStore(self.root / f"{app_id}.sqlite", app_id, shared_fields=["budget_cents", "preferences"])
+            store = TravelMessageStore(self.root / f"{app_id}.sqlite", app_id,
+                                      shared_fields=[] if app_id in SITES else ["budget_cents", "preferences"])
             server = AppServer(("127.0.0.1", 0), store, {secrets.token_hex(32): "bootstrap"})
             threading.Thread(target=server.serve_forever, daemon=True).start()
             self.stores[app_id], self.servers[app_id] = store, server
@@ -368,11 +369,15 @@ class WebHandler(BaseHTTPRequestHandler):
             query = parse_qs(url.query)
             if not write and url.path == "/api/session":
                 site = self.server.app_id
-                result = {"visitor": owner, "csrf": csrf, "trip": hub.trips.get(owner),
+                result = {"csrf": csrf,
                           "catalog": {site: CATALOG[site]} if site else CATALOG,
                           "app_id": site, "linked": hub.handoffs.linked(owner),
                           "session_id": hub.channel(owner, site) if site else None,
-                          "origins": hub.origins, "mode": "test-fixture" if hub.responder_factory else "live"}
+                          "mode": "test-fixture" if hub.responder_factory else "live"}
+                if site:
+                    result["selection"] = hub.trips.selection(owner, site)
+                else:
+                    result.update(visitor=owner, trip=hub.trips.get(owner), origins=hub.origins)
             elif write and url.path == "/api/connect" and self.server.app_id:
                 owner, csrf, self.new_cookie = hub.handoffs.redeem(body.get("token"), self.server.app_id)
                 result = {"connected": True}
@@ -389,21 +394,36 @@ class WebHandler(BaseHTTPRequestHandler):
             elif not write and url.path == "/api/transcript":
                 result = hub.transcript(owner, self.app(query["app_id"][0]), query["session_id"][0])
             elif not write and url.path == "/api/trip":
+                if self.server.app_id:
+                    raise PermissionError("The combined itinerary is private to your agent. Ask in the companion chat.")
                 result = hub.trips.get(owner)
+            elif not write and url.path == "/api/selection" and self.server.app_id:
+                result = hub.trips.selection(owner, self.server.app_id)
             elif write and url.path == "/api/preferences":
+                if self.server.app_id:
+                    raise PermissionError("Manage personal preferences in the companion chat.")
                 result = hub.trips.update(owner, {"budget_cents": body["budget_cents"], "preferences": body["preferences"]}, identifier(body["id"]))
             elif write and url.path == "/api/action":
                 kind = body.get("kind")
                 if kind not in {"flight", "hotel", "activity", "brief"}:
                     raise ValueError("Invalid action")
+                if self.server.app_id and kind != {"flights": "flight", "hotels": "hotel", "activities": "activity"}[self.server.app_id]:
+                    raise PermissionError("This website can only save its own selections. Use the companion chat for other changes.")
                 name, args = (("trip.update_brief", object_value(body.get("changes"))) if kind == "brief" else ("trip.save_" + kind, {"id": body.get("item_id")}))
-                result = hub.tools.invoke(name, args, owner=owner, request_id=identifier(body["id"]),
+                request_id = identifier(body["id"])
+                if self.server.app_id:
+                    request_id = f"site:{self.server.app_id}:{request_id}"
+                result = hub.tools.invoke(name, args, owner=owner, request_id=request_id,
                                           authorize=lambda who, tool, values: who == owner and tool == name and values == args)
+                if self.server.app_id:
+                    result = hub.trips.selection(owner, self.server.app_id)
             elif write and url.path == "/api/confirm":
                 app = body.get("source_app")
                 if app not in APPS:
                     raise ValueError("Unknown proposal source")
                 result = hub.confirm(owner, app, identifier(body.get("event_id")))
+                if self.server.app_id:
+                    result = {"confirmed": True}
             elif write and url.path == "/api/retry":
                 hub.kick(owner)
                 result = {"queued": True}

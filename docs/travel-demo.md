@@ -9,9 +9,15 @@ replies with personal links to three independent websites:
 | Staywell | http://127.0.0.1:8081 | Hotels |
 | Daylight | http://127.0.0.1:8082 | Activities |
 
+Airside uses a compact blue flight-search layout, Staywell uses warm editorial
+typography and distinct hotel photography, and Daylight uses a dark city-guide
+layout with bold yellow accents. The OneAgent panel remains visually consistent.
+
 Each site has its own HTML entry point, origin, cookie, scoped catalog, and
 application message feed. A shared companion component restores the same
-conversation and saved trip across all three. It shows where each message came
+conversation across all three. Each website receives only its own catalog and
+saved selection; it has no shared trip total, budget form, itinerary overview,
+or warnings derived from another site. The companion shows where each message came
 from, including Telegram. Ask about the object currently selected on a site,
 then return to Telegram to discuss the combined itinerary.
 
@@ -92,7 +98,9 @@ text to the existing agent. Website and Telegram reasoning use the running bot�
 original runtime, identity, working directory, and `telegram:<chat-id>` session.
 A per-conversation lock serializes turns, including multi-step travel tool calls.
 Preferences you mentioned before travel mode remain available on all three sites.
-The trip database, application sessions, and existing connection links stay intact.
+The private agent itinerary, application sessions, and existing connection links
+stay intact. Budgets, preferences, combined totals, and timing checks remain
+inside the agent conversation. A website can save only its own type of item.
 The companion displays the travel exchanges; earlier ordinary Telegram messages
 remain in the bot’s session rather than being exported into website feeds.
 
@@ -140,13 +148,15 @@ isolation, and visitor-state cleanup. Use controlled demo access for a recording
 4. Open Daylight. Select “Yanaka, one slow morning.” Ask whether it fits the
    schedule and remaining budget, then save it.
 5. Website exchanges also arrive in Telegram, labeled with the site and selected
-   item. Back in Telegram, ask “What have we planned, and how much is left?” The saved
-   total is $1,235: $720 flight, $480 hotel, and $35 activity, leaving $265.
+   item. Back in Telegram, ask “What have we planned, and how much is left?” The
+   agent can report a combined total of $1,235: $720 flight, $480 hotel, and $35
+   activity, leaving $265.
 
 All data is fictional: one-way SFO → Tokyo flights on Nov 5 arriving Nov 6, stays
 Nov 6–9 (three nights), and activities during the same trip in 2026. Catalog
 prices include mock taxes. Saved selections are not bookings or purchases. A
-late-arriving flight can trigger hotel reception and activity timing warnings.
+late-arriving flight can prompt the agent to flag hotel reception and activity
+timing conflicts in chat. These checks do not appear as shared website widgets.
 The story is a recording guide, not a scripted agent sequence. Film the final
 two-minute submission video separately.
 
@@ -176,10 +186,16 @@ two-minute submission video separately.
   or reset commands repeating after a failed network delivery; the outbox contains
   the returned links. A cached response also makes bot-bridge retries idempotent.
 - `travel/server.py` serves three fixed applications. Each can submit only to its
-  own feed. The companion conversation endpoint aggregates the owner's messages
-  privately; full transcripts are never copied into other applications' feeds.
-- `travel/domain.py` owns catalog facts, trip totals, warnings, and idempotent
-  changes. `travel/agent.py` uses the existing runtime with bounded tool calls.
+  own feed and directly save only its own item type. `/api/session` and
+  `/api/selection` return that site’s saved ID, never the combined trip or
+  personal preferences. The old `/api/trip` and `/api/preferences` routes are
+  denied on the independent sites. Structured preference sharing is disabled.
+  The companion conversation endpoint aggregates the owner's messages privately;
+  full transcripts are never copied into other applications' feeds. Confirming a
+  proposal in the companion returns only an acknowledgement to the browser.
+- `travel/domain.py` owns catalog facts, site-scoped selection views, and the
+  agent’s private itinerary, totals, warnings, and idempotent changes.
+  `travel/agent.py` uses the existing runtime with bounded tool calls.
 - `examples/travel/web/src/CompanionPanel.tsx` is the reusable UI. Hosts supply
   context, conversation data, and action callbacks. The three entry points mount
   the shared travel integration with a fixed site ID.
@@ -215,7 +231,8 @@ npm --prefix examples/travel/web run build
 
 Tests use temporary HTTP servers and a fake Telegram transport. They cover a
 Telegram → three websites → Telegram round trip, separate origins, owner isolation,
-link scope/expiry/replay, reset revocation, shared sessions after restart, budget
+link scope/expiry/replay, reset revocation, sessions after restart, site data
+isolation, blocked cross-site writes, chat-only budget
 confirmations, pre-travel preferences in the real bot session, concurrent turns,
 and notification recovery after bot and backend restarts. Exercise your configured bot and real model
 before recording; automated fixtures do not prove Telegram delivery or model quality.
@@ -229,7 +246,10 @@ way to exercise all three origins together.
 ## Image credits
 
 - Tokyo: [Enes on Unsplash](https://unsplash.com/photos/a-view-of-a-large-city-with-tall-buildings-dyF1Q8kc0Fw).
-- Illustrative room: [Pranav Kumar Jain on Unsplash](https://unsplash.com/photos/white-bed-linen-on-bed-pHcLOc_RzQ0).
+- Kumo House illustration: [Pranav Kumar Jain on Unsplash](https://unsplash.com/photos/white-bed-linen-on-bed-pHcLOc_RzQ0).
+- Aoi Central illustration: [Sung Jin Cho on Unsplash](https://unsplash.com/photos/modern-hotel-room-with-city-view-through-window-pRAs34PRUuU).
+- Sora Retreat illustration: [Wemel Wood on Unsplash](https://unsplash.com/photos/minimalist-bedroom-with-a-neatly-made-bed-uhQHGyLungI).
+- Machi Stay illustration: [Jessica Martins on Unsplash](https://unsplash.com/photos/a-simple-bedroom-with-a-single-bed-and-wooden-furniture-zq3NlBqPTGA).
 
 Local images are used under the [Unsplash License](https://unsplash.com/license).
 They illustrate the demo; the properties and activities are fictional.

@@ -21,6 +21,7 @@ def item(kind, item_id):
 
 
 class TripStore:
+    """Private agent itinerary; websites may read only their own selection."""
     def __init__(self, path: Path):
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -41,6 +42,15 @@ class TripStore:
         db = self.connect()
         try:
             return bool(db.execute("SELECT 1 FROM receipts WHERE owner=? AND id=?", (owner, request_id)).fetchone())
+        finally:
+            db.close()
+
+    def selection(self, owner, app):
+        field = {"flights": "flight_id", "hotels": "hotel_id", "activities": "activity_id"}[app]
+        db = self.connect()
+        try:
+            row = db.execute("SELECT body FROM trips WHERE owner=?", (owner,)).fetchone()
+            return {"saved_id": json.loads(row[0]).get(field) if row else None}
         finally:
             db.close()
 

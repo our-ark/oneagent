@@ -44,8 +44,6 @@ type Props = {
   onConfirm: (output: AgentOutput) => void;
   onRetry: () => void;
   suggestions: string[];
-  sharing: boolean;
-  onSharing: (value: boolean) => void;
   mobileOpen: boolean;
   onMobileOpen: (value: boolean) => void;
   testMode: boolean;
@@ -74,7 +72,7 @@ export function CompanionPanel(props: Props) {
             <strong>OneAgent</strong>
             <span>
               {props.linked
-                ? "Connected to your Telegram trip"
+                ? "Your conversation from Telegram"
                 : "Your personal companion"}
             </span>
           </div>
@@ -104,7 +102,8 @@ export function CompanionPanel(props: Props) {
               <Orbit size={18} />
             </span>
             <p>
-              Your trip and our conversation come with you.{" "}
+              Our conversation comes with you. Each website keeps its own
+              selections.{" "}
               {selected
                 ? "Ask me about this option or how it compares."
                 : "Select an option and ask me anything about it."}
@@ -147,12 +146,6 @@ export function CompanionPanel(props: Props) {
                               ? "Confirm trip brief update"
                               : `Confirm ${output.proposal.name.replace("trip.save_", "")} selection`}
                         </button>
-                      )}
-                      {Object.keys(output.shared_context).length > 0 && (
-                        <span className="shared-label">
-                          <ShieldCheck size={13} /> Authorized preferences
-                          shared
-                        </span>
                       )}
                     </div>
                   </div>
@@ -231,14 +224,6 @@ export function CompanionPanel(props: Props) {
               </button>
             </div>
           </form>
-          <label className="share-toggle">
-            <input
-              type="checkbox"
-              checked={props.sharing}
-              onChange={(e) => props.onSharing(e.target.checked)}
-            />{" "}
-            Share budget &amp; preferences with this app
-          </label>
           {props.children}
           <div className="agent-footnote">
             <ShieldCheck size={12} /> Your conversation stays with your agent
