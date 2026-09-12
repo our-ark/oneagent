@@ -1,0 +1,50 @@
+1
+00:00:00,450 --> 00:00:08,454
+Meet Bob. One personal agent, with one continuing conversation. Let's follow a simple
+shopping decision across your phone, two stores, and your desktop.
+
+2
+00:00:09,719 --> 00:00:20,131
+Start on your phone. Ask for comfortable work sneakers, under one hundred and twenty
+dollars, in size nine. Bob saves your brief and finds two candidates from your
+connected stores.
+
+3
+00:00:28,721 --> 00:00:39,133
+Open Dayform. Bob knows which pair you're viewing, and remembers what matters to you.
+Ask about comfort for your commute. The answer combines the store's product facts
+with your preferences.
+
+4
+00:00:45,724 --> 00:00:56,361
+Switch to Stride and ask about the first pair. Bob connects the new selection to the
+earlier candidate. Day One is the comfort pick. Arc costs more, and exceeds your
+budget after tax.
+
+5
+00:01:04,959 --> 00:01:15,363
+Return to Dayform and ask Bob to order. The store prepares a checkout for one hundred
+and seven dollars and eighty cents, including demo tax. Nothing is ordered until you
+approve.
+
+6
+00:01:25,960 --> 00:01:33,634
+The confirmed receipt is already on your phone. This is a separate interface
+connected to the same session. You never need to repeat the decision.
+
+7
+00:01:36,962 --> 00:01:47,749
+Open the desktop workspace and continue the conversation. Bob still has your budget,
+size, and saved candidates. The same interface also runs in the demo's Electron
+desktop app.
+
+8
+00:01:49,965 --> 00:01:59,858
+You control the connections. Budget sharing is optional, and you can revoke a store's
+access. Your conversation belongs to your personal session, rather than to any one
+store.
+
+9
+00:02:03,969 --> 00:02:11,967
+One conversation. Context from each app. Control stays with you. This is OneAgent,
+everywhere. A working demo, with fictional stores and simulated purchases.

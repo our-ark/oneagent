@@ -1,0 +1,81 @@
+[
+  {
+    "id": "intro",
+    "duration": 9,
+    "chapter": "ONE AGENT. EVERYWHERE.",
+    "title": "Different apps. The same Bob.",
+    "subtitle": "A walkthrough of the working OneAgent demo",
+    "narration": "Meet Bob. One personal agent, with one continuing conversation. Let's follow a simple shopping decision across your phone, two stores, and your desktop."
+  },
+  {
+    "id": "brief",
+    "duration": 19,
+    "surface": "phone",
+    "chapter": "01 / START ON YOUR PHONE",
+    "title": "A small request. Before a busy day.",
+    "subtitle": "Your preferences start the conversation.",
+    "narration": "Start on your phone. Ask for comfortable work sneakers, under one hundred and twenty dollars, in size nine. Bob saves your brief and finds two candidates from your connected stores."
+  },
+  {
+    "id": "dayform",
+    "duration": 17,
+    "surface": "dayform",
+    "chapter": "02 / CONTINUE IN DAYFORM",
+    "title": "Your agent is already part of the conversation.",
+    "subtitle": "The store supplies the selected product. Bob brings your brief.",
+    "narration": "Open Dayform. Bob knows which pair you're viewing, and remembers what matters to you. Ask about comfort for your commute. The answer combines the store's product facts with your preferences."
+  },
+  {
+    "id": "stride",
+    "duration": 19,
+    "surface": "stride",
+    "chapter": "03 / COMPARE IN ANOTHER APP",
+    "title": "“How does this compare with the first pair?”",
+    "subtitle": "A different storefront. The same conversation.",
+    "narration": "Switch to Stride and ask about the first pair. Bob connects the new selection to the earlier candidate. Day One is the comfort pick. Arc costs more, and exceeds your budget after tax."
+  },
+  {
+    "id": "checkout",
+    "duration": 21,
+    "surface": "dayform",
+    "chapter": "04 / YOUR DECISION. YOUR APPROVAL.",
+    "title": "An agent can prepare. You decide.",
+    "subtitle": "Review the exact product, size, and final total before approving.",
+    "narration": "Return to Dayform and ask Bob to order. The store prepares a checkout for one hundred and seven dollars and eighty cents, including demo tax. Nothing is ordered until you approve."
+  },
+  {
+    "id": "receipt",
+    "duration": 11,
+    "surface": "phone",
+    "chapter": "05 / BACK ON YOUR PHONE",
+    "title": "The receipt finds you where you are.",
+    "subtitle": "A separate live interface, synchronized to the same session.",
+    "narration": "The confirmed receipt is already on your phone. This is a separate interface connected to the same session. You never need to repeat the decision."
+  },
+  {
+    "id": "desktop",
+    "duration": 13,
+    "surface": "desktop",
+    "chapter": "06 / PICK UP ON DESKTOP",
+    "title": "Your context comes with you.",
+    "subtitle": "The same workspace also runs in the Electron desktop app.",
+    "narration": "Open the desktop workspace and continue the conversation. Bob still has your budget, size, and saved candidates. The same interface also runs in the demo's Electron desktop app."
+  },
+  {
+    "id": "control",
+    "duration": 14,
+    "surface": "desktop",
+    "chapter": "07 / ALWAYS ON YOUR TERMS",
+    "title": "You control who participates.",
+    "subtitle": "Choose connections. Choose what to share. Approve each purchase.",
+    "narration": "You control the connections. Budget sharing is optional, and you can revoke a store's access. Your conversation belongs to your personal session, rather than to any one store."
+  },
+  {
+    "id": "outro",
+    "duration": 9,
+    "chapter": "ONE AGENT. ANYWHERE.",
+    "title": "One relationship. Every app.",
+    "subtitle": "Built with CopilotKit and AG-UI",
+    "narration": "One conversation. Context from each app. Control stays with you. This is OneAgent, everywhere. A working demo, with fictional stores and simulated purchases."
+  }
+]

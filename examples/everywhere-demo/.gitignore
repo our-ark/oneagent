@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+data/
+test-results/
+playwright-report/
+*.tsbuildinfo
+artifacts/video-work/

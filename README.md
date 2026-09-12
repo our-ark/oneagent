@@ -82,6 +82,28 @@ The notes example demonstrates a smaller integration:
 .venv/bin/python -m unittest tests.test_collaboration -v
 ```
 
+## Shopping demo across phone, web, and desktop
+
+The standalone [Everywhere demo](examples/everywhere-demo/README.md) follows one
+shopping conversation across a phone companion, DAYFORM and STRIDE storefronts,
+and an Electron desktop app. It uses React, CopilotKit, and an Express session
+server, with a deterministic agent by default and optional model-generated
+replies. Purchases are simulated. This prototype runs independently of the Python
+runtime and travel integration above.
+
+Requires Node.js 22.16+ and npm. From the repository root:
+
+```sh
+cd examples/everywhere-demo
+npm ci
+npm run dev
+```
+
+Open http://127.0.0.1:3107 and select **Try the 2-minute story**. The demo includes
+a [narrated walkthrough video](examples/everywhere-demo/public/demo/oneagent-everywhere.mp4),
+[verification results](examples/everywhere-demo/docs/verification.md), and
+[video generation scripts](examples/everywhere-demo/scripts/video/README.md).
+
 ## Project provenance
 
 OneAgent was created with Genesis from an Enoch-derived starting point. Its

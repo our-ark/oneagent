@@ -1,0 +1,35 @@
+{
+  "name": "oneagent-everywhere",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.mjs",
+    "build": "tsc -b && vite build",
+    "start": "NODE_ENV=production node server/index.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:e2e": "playwright test",
+    "desktop": "node desktop/launch.mjs"
+  },
+  "dependencies": {
+    "@ag-ui/client": "latest",
+    "@copilotkit/react-core": "1.71.1",
+    "express": "^5.1.0",
+    "lucide-react": "^0.468.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^44.3.0",
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.2",
+    "vite": "^6.4.0"
+  }
+}

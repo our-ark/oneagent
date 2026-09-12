@@ -1,0 +1,17 @@
+{
+  "name": "Bob · OneAgent Anywhere",
+  "short_name": "Bob",
+  "start_url": "/phone",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f3",
+  "theme_color": "#163c34",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
