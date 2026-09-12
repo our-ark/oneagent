@@ -1,0 +1,19 @@
+name: code
+version: 0.1.0
+summary: Inspect, modify, test, and explain changes to Oneagent's local code body.
+owner: Oneagent
+status: active
+mode: workspace-write
+entrypoint: src/oneagent/brain.py
+permissions:
+  filesystem: workspace-write
+  git:
+    status: true
+    diff: true
+    log: true
+    branch: true
+    commit: false
+    push: false
+    merge: false
+validation:
+  command: python3 -m unittest discover -s tests

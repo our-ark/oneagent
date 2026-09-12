@@ -1,0 +1,26 @@
+name: inherit
+version: 0.1.0
+summary: Discover ancestor skills; assess, inspect, and selectively adapt direct-parent changes.
+owner: Oneagent
+status: active
+mode: lineage-awareness
+entrypoint: src/oneagent/lineage/core.py
+capabilities:
+  resolve_lineage: src/oneagent/lineage/core.py
+  refresh_inbox: src/oneagent/lineage/core.py
+  inspect_candidates: src/oneagent/lineage/core.py
+  mark_candidates: src/oneagent/lineage/core.py
+permissions:
+  filesystem:
+    read:
+      - .agent/lineage.yaml
+      - .agent/lineage_inbox.json
+      - .oneagent/lineage/inbox.json
+      - .oneagent/lineage/assessment_queue.json
+    write:
+      - .oneagent/lineage/inbox.json
+      - .oneagent/lineage/assessment_queue.json
+  forge:
+    read_repo: true
+validation:
+  command: python3 -m unittest discover -s tests

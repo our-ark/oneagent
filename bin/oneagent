@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ONEAGENT_ROOT="$ROOT"
+
+source "$ROOT/bin/_oneagent-env"
+oneagent_run_module oneagent "$@"

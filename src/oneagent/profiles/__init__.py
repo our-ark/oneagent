@@ -1,0 +1,37 @@
+from oneagent.profiles.contracts import (
+    PROFILE_API_VERSION,
+    AgentProfile,
+    CapabilityPolicy,
+    CommandContext,
+    CommandSpec,
+    LifecycleContext,
+    LifecycleHook,
+    LifecycleHooks,
+    ProfilePresentation,
+    ProfileError,
+    PromptContributor,
+    PromptContext,
+    PromptPurpose,
+    WorkflowPolicy,
+)
+from oneagent.profiles.registry import available_profiles, load_profile, register_profile
+
+__all__ = [
+    "PROFILE_API_VERSION",
+    "AgentProfile",
+    "CapabilityPolicy",
+    "CommandContext",
+    "CommandSpec",
+    "LifecycleContext",
+    "LifecycleHook",
+    "LifecycleHooks",
+    "ProfilePresentation",
+    "ProfileError",
+    "PromptContributor",
+    "PromptContext",
+    "PromptPurpose",
+    "WorkflowPolicy",
+    "available_profiles",
+    "load_profile",
+    "register_profile",
+]

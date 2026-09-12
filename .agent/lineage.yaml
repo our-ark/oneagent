@@ -1,0 +1,6 @@
+schema_version: 1
+parent:
+  name: Enoch
+  repo: https://github.com/our-ark/enoch
+  branch: main
+  commit_at_birth: 443b5b0ace6d1c24de2fe5a4506acdfef17aa8c6

@@ -1,0 +1,42 @@
+name: evolve
+version: 0.9.0
+summary: Turn semantic evidence into bounded, human-governed self-evolution.
+owner: Oneagent
+status: active
+mode: co-evolution
+entrypoint: src/oneagent/evolution/core.py
+capabilities:
+  state: src/oneagent/evolution/core.py
+  evidence: src/oneagent/evolution/evidence.py
+  scheduler: src/oneagent/evolution/core.py
+  event_journal: src/oneagent/evolution/events.py
+  semantic_curation: src/oneagent/evolution/curation.py
+  candidate_collection:
+    - src/oneagent/evolution/evidence.py
+    - src/oneagent/learn.py
+    - src/oneagent/evolution/sources/brainstorming.py
+  command_surface: src/oneagent/app/core.py
+permissions:
+  filesystem:
+    read:
+      - .oneagent/artifacts/logs/conversations
+      - .oneagent/artifacts/task_events.jsonl
+      - .oneagent/artifacts/evidence.jsonl
+      - .oneagent/artifacts/evidence_scans.jsonl
+      - .oneagent/artifacts/evolve_events.jsonl
+      - .oneagent/evolve_brainstorm_schedule.json
+      - .oneagent/evolve_candidates.json
+      - .oneagent/evolve_curations.jsonl
+    write:
+      - .oneagent/evidence.json
+      - .oneagent/evolve_brainstorm_schedule.json
+      - .oneagent/evolve.json
+      - .oneagent/evolve_candidates.json
+      - .oneagent/artifacts/evidence.jsonl
+      - .oneagent/artifacts/evidence_scans.jsonl
+      - .oneagent/artifacts/evolve_events.jsonl
+      - .oneagent/evolve_curations.jsonl
+  git:
+    merge: false
+validation:
+  command: python3 -m unittest discover -s tests -t .

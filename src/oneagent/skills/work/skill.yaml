@@ -1,0 +1,26 @@
+name: work
+version: 0.2.0
+summary: Run leased persistent work in isolated task worktrees through queues, backlog, cron, and automatic learning.
+owner: Oneagent
+status: active
+mode: background-work
+entrypoint: src/oneagent/app/core.py
+capabilities:
+  task_queue: src/oneagent/tasks/queue.py
+  task_failure_classification: src/oneagent/tasks/failures.py
+  task_worktrees: src/oneagent/tasks/worktree.py
+  backlog: src/oneagent/backlog.py
+  cron: src/oneagent/cron.py
+  automatic_learning: src/oneagent/automatic_learning.py
+permissions:
+  filesystem:
+    read: true
+    write:
+      - .oneagent/task_queue.json
+      - .oneagent/backlog.json
+      - .oneagent/cron.json
+      - .oneagent/artifacts/learning
+  chat:
+    send_status_updates: true
+validation:
+  command: bin/oneagent doctor
