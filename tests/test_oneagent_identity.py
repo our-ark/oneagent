@@ -11,11 +11,11 @@ from oneagent import load_body_identity, load_identity
 from oneagent.identity import body_file_path
 
 
-class OneagentIdentityTests(unittest.TestCase):
+class OneAgentIdentityTests(unittest.TestCase):
     def test_loads_identity_from_body(self) -> None:
         identity = load_identity()
 
-        self.assertEqual(identity.name, "Oneagent")
+        self.assertEqual(identity.name, "OneAgent")
         self.assertEqual(identity.role, "descendant_agent")
         self.assertEqual(identity.generation, 4)
         self.assertEqual(identity.ancestor, "Enoch")
@@ -64,7 +64,7 @@ class OneagentIdentityTests(unittest.TestCase):
 
             identity = load_body_identity(body_file_path(root))
 
-        self.assertEqual(identity.name, "Oneagent")
+        self.assertEqual(identity.name, "OneAgent")
         self.assertEqual(identity.body.body_file, "src/oneagent/identity.yaml")
 
 

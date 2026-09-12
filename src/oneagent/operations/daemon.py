@@ -16,7 +16,7 @@ class DaemonError(RuntimeError):
 
 
 def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Manage Oneagent as a background service.")
+    parser = argparse.ArgumentParser(description="Manage OneAgent as a background service.")
     parser.add_argument(
         "command",
         choices=[
@@ -104,7 +104,7 @@ def doctor(root: Path | None = None) -> str:
     service = _service(resolved)
     return "\n".join(
         [
-            "Oneagent service doctor:",
+            "OneAgent service doctor:",
             _check(
                 "config",
                 config_ready,
@@ -127,7 +127,7 @@ def _root(root: Path | None) -> Path:
 def _require_daemon_config(root: Path) -> None:
     if not _has_daemon_config(root):
         raise DaemonError(
-            "Configure the selected chat provider before starting Oneagent service. "
+            "Configure the selected chat provider before starting OneAgent service. "
             f"Local config path: {config_path(root)}."
         )
 

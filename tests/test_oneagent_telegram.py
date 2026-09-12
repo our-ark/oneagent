@@ -90,7 +90,7 @@ from oneagent.tasks.queue import (
 from oneagent.tasks.events import load_task_events
 from oneagent.tasks.worktree import TaskWorktree, TaskWorktreeState
 from oneagent.app.core import (
-    OneagentApplication,
+    OneAgentApplication,
     ShutdownRequested,
     TaskContextSnapshot,
     WorkStatusMessage,
@@ -126,7 +126,7 @@ from oneagent.operations.update_tools import (
 )
 
 
-_REAL_TASK_CONTEXT_RESOLVER = OneagentApplication._resolve_task_context_snapshot
+_REAL_TASK_CONTEXT_RESOLVER = OneAgentApplication._resolve_task_context_snapshot
 
 
 class _ImmediateTimer:
@@ -141,10 +141,10 @@ class _ImmediateTimer:
         return None
 
 
-class OneagentTelegramTests(unittest.TestCase):
+class OneAgentTelegramTests(unittest.TestCase):
     def setUp(self) -> None:
         self._task_context_snapshot_patch = patch(
-            "oneagent.app.core.OneagentApplication._resolve_task_context_snapshot",
+            "oneagent.app.core.OneAgentApplication._resolve_task_context_snapshot",
             return_value=TaskContextSnapshot(),
         )
         self.resolve_task_context_snapshot = self._task_context_snapshot_patch.start()
@@ -168,7 +168,7 @@ class OneagentTelegramTests(unittest.TestCase):
         self.update_memory = self._update_memory_patch.start()
         self.addCleanup(self._update_memory_patch.stop)
 
-    def _capture_direct_work_worker(self, bot: OneagentApplication):
+    def _capture_direct_work_worker(self, bot: OneAgentApplication):
         started = []
 
         def start(job, *, session_key):
@@ -238,7 +238,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             def inspect_image(_identity, prompt, **kwargs):
                 image_path = kwargs["image_paths"][0]
@@ -265,7 +265,7 @@ class OneagentTelegramTests(unittest.TestCase):
         respond.return_value = "I can see a dog."
         with TemporaryDirectory() as temp:
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), Path(temp), client)
+            bot = OneAgentApplication(load_identity(), Path(temp), client)
 
             _handle_update(bot, _photo_update(chat_id=42))
 
@@ -280,7 +280,7 @@ class OneagentTelegramTests(unittest.TestCase):
     ) -> None:
         with TemporaryDirectory() as temp:
             client = FakeTelegramClient(allowed_chat_id=7)
-            bot = OneagentApplication(load_identity(), Path(temp), client)
+            bot = OneAgentApplication(load_identity(), Path(temp), client)
 
             _handle_update(bot, _photo_update(chat_id=42))
 
@@ -370,7 +370,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     @patch("oneagent.app.core.ensure_long_term_memory")
     @patch("oneagent.app.core.log_conversation_turn")
-    @patch("oneagent.app.core.respond", return_value="Hello from Oneagent")
+    @patch("oneagent.app.core.respond", return_value="Hello from OneAgent")
     def test_replies_to_allowed_chat(
         self,
         respond: MagicMock,
@@ -378,21 +378,21 @@ class OneagentTelegramTests(unittest.TestCase):
         update_memory: MagicMock,
     ) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="hello"))
 
         respond.assert_called_once()
         self.assertEqual(respond.call_args.kwargs["session_key"], "telegram:42")
-        self.assertIn("Oneagent wrapper instructions:", respond.call_args.args[1])
+        self.assertIn("OneAgent wrapper instructions:", respond.call_args.args[1])
         self.assertIn("/do", respond.call_args.args[1])
         self.assertIn("/task", respond.call_args.args[1])
         self.assertEqual(client.acks, [(42, 1001, READ_ACK_EMOJI)])
-        self.assertEqual(client.sent, [(42, "Hello from Oneagent")])
+        self.assertEqual(client.sent, [(42, "Hello from OneAgent")])
         log_conversation_turn.assert_called_once()
         self.assertEqual(log_conversation_turn.call_args.kwargs["chat_id"], 42)
         self.assertEqual(log_conversation_turn.call_args.kwargs["message"], "hello")
-        self.assertIn("Hello from Oneagent", log_conversation_turn.call_args.kwargs["reply"])
+        self.assertIn("Hello from OneAgent", log_conversation_turn.call_args.kwargs["reply"])
         update_memory.assert_called_once_with(ROOT)
 
     @patch("oneagent.app.core.ensure_long_term_memory")
@@ -404,15 +404,15 @@ class OneagentTelegramTests(unittest.TestCase):
     ) -> None:
         def answer(*_args, **_kwargs):
             brain.update_token_usage(input_tokens=321, cached_input_tokens=300, output_tokens=12)
-            return "Hello from Oneagent"
+            return "Hello from OneAgent"
 
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         with patch("oneagent.app.core.respond", side_effect=answer):
             _handle_update(bot, _message_update(chat_id=42, text="hello"))
 
-        self.assertEqual(client.sent, [(42, "Hello from Oneagent")])
+        self.assertEqual(client.sent, [(42, "Hello from OneAgent")])
 
     @patch("oneagent.app.core.ensure_long_term_memory")
     @patch("oneagent.app.core.log_conversation_turn")
@@ -426,7 +426,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="add reminders"))
 
@@ -454,7 +454,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="I like apples"))
 
@@ -462,7 +462,7 @@ class OneagentTelegramTests(unittest.TestCase):
         remember_memory.assert_called_once_with("User likes apples.", root=root)
         sent = client.sent[0][1]
         self.assertIn("I will remember that.", sent)
-        self.assertIn("Saved to Oneagent long-term memory.", sent)
+        self.assertIn("Saved to OneAgent long-term memory.", sent)
         self.assertNotIn(MEMORY_REQUEST_START, sent)
         self.assertNotIn(MEMORY_REQUEST_END, sent)
 
@@ -486,19 +486,19 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="I like apples"))
 
         remember_memory.assert_called_once_with("User likes apples.", root=root)
         sent = client.sent[0][1]
-        self.assertIn("Oneagent could not save that long-term memory.", sent)
+        self.assertIn("OneAgent could not save that long-term memory.", sent)
         self.assertNotIn(MEMORY_REQUEST_START, sent)
 
     @patch("oneagent.app.core.respond")
     def test_ignores_disallowed_chat(self, respond: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=7, text="hello"))
 
@@ -516,7 +516,7 @@ class OneagentTelegramTests(unittest.TestCase):
         update_memory: MagicMock,
     ) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/unknown"))
 
@@ -529,28 +529,28 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.model_summary", return_value="AI model: gpt-5-codex")
     def test_telegram_command_parser_accepts_bot_mentions(self, _model_summary: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
-        _handle_update(bot, _message_update(chat_id=42, text="/status@OneagentBot"))
+        _handle_update(bot, _message_update(chat_id=42, text="/status@OneAgentBot"))
 
-        self.assertIn("Oneagent status:", client.sent[0][1])
+        self.assertIn("OneAgent status:", client.sent[0][1])
 
     def test_startup_notification_goes_to_locked_chat(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             bot.notify_startup()
 
         self.assertEqual(client.sent[0][0], 42)
-        self.assertIn("Oneagent restarted and is listening on Telegram.", client.sent[0][1])
+        self.assertIn("OneAgent restarted and is listening on Telegram.", client.sent[0][1])
         self.assertNotIn("Action mode:", client.sent[0][1])
         self.assertIn("Last git main pull observed:", client.sent[0][1])
         self.assertIn("/help", client.sent[0][1])
         self.sync_session_activity.assert_called_once()
         startup_context = self.sync_session_activity.call_args.args[3]
-        self.assertIn("Oneagent startup context:", startup_context)
+        self.assertIn("OneAgent startup context:", startup_context)
         self.assertIn("Active chat command reference:", startup_context)
 
     def test_startup_notification_uses_provider_command_prefix(self) -> None:
@@ -559,7 +559,7 @@ class OneagentTelegramTests(unittest.TestCase):
             client = FakeTelegramClient(allowed_chat_id=42)
             client.name = "slack"
             client.command_prefix = "!"
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             bot.notify_startup()
 
@@ -576,11 +576,11 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_startup_notification_reports_previous_shutdown_warning(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(
+        bot = OneAgentApplication(
             load_identity(),
             ROOT,
             client,
-            previous_shutdown_warning="Previous shutdown: unexpected; Oneagent could not send the normal shutdown message.",
+            previous_shutdown_warning="Previous shutdown: unexpected; OneAgent could not send the normal shutdown message.",
         )
 
         bot.notify_startup()
@@ -589,7 +589,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_startup_notification_requires_locked_chat(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=None)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         bot.notify_startup()
 
@@ -599,18 +599,18 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             bot.notify_shutdown("SIGTERM")
 
         self.assertEqual(client.sent[0][0], 42)
-        self.assertIn("Oneagent is shutting down.", client.sent[0][1])
+        self.assertIn("OneAgent is shutting down.", client.sent[0][1])
         self.assertIn("Reason: SIGTERM.", client.sent[0][1])
         self.assertNotIn("Action mode:", client.sent[0][1])
 
     def test_shutdown_notification_requires_locked_chat(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=None)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         bot.notify_shutdown("SIGTERM")
 
@@ -619,7 +619,7 @@ class OneagentTelegramTests(unittest.TestCase):
     def test_shutdown_message_includes_reason(self) -> None:
         message = _shutdown_message(load_identity(), ROOT, "keyboard interrupt")
 
-        self.assertIn("Oneagent is shutting down.", message)
+        self.assertIn("OneAgent is shutting down.", message)
         self.assertIn("Reason: keyboard interrupt.", message)
         self.assertNotIn("Action mode:", message)
 
@@ -722,7 +722,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_start_points_to_help(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/start"))
 
@@ -730,7 +730,7 @@ class OneagentTelegramTests(unittest.TestCase):
             client.sent[0][1],
             "\n".join(
                 [
-                    "Oneagent is ready.",
+                    "OneAgent is ready.",
                     "Use /help to see every command.",
                     "Use /help <command> for detailed usage and subcommands.",
                 ]
@@ -739,7 +739,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_lists_safe_commands(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help"))
 
@@ -771,9 +771,9 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertNotIn("/debug", client.sent[0][1])
         self.assertNotIn("/mode [chat|work]", client.sent[0][1])
         self.assertLess(client.sent[0][1].index("/mission [text]"), client.sent[0][1].index("/status"))
-        self.assertIn("/self - show Oneagent's identity, role, ancestor, and mission", client.sent[0][1])
+        self.assertIn("/self - show OneAgent's identity, role, ancestor, and mission", client.sent[0][1])
         self.assertIn("/status", client.sent[0][1])
-        self.assertIn("/mission [text] - show or update Oneagent's mission", client.sent[0][1])
+        self.assertIn("/mission [text] - show or update OneAgent's mission", client.sent[0][1])
         self.assertNotIn("/thinking", client.sent[0][1])
         self.assertNotIn("/lineage", client.sent[0][1])
         self.assertIn("/ancestors - show ancestor chain and ancestor skills", client.sent[0][1])
@@ -789,7 +789,7 @@ class OneagentTelegramTests(unittest.TestCase):
             client.sent[0][1],
         )
         self.assertIn("/do <request> - run work now instead of queueing it", client.sent[0][1])
-        self.assertIn("/task <request> - queue background work for Oneagent", client.sent[0][1])
+        self.assertIn("/task <request> - queue background work for OneAgent", client.sent[0][1])
         self.assertNotIn("/task cancel <id> - cancel a queued background task", client.sent[0][1])
         self.assertIn("/queue - show running, queued, and recent task history", client.sent[0][1])
         self.assertNotIn("/tasks", client.sent[0][1])
@@ -811,7 +811,7 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertNotIn("/evolve select <id> - select a self-evolution candidate", client.sent[0][1])
         self.assertNotIn("/evolve run <id> - queue a self-evolution candidate as a task", client.sent[0][1])
         self.assertNotIn("/evolve reject <id> - reject a self-evolution candidate", client.sent[0][1])
-        self.assertNotIn("/evolve schedule <text> - let Oneagent interpret common schedule text", client.sent[0][1])
+        self.assertNotIn("/evolve schedule <text> - let OneAgent interpret common schedule text", client.sent[0][1])
         self.assertNotIn("/evolve schedule off - stop scheduled evolve checks", client.sent[0][1])
         self.assertNotIn("/evolve schedule once a day - run evolve once per day", client.sent[0][1])
         self.assertNotIn("/evolve schedule every <interval> - run periodic evolve checks", client.sent[0][1])
@@ -821,13 +821,13 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertIn("/config - show or update local system settings", client.sent[0][1])
         self.assertIn("/worktree - inspect and manage isolated task worktrees", client.sent[0][1])
         self.assertNotIn("/resume", client.sent[0][1])
-        self.assertIn("/restart - restart Oneagent's chat daemon from the locked conversation", client.sent[0][1])
+        self.assertIn("/restart - restart OneAgent's chat daemon from the locked conversation", client.sent[0][1])
         self.assertNotIn("/shutdown", client.sent[0][1])
         self.assertIn("say the request naturally", client.sent[0][1])
 
     def test_every_registered_core_command_has_a_dispatch_handler(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
         event = telegram_event(_message_update(chat_id=42, text="/help"))
         assert event is not None
 
@@ -845,7 +845,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_config_shows_only_config_commands(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help config"))
 
@@ -864,12 +864,12 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertIn("/config task-timeout default", reply)
         self.assertIn("/config runtime <provider>", reply)
         self.assertIn("/config runtime <provider> <setting> [value]", reply)
-        self.assertNotIn("Oneagent Telegram commands:", reply)
+        self.assertNotIn("OneAgent Telegram commands:", reply)
 
     def test_pr_merge_requires_explicit_target(self) -> None:
         review = IndependentReviewFixture()
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot, _message_update(chat_id=42, text="/pr merge"))
 
@@ -879,7 +879,7 @@ class OneagentTelegramTests(unittest.TestCase):
     def test_pr_merge_is_ignored_from_unauthorized_chat(self) -> None:
         review = IndependentReviewFixture()
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot, _message_update(chat_id=99, text="/pr merge review-1"))
 
@@ -889,7 +889,7 @@ class OneagentTelegramTests(unittest.TestCase):
     def test_pr_merge_requires_configured_chat_lock(self) -> None:
         review = IndependentReviewFixture()
         client = FakeTelegramClient()
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot, _message_update(chat_id=42, text="/pr merge review-1"))
 
@@ -906,7 +906,7 @@ class OneagentTelegramTests(unittest.TestCase):
             )
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot,
             _message_update(
@@ -926,18 +926,18 @@ class OneagentTelegramTests(unittest.TestCase):
             side_effect=ReviewProviderError("Review review-1 is a draft.")
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot, _message_update(chat_id=42, text="/pr merge review-1"))
 
         self.assertEqual(
             client.sent[0][1],
-            "Oneagent could not land that review: Review review-1 is a draft.",
+            "OneAgent could not land that review: Review review-1 is a draft.",
         )
 
     def test_help_resume_reports_removed_command(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help resume"))
 
@@ -946,7 +946,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_lists_pr_and_explains_its_subcommands(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help"))
         _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/help pr"))
@@ -963,7 +963,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_lists_worktree_commands(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help worktree"))
 
@@ -989,7 +989,7 @@ class OneagentTelegramTests(unittest.TestCase):
             ),
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/worktree"))
 
@@ -1010,7 +1010,7 @@ class OneagentTelegramTests(unittest.TestCase):
             changed_files=("README.md", "src/oneagent/app/core.py"),
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/worktree show 7"))
 
@@ -1033,7 +1033,7 @@ class OneagentTelegramTests(unittest.TestCase):
             branch="oneagent/main-task-7-example",
         )
         client = FakeTelegramClient()
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/worktree cleanup 7"))
 
@@ -1069,7 +1069,7 @@ class OneagentTelegramTests(unittest.TestCase):
             ),
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/worktree cleanup 7"))
 
@@ -1096,7 +1096,7 @@ class OneagentTelegramTests(unittest.TestCase):
         task_worktree_state.return_value = state
         remove_managed_task_worktree.return_value = "Removed task #7 worktree."
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/worktree discard 7"))
         _handle_update(
@@ -1126,7 +1126,7 @@ class OneagentTelegramTests(unittest.TestCase):
             )
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot, _message_update(chat_id=42, text="/pr"))
 
@@ -1139,7 +1139,7 @@ class OneagentTelegramTests(unittest.TestCase):
     def test_pr_reports_when_no_reviews_are_open(self) -> None:
         review = IndependentReviewFixture()
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(bot, _message_update(chat_id=42, text="/pr"))
 
@@ -1155,7 +1155,7 @@ class OneagentTelegramTests(unittest.TestCase):
             )
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client, review=review)
+        bot = OneAgentApplication(load_identity(), ROOT, client, review=review)
 
         _handle_update(
             bot,
@@ -1175,7 +1175,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/config"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/config task-timeout 30m"))
@@ -1204,7 +1204,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 encoding="utf-8",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.dict("os.environ", {"CODEX_HOME": codex_home}, clear=True):
                 _handle_update(bot, _message_update(chat_id=42, text="/config"))
@@ -1242,7 +1242,7 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertIn("AI model: gpt-global", client.sent[0][1])
         self.assertIn("Reasoning effort: medium", client.sent[0][1])
         self.assertIn("AI model: gpt-oneagent-local", client.sent[1][1])
-        self.assertIn("Model source: Oneagent config codex.model", client.sent[1][1])
+        self.assertIn("Model source: OneAgent config codex.model", client.sent[1][1])
         self.assertIn("Reasoning effort: xhigh", client.sent[2][1])
         self.assertEqual(configured["model"], "gpt-oneagent-local")
         self.assertEqual(configured["reasoning_effort"], "xhigh")
@@ -1281,7 +1281,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client, runtime=runtime)
+            bot = OneAgentApplication(load_identity(), root, client, runtime=runtime)
 
             _handle_update(bot, _message_update(chat_id=42, text="/config model"))
 
@@ -1310,7 +1310,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client, runtime=runtime)
+            bot = OneAgentApplication(load_identity(), root, client, runtime=runtime)
 
             _handle_update(
                 bot,
@@ -1327,7 +1327,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_inherit_shows_inherit_usage(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help inherit"))
 
@@ -1346,27 +1346,27 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertIn("/inherit ignore <change_id> - dismiss a change", reply)
         self.assertNotIn("/inherit show", reply)
         self.assertNotIn("/inherit all", reply)
-        self.assertNotIn("Oneagent Telegram commands:", reply)
+        self.assertNotIn("OneAgent Telegram commands:", reply)
 
     def test_help_topic_shows_single_command_usage(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help task cancel"))
 
         reply = client.sent[0][1]
         self.assertIn("Task commands:", reply)
-        self.assertIn("/task <request> - queue background work for Oneagent", reply)
+        self.assertIn("/task <request> - queue background work for OneAgent", reply)
         self.assertIn("/task cancel <id> - cancel a queued background task", reply)
         self.assertIn("/task resume <id|all> - continue paused tasks with the same ids", reply)
         self.assertIn("/task retry <id> - retry a failed task as a new linked task", reply)
         self.assertNotIn("/task regress", reply)
         self.assertNotIn("/task resolve", reply)
-        self.assertNotIn("Oneagent Telegram commands:", reply)
+        self.assertNotIn("OneAgent Telegram commands:", reply)
 
     def test_help_topic_rejects_removed_work_command_aliases(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help /crons"))
 
@@ -1376,7 +1376,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_queue_shows_canonical_queue_command(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help queue"))
 
@@ -1387,7 +1387,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_backlog_shows_backlog_subcommands(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help backlog"))
 
@@ -1399,7 +1399,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_evolve_shows_evolve_usage(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help evolve"))
 
@@ -1433,13 +1433,13 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertNotIn("/evolve schedule every <interval> - run periodic evolve checks", reply)
         self.assertNotIn("/evolve schedule daily HH:MM - run evolve once per day at local time", reply)
         self.assertNotIn("/evolve schedule cron '30 9 * * *' - run evolve with a cron-style daily schedule", reply)
-        self.assertNotIn("Oneagent Telegram commands:", reply)
+        self.assertNotIn("OneAgent Telegram commands:", reply)
 
     def test_removed_evolve_top_level_commands_have_no_help_topics(self) -> None:
         for index, topic in enumerate(("feedback", "experience", "propose"), start=1):
             with self.subTest(topic=topic):
                 client = FakeTelegramClient(allowed_chat_id=42)
-                bot = OneagentApplication(load_identity(), ROOT, client)
+                bot = OneAgentApplication(load_identity(), ROOT, client)
 
                 _handle_update(bot, _message_update(update_id=index, chat_id=42, text=f"/help {topic}"))
 
@@ -1447,7 +1447,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_debug_reports_unknown_command(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help /debug"))
 
@@ -1456,7 +1456,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_shutdown_reports_removed_command(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help shutdown"))
 
@@ -1465,7 +1465,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_topic_reports_unknown_command(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help nope"))
 
@@ -1482,7 +1482,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
 
@@ -1514,7 +1514,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot,
                 _message_update(
@@ -1546,7 +1546,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task do it"))
 
@@ -1567,18 +1567,18 @@ class OneagentTelegramTests(unittest.TestCase):
         _update_memory: MagicMock,
     ) -> None:
         self.resolve_task_context_snapshot.return_value = TaskContextSnapshot(
-            clarification="Which feature should Oneagent implement?"
+            clarification="Which feature should OneAgent implement?"
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task do it"))
             status = task_queue_status(root)
 
         self.assertEqual(status.pending, ())
-        self.assertIn("Which feature should Oneagent implement?", client.sent[0][1])
+        self.assertIn("Which feature should OneAgent implement?", client.sent[0][1])
 
     @patch("oneagent.app.core.ensure_long_term_memory")
     @patch("oneagent.app.core.log_conversation_turn")
@@ -1588,7 +1588,7 @@ class OneagentTelegramTests(unittest.TestCase):
         _update_memory: MagicMock,
     ) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/task"))
 
@@ -1604,7 +1604,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/task cancel 1"))
@@ -1629,7 +1629,7 @@ class OneagentTelegramTests(unittest.TestCase):
             begin_next_task(root)
             fail_task(original.id, root, result="temporary failure")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot,
                 _message_update(chat_id=42, text="/task retry 1")
@@ -1691,7 +1691,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 worker_id="worker-one",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 client,
@@ -1765,13 +1765,13 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "retry evolve work")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             bot._evolve_approve("feedback-1")
             original = begin_next_task(root)
             with patch.object(
                 bot,
                 "_run_direct_work",
-                return_value="Oneagent could not complete evolve work: invalid request",
+                return_value="OneAgent could not complete evolve work: invalid request",
             ):
                 bot._run_task_job(original)
             self.assertEqual(
@@ -1815,7 +1815,7 @@ class OneagentTelegramTests(unittest.TestCase):
             original = enqueue_task(42, "ship risky work", root)
             complete_task(begin_next_task(root).id, root, result="Shipped.")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="the last deploy broke recovery"))
             status = task_queue_status(root)
@@ -1837,7 +1837,7 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertNotIn(TASK_REGRESSION_START, client.sent[0][1])
         self.assertEqual(events[-1].event_actor, "agent")
         self.assertEqual(events[-1].trigger, "agent-regression-signal")
-        self.assertIn("Oneagent owns regression bookkeeping", respond.call_args.args[1])
+        self.assertIn("OneAgent owns regression bookkeeping", respond.call_args.args[1])
 
     def test_completed_fix_task_automatically_resolves_original_regression(self) -> None:
         with TemporaryDirectory() as temp:
@@ -1845,7 +1845,7 @@ class OneagentTelegramTests(unittest.TestCase):
             original = enqueue_task(42, "ship risky work", root)
             complete_task(begin_next_task(root).id, root, result="Shipped.")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             fix = enqueue_task(42, "repair recovery", root, parent_task_id=original.id)
             running_fix = begin_next_task(root)
             assert running_fix is not None
@@ -1879,13 +1879,13 @@ class OneagentTelegramTests(unittest.TestCase):
             original = enqueue_task(42, "ship risky work", root)
             complete_task(begin_next_task(root).id, root)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             enqueue_task(42, "repair recovery", root, parent_task_id=original.id)
             running_fix = begin_next_task(root)
             assert running_fix is not None
 
             result = (
-                "Oneagent could not complete the requested work yet: tests failed.\n"
+                "OneAgent could not complete the requested work yet: tests failed.\n"
                 f"{TASK_REGRESSION_START}\n"
                 '{"task_id": 1, "reason": "Original recovery path failed.", '
                 '"resolution": "forward-fixed"}\n'
@@ -1908,7 +1908,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _started, start_worker = self._capture_direct_work_worker(bot)
             with start_worker:
@@ -1936,7 +1936,7 @@ class OneagentTelegramTests(unittest.TestCase):
         _update_memory: MagicMock,
     ) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/stop"))
 
@@ -1952,7 +1952,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task first queued work"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/task second queued work"))
@@ -1974,7 +1974,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
             job = begin_next_task(root)
@@ -1998,7 +1998,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             for update_id, command in enumerate(
                 ("/tasks", "/backlogs", "/crons", "/worktrees"),
@@ -2032,7 +2032,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
             job = begin_next_task(root)
             assert job is not None
@@ -2075,7 +2075,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship evolve status updates")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot,
                 _message_update(chat_id=42, text="/evolve approve feedback-1")
             )
@@ -2097,10 +2097,10 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertIn("Task #1", client.sent[1][1])
         self.assertIn("Task #1 final update", client.sent[2][1])
         self.assertFalse(
-            any("Oneagent update:" in text for _chat_id, text in client.sent)
+            any("OneAgent update:" in text for _chat_id, text in client.sent)
         )
         self.assertFalse(
-            any("Oneagent is still working" in text for _chat_id, text in client.sent)
+            any("OneAgent is still working" in text for _chat_id, text in client.sent)
         )
         self.assertGreaterEqual(len(client.edited), 4)
         self.assertEqual(
@@ -2117,7 +2117,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
             job = begin_next_task(root)
             assert job is not None
@@ -2167,7 +2167,7 @@ class OneagentTelegramTests(unittest.TestCase):
             pause_task(begin_next_task(root).id, root, result="No Codex access.")
             pause_task(begin_next_task(root).id, root, result="No Codex access.")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker") as start_worker:
                 _handle_update(bot,
@@ -2202,7 +2202,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             enqueue_task(42, "first task", root)
             second = enqueue_task(42, "second task", root)
 
@@ -2226,7 +2226,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/task preserve this work"))
             status = task_queue_status(root)
@@ -2241,7 +2241,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task add skill"))
             job = begin_next_task(root)
             assert job is not None
@@ -2264,7 +2264,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             snapshot = _REAL_TASK_CONTEXT_RESOLVER(bot, 42, "do it")
 
@@ -2277,9 +2277,9 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_task_context_snapshot_parser_handles_sentinel_responses(self) -> None:
         self.assertEqual(_parse_task_context_snapshot("No extra context needed.").context, "")
-        clarification = _parse_task_context_snapshot("NEEDS_CLARIFICATION: Which file should Oneagent update?")
+        clarification = _parse_task_context_snapshot("NEEDS_CLARIFICATION: Which file should OneAgent update?")
 
-        self.assertEqual(clarification.clarification, "Which file should Oneagent update?")
+        self.assertEqual(clarification.clarification, "Which file should OneAgent update?")
         self.assertIn("NEEDS_CLARIFICATION:", _task_context_snapshot_prompt("do it"))
 
     @patch("oneagent.app.core.ensure_long_term_memory")
@@ -2296,7 +2296,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/backlog p0 do it later"))
@@ -2318,7 +2318,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/backlog do it eventually"))
@@ -2334,25 +2334,25 @@ class OneagentTelegramTests(unittest.TestCase):
         _update_memory: MagicMock,
     ) -> None:
         self.resolve_task_context_snapshot.return_value = TaskContextSnapshot(
-            clarification="Which deferred item should Oneagent save?"
+            clarification="Which deferred item should OneAgent save?"
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/backlog do it"))
             status = backlog_status(root)
 
         self.assertEqual(status.pending, ())
-        self.assertIn("Which deferred item should Oneagent save?", client.sent[0][1])
+        self.assertIn("Which deferred item should OneAgent save?", client.sent[0][1])
 
     def test_backlog_idle_promotion_moves_item_to_task_queue(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             backlog_item = add_backlog_item(
                 42,
                 "background cleanup",
@@ -2381,7 +2381,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             add_backlog_item(42, "background cleanup", root, priority="p0")
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/task active work"))
@@ -2404,7 +2404,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/backlog p2 first"))
@@ -2427,7 +2427,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/backlog cancel 1"))
             status = backlog_status(root)
@@ -2445,7 +2445,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/backlog p1 first"))
@@ -2472,7 +2472,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_maybe_start_task_worker"):
                 _handle_update(bot, _message_update(chat_id=42, text="/backlog p0 first"))
@@ -2486,7 +2486,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "improve Telegram work UX")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve"))
 
@@ -2501,7 +2501,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot,
                 _message_update(
@@ -2523,7 +2523,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 root=root,
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(
                 bot,
@@ -2540,7 +2540,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             add_cron_job(42, "review recurring recovery", 3600, root)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(
                 bot,
@@ -2571,7 +2571,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 command="/task",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(
                 bot,
@@ -2588,7 +2588,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "improve Telegram work UX")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve propose"))
             candidates = load_evolve_candidates(root)
@@ -2596,7 +2596,7 @@ class OneagentTelegramTests(unittest.TestCase):
             queued = task_queue_status(root)
 
         reply = client.sent[0][1]
-        self.assertIn("Oneagent proposes:", reply)
+        self.assertIn("OneAgent proposes:", reply)
         self.assertIn("Ranked 1 actionable candidate(s) from the evolution pathways.", reply)
         self.assertIn("Deterministic fallback recommendation", reply)
         self.assertIn("feedback-1 [candidate feedback] improve Telegram work UX", reply)
@@ -2638,7 +2638,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 }
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch(
                 "oneagent.evolution.core.recent_completion_evidence",
@@ -2675,7 +2675,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "improve Telegram work UX")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve propose"))
             _handle_update(bot,
@@ -2695,7 +2695,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "remove proposed cleanup")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve propose"))
             _handle_update(bot,
@@ -2739,7 +2739,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 },
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch(
                 "oneagent.evolution.core.recent_completion_evidence",
@@ -2774,7 +2774,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             set_evolve_theme("proposal observability", root)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_respond_isolated_evidence_turn") as respond:
                 _handle_update(bot, _message_update(chat_id=42, text="/evolve propose"))
@@ -2794,7 +2794,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 candidate_id="feedback-2",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve candidates"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/evolve remove feedback-1"))
@@ -2821,7 +2821,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 root = Path(temp)
                 _add_feedback_evolve_candidate(root, "keep this candidate")
                 client = FakeTelegramClient(allowed_chat_id=42)
-                bot = OneagentApplication(load_identity(), root, client)
+                bot = OneAgentApplication(load_identity(), root, client)
 
                 _handle_update(bot,
                     _message_update(update_id=index, chat_id=42, text=f"/evolve {command} feedback-1")
@@ -2838,7 +2838,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship evolve approval")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             queued = task_queue_status(root)
@@ -2926,7 +2926,7 @@ class OneagentTelegramTests(unittest.TestCase):
             begin_next_task(root)
             fail_task(original.id, root, result="Worktree branch failed.")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve task-1"))
             queued = task_queue_status(root)
@@ -2939,7 +2939,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "remove this candidate")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve remove feedback-1"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/evolve approve feedback-1"))
@@ -2953,7 +2953,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "cancel queued evolution")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/task cancel 1"))
@@ -2976,7 +2976,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship evolve completion")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             job = begin_next_task(root)
@@ -3002,7 +3002,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship tracked proposal")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve propose"))
             _handle_update(bot,
@@ -3042,12 +3042,12 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship failing evolve")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             job = begin_next_task(root)
             assert job is not None
-            with patch.object(bot, "_run_direct_work", return_value="Oneagent could not publish this edit as a pull request: GH007"):
+            with patch.object(bot, "_run_direct_work", return_value="OneAgent could not publish this edit as a pull request: GH007"):
                 bot._run_task_job(job)
             visible = load_evolve_candidates(root)
             all_candidates = load_evolve_candidates(root, include_inactive=True)
@@ -3071,7 +3071,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship retryable evolve work")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             failed_job = begin_next_task(root)
@@ -3079,7 +3079,7 @@ class OneagentTelegramTests(unittest.TestCase):
             with patch.object(
                 bot,
                 "_run_direct_work",
-                return_value="Oneagent could not complete the requested work yet: transient failure",
+                return_value="OneAgent could not complete the requested work yet: transient failure",
             ):
                 bot._run_task_job(failed_job)
 
@@ -3134,7 +3134,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "ship regressing evolve work")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot,
                 _message_update(chat_id=42, text="/evolve approve feedback-1")
@@ -3180,7 +3180,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config theme improve recovery"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/evolve config mode disabled"))
@@ -3193,7 +3193,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config theme"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/evolve config theme improve recovery"))
@@ -3219,7 +3219,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config theme auditable evolution"))
             with patch.object(
@@ -3252,7 +3252,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_respond_isolated_evidence_turn") as respond:
                 _handle_update(bot, _message_update(chat_id=42, text="/evolve brainstorm"))
@@ -3264,7 +3264,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve explore enosh"))
 
@@ -3276,7 +3276,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve candidates"))
 
@@ -3286,7 +3286,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve auto-evovle"))
 
@@ -3297,7 +3297,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule every 1d"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/evolve config schedule off"))
@@ -3309,7 +3309,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule once a day"))
 
@@ -3319,7 +3319,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule once a day at 09:30"))
 
@@ -3329,7 +3329,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text='/evolve config schedule "once a day"'))
 
@@ -3339,7 +3339,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule 30 9 * * *"))
 
@@ -3349,7 +3349,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule every day at 09:30"))
 
@@ -3359,7 +3359,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule daily 09:30"))
 
@@ -3369,7 +3369,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/evolve config schedule cron 30 9 * * *"))
 
@@ -3385,7 +3385,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 now=datetime(2020, 1, 1, tzinfo=timezone.utc),
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_generate_brainstorm_candidates") as brainstorm:
                 job = bot._run_due_evolve_schedule()
@@ -3395,7 +3395,7 @@ class OneagentTelegramTests(unittest.TestCase):
         brainstorm.assert_not_called()
         self.assertIn("Scheduled evolve check", client.sent[0][1])
         self.assertIn("disabled in co-evolve mode", client.sent[0][1])
-        self.assertIn("Oneagent proposes:", client.sent[0][1])
+        self.assertIn("OneAgent proposes:", client.sent[0][1])
         self.assertIn("Ranked 1 actionable candidate(s) from the evolution pathways.", client.sent[0][1])
         self.assertIn("feedback-1 [candidate feedback] improve Telegram work UX", client.sent[0][1])
         self.assertEqual([event.event for event in events], ["checked", "proposed", "skipped"])
@@ -3413,7 +3413,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 now=datetime(2020, 1, 1, tzinfo=timezone.utc),
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             job = bot._run_due_evolve_schedule()
             queued = task_queue_status(root)
@@ -3451,14 +3451,14 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "retry only with human approval")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             failed_job = begin_next_task(root)
             assert failed_job is not None
             with patch.object(
                 bot,
                 "_run_direct_work",
-                return_value="Oneagent could not complete the requested work yet: transient failure",
+                return_value="OneAgent could not complete the requested work yet: transient failure",
             ):
                 bot._run_task_job(failed_job)
             set_evolve_mode(MODE_AUTO_EVOLVE, root)
@@ -3485,7 +3485,7 @@ class OneagentTelegramTests(unittest.TestCase):
             set_evolve_mode(MODE_AUTO_EVOLVE, root)
             set_evolve_schedule(60, root, now=datetime(2020, 1, 1, tzinfo=timezone.utc))
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             first = bot._run_due_evolve_schedule()
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
@@ -3526,7 +3526,7 @@ class OneagentTelegramTests(unittest.TestCase):
             set_evolve_mode(MODE_AUTO_EVOLVE, root)
             set_evolve_schedule(60, root, now=datetime(2020, 1, 1, tzinfo=timezone.utc))
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(
                 bot,
@@ -3564,7 +3564,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/cron every 10m run scheduled cleanup"))
             status = cron_status(root)
@@ -3590,7 +3590,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(
                 bot,
@@ -3615,7 +3615,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/cron every 1h scheduled cleanup"))
             _handle_update(bot, _message_update(update_id=2, chat_id=42, text="/cron"))
@@ -3632,7 +3632,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             cron = add_cron_job(
                 42,
                 "scheduled cleanup",
@@ -3670,7 +3670,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             ordinary = enqueue_task(42, "ordinary queued work", root)
             cron = add_cron_job(
                 42,
@@ -3724,7 +3724,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             add_cron_job(
                 42,
                 "scheduled cleanup",
@@ -3758,7 +3758,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
             job = begin_next_task(root)
             assert job is not None
@@ -3766,7 +3766,7 @@ class OneagentTelegramTests(unittest.TestCase):
             with patch.object(
                 bot,
                 "_run_direct_work",
-                return_value="Oneagent could not publish this edit as a pull request: GH007",
+                return_value="OneAgent could not publish this edit as a pull request: GH007",
             ):
                 bot._run_task_job(job)
             status = task_queue_status(root)
@@ -3791,7 +3791,7 @@ class OneagentTelegramTests(unittest.TestCase):
             with self.subTest(operation=operation), TemporaryDirectory() as temp:
                 root = Path(temp)
                 client = FakeTelegramClient(allowed_chat_id=42)
-                bot = OneagentApplication(
+                bot = OneAgentApplication(
                     identity, root, client,
                     repository=BranchlessRepositoryFixture(),
                     review=IndependentReviewFixture(),
@@ -3829,7 +3829,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             queued = enqueue_task(42, "edit from a dirty worktree", root)
             job = begin_next_task(root)
 
@@ -3837,7 +3837,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 bot,
                 "_run_direct_work",
                 return_value=(
-                    "Oneagent could not complete the requested work yet: "
+                    "OneAgent could not complete the requested work yet: "
                     "Worktree is not clean. Commit, stash, or discard changes before evolving."
                 ),
             ):
@@ -3859,7 +3859,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             queued = enqueue_task(42, "survive a network interruption", root)
             first = begin_next_task(root)
 
@@ -3871,7 +3871,7 @@ class OneagentTelegramTests(unittest.TestCase):
                     bot,
                     "_run_direct_work",
                     side_effect=[
-                        "Oneagent could not continue: connection reset by peer.",
+                        "OneAgent could not continue: connection reset by peer.",
                         "Completed after reconnecting.",
                     ],
                 ):
@@ -3911,7 +3911,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task long queued work"))
             job = begin_next_task(root)
             assert job is not None
@@ -3932,7 +3932,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task timed runtime"))
             job = begin_next_task(root)
             assert job is not None
@@ -3956,7 +3956,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "time out evolution safely")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             job = begin_next_task(root)
             assert job is not None
@@ -3978,7 +3978,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             _add_feedback_evolve_candidate(root, "pause evolution safely")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/evolve approve feedback-1"))
             job = begin_next_task(root)
             assert job is not None
@@ -4025,7 +4025,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task add queued work"))
             job = begin_next_task(root)
             assert job is not None
@@ -4065,7 +4065,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 [
                     "\n".join(
                         [
-                            "Oneagent committed this change.",
+                            "OneAgent committed this change.",
                             "Branch: oneagent/add-test4",
                             "Files:",
                             "- README.md",
@@ -4074,7 +4074,7 @@ class OneagentTelegramTests(unittest.TestCase):
                     ),
                     "\n".join(
                         [
-                            "Oneagent opened a pull request.",
+                            "OneAgent opened a pull request.",
                             "PR URL: https://github.com/our-ark/oneagent/pull/21",
                             "Branch: oneagent/add-test4",
                         ]
@@ -4090,10 +4090,10 @@ class OneagentTelegramTests(unittest.TestCase):
             "Review URL:\n- https://github.com/our-ark/oneagent/pull/21",
             message,
         )
-        self.assertIn("Oneagent committed this change.\nBranch: oneagent/add-test4", message)
+        self.assertIn("OneAgent committed this change.\nBranch: oneagent/add-test4", message)
         self.assertIn("Files:\n- README.md", message)
-        self.assertIn("Oneagent opened a pull request.\nPR URL: https://github.com/our-ark/oneagent/pull/21", message)
-        self.assertNotIn("Oneagent committed this change. Branch:", message)
+        self.assertIn("OneAgent opened a pull request.\nPR URL: https://github.com/our-ark/oneagent/pull/21", message)
+        self.assertNotIn("OneAgent committed this change. Branch:", message)
 
     @patch("oneagent.app.core.ensure_long_term_memory")
     def test_startup_does_not_complete_task_from_direct_action_text(
@@ -4112,7 +4112,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 details={"request": queued.text, "result": result},
             )
 
-            OneagentApplication(load_identity(), root, FakeTelegramClient(allowed_chat_id=42))
+            OneAgentApplication(load_identity(), root, FakeTelegramClient(allowed_chat_id=42))
             status = task_queue_status(root)
 
         self.assertIsNone(status.running)
@@ -4130,14 +4130,14 @@ class OneagentTelegramTests(unittest.TestCase):
             queued = enqueue_task(42, "ship it", root)
             running = begin_next_task(root)
             assert running is not None
-            result = "Oneagent could not complete the requested work yet: usage limit"
+            result = "OneAgent could not complete the requested work yet: usage limit"
             log_system_event(
                 "direct_action",
                 root=root,
                 details={"request": queued.text, "result": result},
             )
 
-            OneagentApplication(load_identity(), root, FakeTelegramClient(allowed_chat_id=42))
+            OneAgentApplication(load_identity(), root, FakeTelegramClient(allowed_chat_id=42))
             status = task_queue_status(root)
 
         self.assertIsNone(status.running)
@@ -4171,7 +4171,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 encoding="utf-8",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 client,
@@ -4201,7 +4201,7 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.skills_command", return_value="Lucy skills:")
     def test_skills_command_shows_declared_skills(self, skills_command: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/skills lucy"))
 
@@ -4216,16 +4216,16 @@ class OneagentTelegramTests(unittest.TestCase):
             identity_file.parent.mkdir(parents=True)
             identity_file.write_text((ROOT / "src" / "oneagent" / "body.yaml").read_text(encoding="utf-8"), encoding="utf-8")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/mission"))
             _handle_update(bot, _message_update(chat_id=42, text="/mission Build calm agent networks"))
             _handle_update(bot, _message_update(chat_id=42, text="/self"))
             identity_text = identity_file.read_text(encoding="utf-8")
 
-            self.assertIn("Oneagent mission:", client.sent[0][1])
+            self.assertIn("OneAgent mission:", client.sent[0][1])
             self.assertIn("Update with /mission <new mission>.", client.sent[0][1])
-            self.assertIn("Oneagent mission updated.", client.sent[1][1])
+            self.assertIn("OneAgent mission updated.", client.sent[1][1])
             self.assertIn("Mission: Build calm agent networks", client.sent[1][1])
             self.assertIn("Mission: Build calm agent networks", client.sent[2][1])
             self.assertIn("Build calm agent networks", identity_text)
@@ -4233,7 +4233,7 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.respond", return_value="Memory is managed internally now.")
     def test_memory_command_is_not_user_facing(self, respond: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/memory"))
 
@@ -4243,7 +4243,7 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.respond", return_value="Teaching is automatic now.")
     def test_teach_command_is_not_user_facing(self, respond: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/teach natural agency"))
 
@@ -4265,10 +4265,10 @@ class OneagentTelegramTests(unittest.TestCase):
                 "reason": "This adds a missing bounded teaching capability.",
                 "candidate": {
                     "title": "Adapt peer teaching summaries",
-                    "rationale": "Oneagent cannot currently package these summaries.",
+                    "rationale": "OneAgent cannot currently package these summaries.",
                     "proposed_change": "Add a focused teaching-summary adapter.",
                     "expected_benefit": "Improves skill portability.",
-                    "risk": "Source assumptions may not fit Oneagent.",
+                    "risk": "Source assumptions may not fit OneAgent.",
                     "test_plan": "Add focused adapter tests.",
                 },
             }
@@ -4276,7 +4276,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(
                 bot,
@@ -4308,14 +4308,14 @@ class OneagentTelegramTests(unittest.TestCase):
         respond.return_value = json.dumps(
             {
                 "decision": "not_applicable",
-                "reason": "Oneagent already has this capability.",
+                "reason": "OneAgent already has this capability.",
                 "candidate": None,
             }
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(
                 bot,
@@ -4330,29 +4330,29 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.model_summary", return_value="AI model: gpt-5-codex")
     def test_self_reports_identity_without_runtime_status(self, model_summary: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/self"))
 
         model_summary.assert_not_called()
-        self.assertIn("I am Oneagent.", client.sent[0][1])
+        self.assertIn("I am OneAgent.", client.sent[0][1])
         self.assertIn("Role: descendant_agent", client.sent[0][1])
         self.assertIn("Generation: 4", client.sent[0][1])
         self.assertIn("Ancestor: Enoch", client.sent[0][1])
         self.assertIn("Mission:", client.sent[0][1])
-        self.assertNotIn("Oneagent status:", client.sent[0][1])
+        self.assertNotIn("OneAgent status:", client.sent[0][1])
         self.assertNotIn("Local state:", client.sent[0][1])
         self.assertNotIn("AI model:", client.sent[0][1])
 
     @patch("oneagent.app.core.model_summary", return_value="AI model: gpt-5-codex")
     def test_status_reports_runtime_state_and_chat_lock(self, model_summary: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/status"))
 
         model_summary.assert_called_once_with(ROOT)
-        self.assertIn("Oneagent status:", client.sent[0][1])
+        self.assertIn("OneAgent status:", client.sent[0][1])
         self.assertIn("AI model: gpt-5-codex", client.sent[0][1])
         self.assertIn("Local state:", client.sent[0][1])
         self.assertIn("Telegram conversation lock: 42", client.sent[0][1])
@@ -4363,7 +4363,7 @@ class OneagentTelegramTests(unittest.TestCase):
         self.assertIn("- State:", client.sent[0][1])
         self.assertIn("Tasks:", client.sent[0][1])
         self.assertNotIn("action mode", client.sent[0][1])
-        self.assertNotIn("I am Oneagent.", client.sent[0][1])
+        self.assertNotIn("I am OneAgent.", client.sent[0][1])
         self.assertNotIn("Ancestor:", client.sent[0][1])
         self.assertNotIn("Mission:", client.sent[0][1])
         self.assertNotIn("current evolution", client.sent[0][1])
@@ -4379,7 +4379,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 encoding="utf-8",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/self"))
 
@@ -4389,20 +4389,20 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_status_includes_setup_hint_without_chat_lock(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=None)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/status"))
 
         self.assertIn("Telegram conversation lock: not set", client.sent[0][1])
         self.assertIn("Configure the Telegram provider", client.sent[0][1])
-        self.assertIn("restart Oneagent", client.sent[0][1])
+        self.assertIn("restart OneAgent", client.sent[0][1])
 
     @patch("oneagent.app.core.respond", return_value="Thinking config is managed locally.")
     def test_thinking_is_no_longer_a_telegram_command(self, respond: MagicMock) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/thinking high"))
 
@@ -4412,7 +4412,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_help_thinking_reports_removed_command(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/help thinking"))
         _handle_update(
@@ -4427,7 +4427,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/ancestors"))
 
@@ -4439,13 +4439,13 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.resolve_lineage")
     def test_ancestors_reports_resolution_warnings(self, resolve_lineage: MagicMock) -> None:
         resolve_lineage.return_value = LineageResolution(
-            ancestors=(AncestorLink(name="Oneagent", repo="our-ark/oneagent", branch="main", depth=1),),
+            ancestors=(AncestorLink(name="OneAgent", repo="our-ark/oneagent", branch="main", depth=1),),
             warnings=("Could not read parent lineage from our-ark/oneagent@main: private repo",),
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/ancestors"))
 
@@ -4462,7 +4462,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with (
                 patch.object(bot, "_reconcile_lineage_adoptions") as reconcile,
@@ -4495,7 +4495,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 scope="parent",
                 ancestors=(
                     AncestorLink(
-                        name="Oneagent",
+                        name="OneAgent",
                         repo="our-ark/oneagent",
                         branch="main",
                         depth=1,
@@ -4506,7 +4506,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 new_count=1,
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             worker_started = threading.Event()
             release_worker = threading.Event()
             reply_present_at_start = []
@@ -4551,21 +4551,21 @@ class OneagentTelegramTests(unittest.TestCase):
 
         self.assertEqual(reply_present_at_start, [True])
         self.assertIn("background Codex assessment", client.sent[0][1])
-        self.assertIn("Oneagent commands:", client.sent[1][1])
+        self.assertIn("OneAgent commands:", client.sent[1][1])
 
     def test_inherit_inspect_syncs_candidate_context_to_codex_session(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)
             lineage = root / ".agent" / "lineage.yaml"
             lineage.parent.mkdir()
-            lineage.write_text("parent:\n  name: Oneagent\n  repo: our-ark/oneagent\n", encoding="utf-8")
+            lineage.write_text("parent:\n  name: OneAgent\n  repo: our-ark/oneagent\n", encoding="utf-8")
             inbox = root / ".agent" / "lineage_inbox.json"
             inbox.write_text(
                 json.dumps({"schema_version": 1, "candidates": [_lineage_candidate().__dict__]}),
                 encoding="utf-8",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/inherit inspect our-ark/oneagent#32"))
 
@@ -4576,7 +4576,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
     def test_inherit_candidate_id_uses_lineage_adoption_flow(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         with patch.object(bot, "_adopt_lineage_candidate", return_value="adopted change") as adopt:
             _handle_update(bot, _message_update(chat_id=42, text="/inherit our-ark/oneagent#32"))
@@ -4589,7 +4589,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             lineage = root / ".agent" / "lineage.yaml"
             lineage.parent.mkdir()
-            lineage.write_text("parent:\n  name: Oneagent\n  repo: our-ark/oneagent\n", encoding="utf-8")
+            lineage.write_text("parent:\n  name: OneAgent\n  repo: our-ark/oneagent\n", encoding="utf-8")
             candidate = _lineage_candidate()
             candidate = replace(
                 candidate,
@@ -4600,7 +4600,7 @@ class OneagentTelegramTests(unittest.TestCase):
             inbox = root / ".agent" / "lineage_inbox.json"
             inbox.write_text(json.dumps({"schema_version": 1, "candidates": [candidate.__dict__]}), encoding="utf-8")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_respond_read_only_turn") as read_only:
                 _handle_update(
@@ -4621,7 +4621,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="/ancestors unknown our-ark/oneagent#32"))
 
@@ -4638,18 +4638,18 @@ class OneagentTelegramTests(unittest.TestCase):
             state.parent.mkdir()
             state.write_text('{"mode":"conversation-only"}', encoding="utf-8")
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             self.assertTrue(bot._action_allowed())
             self.assertEqual(_action_sandbox(root), "danger-full-access")
 
     def test_progress_update_uses_minutes_at_default_interval(self) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         bot._send_progress(42, 60, "workspace-write")
 
-        self.assertEqual(client.sent[0][1], "Oneagent is still working after 1 minute: editing her code body.")
+        self.assertEqual(client.sent[0][1], "OneAgent is still working after 1 minute: editing her code body.")
 
     def test_elapsed_time_omits_seconds(self) -> None:
         self.assertEqual(telegram._format_elapsed(0), "<1 minute")
@@ -4693,7 +4693,7 @@ class OneagentTelegramTests(unittest.TestCase):
             diagnosis=MagicMock(summary="All tests passed.", suggested_action="Keep going.", failing_tests=[]),
         )
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/doctor"))
 
@@ -4708,21 +4708,21 @@ class OneagentTelegramTests(unittest.TestCase):
         update_from_authoritative: MagicMock,
         schedule_restart: MagicMock,
     ) -> None:
-        update_from_authoritative.return_value.message = "Oneagent pulled latest main and doctor passed.\n\nRestarting now."
+        update_from_authoritative.return_value.message = "OneAgent pulled latest main and doctor passed.\n\nRestarting now."
         update_from_authoritative.return_value.direct_action_result = "Updating 1111111..2222222"
         update_from_authoritative.return_value.restart_required = True
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/update"))
 
         update_from_authoritative.assert_called_once_with(
             ROOT,
             repository=ANY,
-            application_name="Oneagent",
+            application_name="OneAgent",
         )
         schedule_restart.assert_called_once_with(ROOT)
-        self.assertIn("Oneagent pulled latest main and doctor passed.", client.sent[0][1])
+        self.assertIn("OneAgent pulled latest main and doctor passed.", client.sent[0][1])
         self.assertIn("Restarting now.", client.sent[0][1])
 
     @patch("oneagent.app.core._schedule_daemon_restart")
@@ -4738,7 +4738,7 @@ class OneagentTelegramTests(unittest.TestCase):
         update_from_authoritative.return_value.direct_action_result = "Already up to date."
         update_from_authoritative.return_value.restart_required = False
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(
+        bot = OneAgentApplication(
             load_identity(),
             ROOT,
             client,
@@ -4758,7 +4758,7 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core.update_from_authoritative")
     def test_update_requires_locked_chat(self, update_from_authoritative: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=None)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/update"))
 
@@ -4768,12 +4768,12 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core._schedule_daemon_restart")
     def test_restart_schedules_daemon_restart_after_reply(self, schedule_restart: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/restart"))
 
         schedule_restart.assert_called_once_with(ROOT)
-        self.assertIn("Oneagent is restarting.", client.sent[0][1])
+        self.assertIn("OneAgent is restarting.", client.sent[0][1])
 
     @patch("oneagent.app.core._schedule_daemon_restart")
     def test_descendant_presentation_rebrands_core_reply(
@@ -4782,7 +4782,7 @@ class OneagentTelegramTests(unittest.TestCase):
     ) -> None:
         display_name = f"Hosted {load_identity().name}"
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(
+        bot = OneAgentApplication(
             load_identity(),
             ROOT,
             client,
@@ -4801,7 +4801,7 @@ class OneagentTelegramTests(unittest.TestCase):
     @patch("oneagent.app.core._schedule_daemon_restart")
     def test_restart_requires_locked_chat(self, schedule_restart: MagicMock) -> None:
         client = FakeTelegramClient(allowed_chat_id=None)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(chat_id=42, text="/restart"))
 
@@ -4813,13 +4813,13 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
-            _handle_update(bot, _message_update(chat_id=42, text="我想让 Oneagent 支持 reminders"))
+            _handle_update(bot, _message_update(chat_id=42, text="我想让 OneAgent 支持 reminders"))
 
         respond.assert_called_once()
         self.assertEqual(respond.call_args.kwargs["session_key"], "telegram:42")
-        self.assertIn("Oneagent wrapper instructions:", respond.call_args.args[1])
+        self.assertIn("OneAgent wrapper instructions:", respond.call_args.args[1])
         self.assertIn("/do", respond.call_args.args[1])
         self.assertIn("/task", respond.call_args.args[1])
         self.sync_session_activity.assert_not_called()
@@ -4834,7 +4834,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
             client.command_prefix = "!"
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="disable auto evolve"))
 
@@ -4861,7 +4861,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="make the README clearer"))
 
             self.assertEqual(respond.call_args.kwargs["session_key"], "telegram:42")
@@ -4887,7 +4887,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(chat_id=42, text="commit then open a PR for it"))
 
@@ -4921,7 +4921,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 encoding="utf-8",
             )
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 client,
@@ -5019,7 +5019,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 client,
@@ -5082,7 +5082,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 client,
@@ -5135,7 +5135,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with patch.object(bot, "_run_direct_work") as run_direct_work:
@@ -5160,12 +5160,12 @@ class OneagentTelegramTests(unittest.TestCase):
         _update_memory: MagicMock,
     ) -> None:
         self.resolve_task_context_snapshot.return_value = TaskContextSnapshot(
-            clarification="Which change should Oneagent make?"
+            clarification="Which change should OneAgent make?"
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             with patch.object(bot, "_run_direct_work") as run_direct_work:
                 _handle_update(bot, _message_update(chat_id=42, text="/do do it"))
@@ -5174,7 +5174,7 @@ class OneagentTelegramTests(unittest.TestCase):
         run_direct_work.assert_not_called()
         self.assertIsNone(status.running)
         self.assertEqual(status.history, ())
-        self.assertIn("Which change should Oneagent make?", client.sent[0][1])
+        self.assertIn("Which change should OneAgent make?", client.sent[0][1])
 
     @patch("oneagent.app.core.ensure_long_term_memory")
     @patch("oneagent.app.core.log_conversation_turn")
@@ -5186,13 +5186,13 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with patch.object(
                 bot,
                 "_run_direct_work",
-                return_value="Oneagent could not complete the requested work yet: usage limit",
+                return_value="OneAgent could not complete the requested work yet: usage limit",
             ):
                 with start_worker:
                     _handle_update(bot, _message_update(chat_id=42, text="/do Update README directly."))
@@ -5218,7 +5218,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with patch.object(bot, "_run_direct_work", return_value="Done.") as run_direct_work:
@@ -5249,7 +5249,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with patch.object(bot, "_run_direct_work", return_value="Done.") as run_direct_work:
@@ -5281,7 +5281,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             _handle_update(bot, _message_update(chat_id=42, text="/task existing work"))
             job = begin_next_task(root)
             assert job is not None
@@ -5309,7 +5309,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with patch.object(bot, "_run_direct_work", return_value="Done."):
@@ -5332,7 +5332,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
             started, start_worker = self._capture_direct_work_worker(bot)
 
             with start_worker:
@@ -5356,7 +5356,7 @@ class OneagentTelegramTests(unittest.TestCase):
     def test_stop_workers_cancels_active_work_and_waits_for_workers(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 FakeTelegramClient(allowed_chat_id=42),
@@ -5438,7 +5438,7 @@ class OneagentTelegramTests(unittest.TestCase):
                 semantic_workspace,
             )
             repository.mark_changed("README.md")
-            bot = OneagentApplication(
+            bot = OneAgentApplication(
                 load_identity(),
                 root,
                 client,
@@ -5504,7 +5504,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client, review=review)
+            bot = OneAgentApplication(load_identity(), root, client, review=review)
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with start_worker:
@@ -5559,7 +5559,7 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             client = FakeTelegramClient()
             client.updates = [_message_update(update_id=10, chat_id=42, text="/status")]
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             bot.run_once()
 
@@ -5571,10 +5571,10 @@ class OneagentTelegramTests(unittest.TestCase):
             root = Path(temp)
             client = FakeTelegramClient()
             client.updates = [_message_update(update_id=10, chat_id=42, text="/status")]
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             bot.run_once()
-            restarted_bot = OneagentApplication(load_identity(), root, client)
+            restarted_bot = OneAgentApplication(load_identity(), root, client)
             restarted_bot.run_once()
 
             self.assertEqual(bot.offset, 11)
@@ -5592,7 +5592,7 @@ class OneagentTelegramTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             client = FailingTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(update_id=10, chat_id=42, text="/status"))
 
@@ -5618,7 +5618,7 @@ class OneagentTelegramTests(unittest.TestCase):
         _update_memory: MagicMock,
     ) -> None:
         client = FailingAckTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         _handle_update(bot, _message_update(update_id=10, chat_id=42, text="/status"))
 
@@ -5633,11 +5633,11 @@ class OneagentTelegramTests(unittest.TestCase):
                 "error": "reaction failed",
             },
         )
-        self.assertIn("Oneagent status:", client.sent[0][1])
+        self.assertIn("OneAgent status:", client.sent[0][1])
 
     def test_progress_send_failure_does_not_abort_action(self) -> None:
         client = FailingTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
 
         bot._send_progress(42, 60, "danger-full-access")
 
@@ -5651,7 +5651,7 @@ class OneagentTelegramTests(unittest.TestCase):
         _print: MagicMock,
     ) -> None:
         client = FakeTelegramClient(allowed_chat_id=42)
-        bot = OneagentApplication(load_identity(), ROOT, client)
+        bot = OneAgentApplication(load_identity(), ROOT, client)
         bot.run_once = MagicMock(side_effect=[OSError("network down"), KeyboardInterrupt])
 
         with self.assertRaises(KeyboardInterrupt):
@@ -5705,7 +5705,7 @@ class OneagentTelegramTests(unittest.TestCase):
         _log_conversation_turn: MagicMock,
         _update_memory: MagicMock,
     ) -> None:
-        update_from_authoritative.return_value.message = "Oneagent pulled latest main and doctor passed."
+        update_from_authoritative.return_value.message = "OneAgent pulled latest main and doctor passed."
         update_from_authoritative.return_value.direct_action_result = "Updating 1111111..2222222"
         update_from_authoritative.return_value.restart_required = True
         with TemporaryDirectory() as temp:
@@ -5718,7 +5718,7 @@ class OneagentTelegramTests(unittest.TestCase):
 
             schedule_restart.side_effect = assert_offset_saved
             client = FakeTelegramClient(allowed_chat_id=42)
-            bot = OneagentApplication(load_identity(), root, client)
+            bot = OneAgentApplication(load_identity(), root, client)
 
             _handle_update(bot, _message_update(update_id=10, chat_id=42, text="/update"))
 
@@ -5880,7 +5880,7 @@ def _photo_update(update_id=1, chat_id=42, caption=""):
     return {"update_id": update_id, "message": message}
 
 
-def _handle_update(bot: OneagentApplication, update: dict) -> None:
+def _handle_update(bot: OneAgentApplication, update: dict) -> None:
     event = telegram_event(update)
     if event is not None:
         bot.handle_event(event)
@@ -5941,7 +5941,7 @@ def _lineage_candidate():
         url="https://github.com/our-ark/oneagent/pull/32",
         merged_at="2026-06-17T01:31:12Z",
         merge_commit="abc123",
-        ancestor_name="Oneagent",
+        ancestor_name="OneAgent",
         depth=1,
         labels=("inherit:recommended",),
         files=("src/oneagent/telegram/bot.py",),
@@ -5953,7 +5953,7 @@ def _lineage_candidate():
         applicability="applicable",
         summary="Adds a reasoning-level command.",
         behavioral_change="Users can configure reasoning effort.",
-        rationale="The behavior applies to Oneagent's runtime configuration.",
+        rationale="The behavior applies to OneAgent's runtime configuration.",
         proposed_adaptation="Adapt the provider-neutral configuration behavior.",
         risks=("Provider support varies.",),
         likely_files=("src/oneagent/commands.py",),
@@ -5967,7 +5967,7 @@ def _write_lineage_inbox(root: Path, candidate: LineageCandidate) -> None:
     lineage = root / ".agent" / "lineage.yaml"
     lineage.parent.mkdir(parents=True, exist_ok=True)
     lineage.write_text(
-        "parent:\n  name: Oneagent\n  repo: our-ark/oneagent\n  branch: main\n",
+        "parent:\n  name: OneAgent\n  repo: our-ark/oneagent\n  branch: main\n",
         encoding="utf-8",
     )
     inbox = root / ".oneagent" / "lineage" / "inbox.json"
@@ -5978,7 +5978,7 @@ def _write_lineage_inbox(root: Path, candidate: LineageCandidate) -> None:
                 "schema_version": 2,
                 "ancestors": [
                     {
-                        "name": "Oneagent",
+                        "name": "OneAgent",
                         "repo": "our-ark/oneagent",
                         "branch": "main",
                         "depth": 1,

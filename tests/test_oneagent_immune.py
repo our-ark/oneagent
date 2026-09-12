@@ -49,7 +49,7 @@ def _check(
     )
 
 
-class OneagentImmuneTests(unittest.TestCase):
+class OneAgentImmuneTests(unittest.TestCase):
     @patch("oneagent.immune._memory_storage_check")
     @patch("oneagent.immune._forge_provider_check")
     @patch("oneagent.immune._codex_binary_check")
@@ -338,7 +338,7 @@ class OneagentImmuneTests(unittest.TestCase):
 
     def test_diagnoses_unittest_failures(self) -> None:
         output = """
-FAIL: test_help_output (tests.test_oneagent_cli.OneagentCliTests.test_help_output)
+FAIL: test_help_output (tests.test_oneagent_cli.OneAgentCliTests.test_help_output)
 Traceback (most recent call last):
   File "/repo/tests/test_oneagent_cli.py", line 42, in test_help_output
     self.assertTrue(False)
@@ -352,17 +352,17 @@ FAILED (failures=1)
         self.assertEqual(diagnosis.summary, "1 test(s) failed.")
         self.assertEqual(
             diagnosis.failing_tests,
-            ["tests.test_oneagent_cli.OneagentCliTests.test_help_output"],
+            ["tests.test_oneagent_cli.OneAgentCliTests.test_help_output"],
         )
         self.assertIn("/repo/tests/test_oneagent_cli.py", diagnosis.likely_files)
         self.assertIn("repair pass", diagnosis.suggested_action)
 
     def test_diagnoses_pytest_failures(self) -> None:
-        output = "FAILED tests/test_oneagent_cli.py::OneagentCliTests::test_help - AssertionError"
+        output = "FAILED tests/test_oneagent_cli.py::OneAgentCliTests::test_help - AssertionError"
 
         diagnosis = diagnose_output(output, passed=False)
 
-        self.assertEqual(diagnosis.failing_tests, ["tests/test_oneagent_cli.py::OneagentCliTests::test_help"])
+        self.assertEqual(diagnosis.failing_tests, ["tests/test_oneagent_cli.py::OneAgentCliTests::test_help"])
         self.assertIn("tests/test_oneagent_cli.py", diagnosis.likely_files)
 
     def test_diagnoses_missing_imports(self) -> None:

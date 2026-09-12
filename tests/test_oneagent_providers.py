@@ -64,7 +64,7 @@ from our_ark_provider_kit import (
 )
 from oneagent.providers.authorization import DEFAULT_TASK_REQUIREMENTS
 from oneagent.providers import registry as provider_registry
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.tasks.queue import (
     TaskJob,
     enqueue_task,
@@ -340,7 +340,7 @@ class _EntryPoints(list):
         return self if group == "our_ark.providers" else ()
 
 
-class OneagentProviderTests(unittest.TestCase):
+class OneAgentProviderTests(unittest.TestCase):
     def test_queued_task_uses_branchless_repository_and_independent_review(self) -> None:
         repository = BranchlessRepositoryFixture()
         review = IndependentReviewFixture()
@@ -393,7 +393,7 @@ class OneagentProviderTests(unittest.TestCase):
                 "  forge: independent-review\n",
                 encoding="utf-8",
             )
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -459,7 +459,7 @@ class OneagentProviderTests(unittest.TestCase):
         runtime = CountingRuntime()
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -490,7 +490,7 @@ class OneagentProviderTests(unittest.TestCase):
             root = Path(temp)
             for args in (
                 ["init", "-b", "main"],
-                ["config", "user.name", "Oneagent Test"],
+                ["config", "user.name", "OneAgent Test"],
                 ["config", "user.email", "oneagent@example.com"],
             ):
                 self.assertEqual(run_git(args, root).returncode, 0)
@@ -717,7 +717,7 @@ class OneagentProviderTests(unittest.TestCase):
 
         with TemporaryDirectory() as temp:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -800,7 +800,7 @@ class OneagentProviderTests(unittest.TestCase):
             chat = load_provider("chat", root)
             runtime = load_provider("runtime", root)
             forge = load_provider("forge", root)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 identity=load_identity(),
                 root=root,
                 client=chat,
@@ -901,7 +901,7 @@ class OneagentProviderTests(unittest.TestCase):
                 semantic_workspace,
             )
             repository.mark_changed("README.md")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -954,7 +954,7 @@ class OneagentProviderTests(unittest.TestCase):
                 semantic_workspace,
             )
             repository.mark_changed("README.md")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -1016,7 +1016,7 @@ class OneagentProviderTests(unittest.TestCase):
                 semantic_workspace,
             )
             repository.mark_changed("README.md")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -1116,7 +1116,7 @@ class OneagentProviderTests(unittest.TestCase):
 
             self.assertEqual(configured["executable"], str(executable))
             self.assertIn(f"Executable: {executable}", changed)
-            self.assertIn("Source: Oneagent config codex.executable", shown)
+            self.assertIn("Source: OneAgent config codex.executable", shown)
             self.assertIn("reset to automatic discovery", reset)
             self.assertNotIn("executable", read_section("codex", root))
 
@@ -1171,7 +1171,7 @@ exit 2
 
         self.assertTrue(check.passed)
         self.assertIn(str(executable), check.summary)
-        self.assertIn("source: Oneagent config codex.executable", check.summary)
+        self.assertIn("source: OneAgent config codex.executable", check.summary)
 
     def test_doctor_uses_selected_runtime_health(self) -> None:
         register_provider("runtime", "test-runtime", lambda _root=None: _Runtime(), replace=True)
@@ -1192,7 +1192,7 @@ exit 2
             root = Path(temp)
             chat = _Chat()
             runtime = _Runtime()
-            bot = OneagentApplication(load_identity(), root, chat, runtime=runtime)
+            bot = OneAgentApplication(load_identity(), root, chat, runtime=runtime)
             event = ChatEvent(
                 cursor=2,
                 conversation_id="room-1",
@@ -1227,7 +1227,7 @@ exit 2
             root = Path(temp)
             chat = _Chat()
             runtime = TypedRuntime()
-            app = OneagentApplication(load_identity(), root, chat, runtime=runtime)
+            app = OneAgentApplication(load_identity(), root, chat, runtime=runtime)
 
             with (
                 patch("oneagent.app.core.log_conversation_turn"),
@@ -1262,14 +1262,14 @@ exit 2
                     text="/status",
                 )
             ]
-            app = OneagentApplication(load_identity(), root, chat, runtime=runtime)
+            app = OneAgentApplication(load_identity(), root, chat, runtime=runtime)
 
             with (
                 patch("oneagent.app.core.log_conversation_turn"),
                 patch("oneagent.app.core.ensure_long_term_memory"),
             ):
                 app.run_once()
-                restarted = OneagentApplication(load_identity(), root, chat, runtime=runtime)
+                restarted = OneAgentApplication(load_identity(), root, chat, runtime=runtime)
                 restarted.run_once()
 
             state = (root / ".oneagent" / "channels" / "test-chat" / "cursor.json").read_text(
@@ -1286,7 +1286,7 @@ exit 2
             root = Path(temp)
             chat = _Chat()
             runtime = _Runtime()
-            app = OneagentApplication(load_identity(), root, chat, runtime=runtime)
+            app = OneAgentApplication(load_identity(), root, chat, runtime=runtime)
             event = ChatEvent(
                 cursor="image-2",
                 conversation_id="room-1",

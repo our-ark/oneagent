@@ -12,7 +12,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.app.epoch import StaleDaemonEpoch, begin_daemon_epoch
 from oneagent.extensions import (
     AGENT_EXTENSION_API_VERSION,
@@ -134,7 +134,7 @@ class _DenyRuntimeExecution:
         return AuthorizationDecision(allowed=True)
 
 
-class OneagentExtensionTests(unittest.TestCase):
+class OneAgentExtensionTests(unittest.TestCase):
     def test_extension_command_schedule_control_records_human_actor(self) -> None:
         def run_refresh(context):
             status = context.schedules.run_now(
@@ -163,7 +163,7 @@ class OneagentExtensionTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 chat,
@@ -209,7 +209,7 @@ class OneagentExtensionTests(unittest.TestCase):
         extension = AgentExtension(name="manager", schedules=(schedule,))
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -251,7 +251,7 @@ class OneagentExtensionTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -296,7 +296,7 @@ class OneagentExtensionTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            first_app = OneagentApplication(
+            first_app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -316,7 +316,7 @@ class OneagentExtensionTests(unittest.TestCase):
                 ),
             )
 
-            restarted = OneagentApplication(
+            restarted = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -362,7 +362,7 @@ class OneagentExtensionTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 chat,
@@ -423,7 +423,7 @@ class OneagentExtensionTests(unittest.TestCase):
             )
 
         with TemporaryDirectory() as temp:
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 _Chat(),
@@ -460,7 +460,7 @@ class OneagentExtensionTests(unittest.TestCase):
             ),
         )
         with TemporaryDirectory() as temp:
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 _UnlockedChat(),
@@ -499,7 +499,7 @@ class OneagentExtensionTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -969,7 +969,7 @@ class OneagentExtensionTests(unittest.TestCase):
         ) as record_event:
             root = Path(temp)
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 chat,
@@ -1016,7 +1016,7 @@ class OneagentExtensionTests(unittest.TestCase):
             "oneagent.app.core._record_system_event"
         ) as record_event:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -1119,7 +1119,7 @@ class OneagentExtensionTests(unittest.TestCase):
             "oneagent.app.core._record_system_event"
         ) as record_event:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -1185,7 +1185,7 @@ class OneagentExtensionTests(unittest.TestCase):
         ) as record_event:
             root = Path(temp)
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 chat,
@@ -1212,7 +1212,7 @@ class OneagentExtensionTests(unittest.TestCase):
         extension = AgentExtension(name="manager")
         with TemporaryDirectory() as temp:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -1256,7 +1256,7 @@ class OneagentExtensionTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -1322,7 +1322,7 @@ class OneagentExtensionTests(unittest.TestCase):
             ),
         )
         with TemporaryDirectory() as temp:
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 _Chat(),
@@ -1363,7 +1363,7 @@ class OneagentExtensionTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             root = Path(temp)
-            first = OneagentApplication(
+            first = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -1373,7 +1373,7 @@ class OneagentExtensionTests(unittest.TestCase):
             first.handle_event(_event("/project"))
             first.start()
 
-            restarted = OneagentApplication(
+            restarted = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -1450,7 +1450,7 @@ class OneagentExtensionTests(unittest.TestCase):
                     AgentExtensionError,
                     f"registered commands: {command}",
                 ):
-                    OneagentApplication(
+                    OneAgentApplication(
                         load_identity(),
                         Path(temp),
                         _Chat(),
@@ -1528,7 +1528,7 @@ class OneagentExtensionTests(unittest.TestCase):
                 AgentExtensionError,
                 "Duplicate agent extension",
             ):
-                OneagentApplication(
+                OneAgentApplication(
                     load_identity(),
                     Path(temp),
                     _Chat(),
@@ -1558,7 +1558,7 @@ class OneagentExtensionTests(unittest.TestCase):
             "oneagent.app.core._record_system_event"
         ) as record_event:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,

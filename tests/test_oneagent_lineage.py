@@ -56,20 +56,20 @@ from oneagent.providers.contracts import (
 from oneagent.tasks.queue import TaskJob
 
 
-class OneagentLineageTests(unittest.TestCase):
+class OneAgentLineageTests(unittest.TestCase):
     def test_parse_lineage_parent(self) -> None:
         parent = parse_lineage_parent(
             "\n".join(
                 [
                     "parent:",
-                    "  name: Oneagent",
+                    "  name: OneAgent",
                     "  repo: our-ark/oneagent",
                     "  branch: main",
                 ]
             )
         )
 
-        self.assertEqual(parent, ParentLink(name="Oneagent", repo="our-ark/oneagent", branch="main"))
+        self.assertEqual(parent, ParentLink(name="OneAgent", repo="our-ark/oneagent", branch="main"))
 
     def test_parse_lineage_parent_normalizes_github_url(self) -> None:
         parent = parse_lineage_parent(
@@ -118,13 +118,13 @@ class OneagentLineageTests(unittest.TestCase):
             path = root / ".agent" / "lineage.yaml"
             path.parent.mkdir()
             path.write_text(
-                "\n".join(["parent:", "  name: Oneagent", "  repo: our-ark/oneagent"]),
+                "\n".join(["parent:", "  name: OneAgent", "  repo: our-ark/oneagent"]),
                 encoding="utf-8",
             )
 
             parent = load_parent(root)
 
-        self.assertEqual(parent, ParentLink(name="Oneagent", repo="our-ark/oneagent", branch="main"))
+        self.assertEqual(parent, ParentLink(name="OneAgent", repo="our-ark/oneagent", branch="main"))
 
     def test_load_birth_commit_from_agent_lineage_file(self) -> None:
         birth_commit = "b" * 40
@@ -155,7 +155,7 @@ class OneagentLineageTests(unittest.TestCase):
 
             chain = resolve_lineage(root, client=FakeLineageClient()).ancestors
 
-        self.assertEqual([item.name for item in chain], ["Oneagent", "Lucy"])
+        self.assertEqual([item.name for item in chain], ["OneAgent", "Lucy"])
         self.assertEqual([item.depth for item in chain], [1, 2])
         self.assertIn("Lucy", format_lineage(chain))
 
@@ -166,7 +166,7 @@ class OneagentLineageTests(unittest.TestCase):
 
             resolution = resolve_lineage(root, client=client)
 
-        self.assertEqual([item.name for item in resolution.ancestors], ["Oneagent", "Lucy"])
+        self.assertEqual([item.name for item in resolution.ancestors], ["OneAgent", "Lucy"])
         self.assertEqual(client.remote_parent_calls, [("our-ark/oneagent", "main")])
         self.assertEqual(resolution.warnings, ())
 
@@ -197,13 +197,13 @@ class OneagentLineageTests(unittest.TestCase):
         self.assertIn("   Repo: our-ark/lucy@main", formatted)
         self.assertIn("   New skills: itu-talk, code, teach, learn", formatted)
         self.assertIn("   Pending: 2 changes", formatted)
-        self.assertIn("2. Oneagent", formatted)
+        self.assertIn("2. OneAgent", formatted)
         self.assertIn("   Relation: parent", formatted)
         self.assertIn("   Repo: our-ark/oneagent@main", formatted)
         self.assertIn("   New skills: telegram-talk, inherit, work", formatted)
         self.assertNotIn("teach (hidden)", formatted)
         self.assertIn("   Pending: 1 change", formatted)
-        self.assertIn("3. Oneagent (current)", formatted)
+        self.assertIn("3. OneAgent (current)", formatted)
         self.assertIn("   Relation: current agent", formatted)
         self.assertIn("   Source: src/oneagent/body.yaml", formatted)
         self.assertIn(
@@ -216,7 +216,7 @@ class OneagentLineageTests(unittest.TestCase):
 
         self.assertIsNotNone(current_agent)
         assert current_agent is not None
-        self.assertEqual(current_agent.name, "Oneagent")
+        self.assertEqual(current_agent.name, "OneAgent")
         self.assertIn("code", current_agent.skills)
         self.assertIn("evolve", current_agent.skills)
 
@@ -225,7 +225,7 @@ class OneagentLineageTests(unittest.TestCase):
             parse_declared_skills(
                 "\n".join(
                     [
-                        "name: Oneagent",
+                        "name: OneAgent",
                         "skills:",
                         "  - name: code",
                         "    path: src/oneagent/skills/code",
@@ -239,7 +239,7 @@ class OneagentLineageTests(unittest.TestCase):
         )
 
     def test_parse_identity_name_from_identity_yaml(self) -> None:
-        self.assertEqual(parse_identity_name("name: Oneagent\nkind: agent\n"), "Oneagent")
+        self.assertEqual(parse_identity_name("name: OneAgent\nkind: agent\n"), "OneAgent")
 
     def test_resolve_lineage_reports_inaccessible_parent_lineage(self) -> None:
         with TemporaryDirectory() as temp:
@@ -248,7 +248,7 @@ class OneagentLineageTests(unittest.TestCase):
             resolution = resolve_lineage(root, client=BlockedLineageClient())
             formatted = format_lineage(resolution.ancestors, resolution.warnings)
 
-        self.assertEqual([item.name for item in resolution.ancestors], ["Oneagent"])
+        self.assertEqual([item.name for item in resolution.ancestors], ["OneAgent"])
         self.assertEqual(len(resolution.warnings), 1)
         self.assertIn("Could not read parent lineage from our-ark/oneagent@main", resolution.warnings[0])
         self.assertIn("Warnings:", formatted)
@@ -512,7 +512,7 @@ class OneagentLineageTests(unittest.TestCase):
                             "summary": "Adds a configurable reasoning command.",
                             "behavioral_change": "Users can select reasoning effort.",
                             "applicability": "applicable",
-                            "rationale": "Oneagent exposes runtime configuration.",
+                            "rationale": "OneAgent exposes runtime configuration.",
                             "proposed_adaptation": "Adapt the provider-neutral setting.",
                             "risks": ["Model capabilities differ."],
                             "likely_files": ["src/oneagent/commands.py"],
@@ -526,14 +526,14 @@ class OneagentLineageTests(unittest.TestCase):
                 report,
                 root,
                 generator=generator,
-                mission="Help Roy operate and improve Oneagent.",
+                mission="Help Roy operate and improve OneAgent.",
             )
             candidate = find_inbox_candidate("our-ark/oneagent#32", root)
             cached = assess_lineage_inbox(
                 assessed,
                 root,
                 generator=lambda _prompt: self.fail("cached change was reassessed"),
-                mission="Help Roy operate and improve Oneagent.",
+                mission="Help Roy operate and improve OneAgent.",
             )
 
         assert candidate is not None
@@ -572,7 +572,7 @@ class OneagentLineageTests(unittest.TestCase):
                 generator=lambda _prompt: self.fail(
                     "an unconfigured parent must not trigger assessment"
                 ),
-                mission="Help Roy operate Oneagent.",
+                mission="Help Roy operate OneAgent.",
             )
 
         self.assertEqual(assessed.ancestors, ())
@@ -592,7 +592,7 @@ class OneagentLineageTests(unittest.TestCase):
                 report,
                 root,
                 generator=lambda _prompt: "not json",
-                mission="Help Roy operate Oneagent.",
+                mission="Help Roy operate OneAgent.",
             )
             candidate = find_inbox_candidate("our-ark/oneagent#32", root)
 
@@ -639,7 +639,7 @@ class OneagentLineageTests(unittest.TestCase):
                 report,
                 root,
                 generator=generator,
-                mission="Help Roy operate Oneagent.",
+                mission="Help Roy operate OneAgent.",
                 progress_callback=progress.append,
             )
 
@@ -730,7 +730,7 @@ class OneagentLineageTests(unittest.TestCase):
                     "our-ark/oneagent#32",
                     applicability=APPLICABILITY_NOT_APPLICABLE,
                 ),
-                mission="Help Roy operate Oneagent.",
+                mission="Help Roy operate OneAgent.",
             )
             from oneagent.lineage.core import link_inbox_candidate
 
@@ -987,7 +987,7 @@ class BlockedLineageClient(FakeLineageClient):
 def _root_with_parent(root: Path, *, commit_at_birth: str = "") -> Path:
     path = root / ".agent" / "lineage.yaml"
     path.parent.mkdir()
-    lines = ["parent:", "  name: Oneagent", "  repo: our-ark/oneagent"]
+    lines = ["parent:", "  name: OneAgent", "  repo: our-ark/oneagent"]
     if commit_at_birth:
         lines.append(f"  commit_at_birth: {commit_at_birth}")
     path.write_text(
@@ -1044,7 +1044,7 @@ def _lineage_candidate_fixture() -> LineageCandidate:
         url="https://github.com/our-ark/oneagent/pull/32",
         merged_at="2026-06-17T01:31:12Z",
         merge_commit="oneagent-merge",
-        ancestor_name="Oneagent",
+        ancestor_name="OneAgent",
         depth=1,
         labels=(),
         files=("src/oneagent/app/core.py",),

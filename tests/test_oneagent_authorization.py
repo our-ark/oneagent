@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.identity import load_identity
 from oneagent.profiles import AgentProfile, CapabilityPolicy, CommandSpec
 from oneagent.providers import (
@@ -21,7 +21,7 @@ class CapabilityAuthorizationTests(unittest.TestCase):
     def test_read_only_response_does_not_require_repository_work(self) -> None:
         with TemporaryDirectory() as directory:
             runtime = _LimitedRuntime("runtime.respond")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(directory),
                 _Chat(),
@@ -38,7 +38,7 @@ class CapabilityAuthorizationTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             runtime = _LimitedRuntime("runtime.respond")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -72,7 +72,7 @@ class CapabilityAuthorizationTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             runtime = _LimitedRuntime("runtime.respond", "runtime.execute")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -115,7 +115,7 @@ class CapabilityAuthorizationTests(unittest.TestCase):
         )
         with TemporaryDirectory() as directory:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(directory),
                 chat,
@@ -147,7 +147,7 @@ class CapabilityAuthorizationTests(unittest.TestCase):
     def test_application_accepts_injected_authorization_policy(self) -> None:
         with TemporaryDirectory() as directory:
             runtime = _LimitedRuntime("runtime.respond", "runtime.execute")
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(directory),
                 _Chat(),
@@ -163,7 +163,7 @@ class CapabilityAuthorizationTests(unittest.TestCase):
     def test_task_requirements_are_persisted(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),

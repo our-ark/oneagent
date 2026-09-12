@@ -20,7 +20,7 @@ from oneagent.evolution.events import (
 )
 
 
-class OneagentEvolveEventTests(unittest.TestCase):
+class OneAgentEvolveEventTests(unittest.TestCase):
     def test_records_and_filters_evolution_funnel_events(self) -> None:
         candidate = _candidate()
         with TemporaryDirectory() as temp:

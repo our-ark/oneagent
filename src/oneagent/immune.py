@@ -221,9 +221,9 @@ def _validation_python_and_backend_check(
         return validation_python, DoctorCheckResult(
             name=check.name,
             passed=False,
-            command="provision Oneagent-managed validation environment",
+            command="provision OneAgent-managed validation environment",
             output=_join_output(
-                "Oneagent could not prepare its managed validation environment.",
+                "OneAgent could not prepare its managed validation environment.",
                 str(error),
                 "Original build-backend check:",
                 check.output,
@@ -483,7 +483,7 @@ def _codex_binary_check(
             for part in (
                 "Codex binary was not found.",
                 resolution.detail,
-                "Set codex.executable in Oneagent config, set ONEAGENT_CODEX_BIN, "
+                "Set codex.executable in OneAgent config, set ONEAGENT_CODEX_BIN, "
                 "or install codex on PATH.",
             )
             if part

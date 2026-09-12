@@ -17,7 +17,7 @@ from oneagent.immune import DoctorCheckResult, DoctorDiagnosis
 from oneagent.identity import load_identity
 
 
-class OneagentCliTests(unittest.TestCase):
+class OneAgentCliTests(unittest.TestCase):
     def test_admin_registry_drives_help_and_detailed_usage(self) -> None:
         overview = admin_help()
 
@@ -34,26 +34,26 @@ class OneagentCliTests(unittest.TestCase):
         output = _run_repl_commands("help", "exit")
 
         self.assertIn("status      Show identity, model, and lineage.", output)
-        self.assertIn("init        Create or claim a local Oneagent instance worktree.", output)
+        self.assertIn("init        Create or claim a local OneAgent instance worktree.", output)
         self.assertIn("setup       Configure the selected chat provider and lineage.", output)
-        self.assertIn("thinking    Show or set Oneagent's Codex thinking level.", output)
-        self.assertIn("mission     Show or update Oneagent's mission.", output)
+        self.assertIn("thinking    Show or set OneAgent's Codex thinking level.", output)
+        self.assertIn("mission     Show or update OneAgent's mission.", output)
         self.assertNotIn("memory      Manage long-term memory", output)
         self.assertIn("ancestors   Inspect ancestor chain and inheritable updates.", output)
         self.assertIn("inherit     Scan or inspect stored direct-parent changes.", output)
-        self.assertIn("skills      Show declared skills for Oneagent or another local agent.", output)
+        self.assertIn("skills      Show declared skills for OneAgent or another local agent.", output)
         self.assertNotIn("teach       Package local changes as a portable lesson.", output)
         self.assertIn("learn       Inspect a published skill for adaptation.", output)
         self.assertNotIn("debug       Inspect prompts, logs, state files, and worktree health.", output)
         self.assertNotIn("mode        Show or set chat/work mode.", output)
-        self.assertIn("doctor      Run Oneagent's local health checks", output)
+        self.assertIn("doctor      Run OneAgent's local health checks", output)
         self.assertIn("state       Validate or migrate private runtime state.", output)
         self.assertIn("migration   Export, inspect, import, or verify a host migration.", output)
         self.assertIn(
-            "update      Update from the authoritative repository, run doctor, and restart Oneagent if safe.",
+            "update      Update from the authoritative repository, run doctor, and restart OneAgent if safe.",
             output,
         )
-        self.assertIn("Oneagent CLI is admin-only.", output)
+        self.assertIn("OneAgent CLI is admin-only.", output)
         self.assertNotIn("lastinput   Shortcut", output)
         self.assertNotIn("checktree   Shortcut", output)
         self.assertNotIn("Natural input is classified", output)
@@ -63,8 +63,8 @@ class OneagentCliTests(unittest.TestCase):
         output = _run_repl_commands("status", "exit")
 
         model_summary.assert_called_once_with(ROOT)
-        self.assertIn("Oneagent status:", output)
-        self.assertIn("I am Oneagent.", output)
+        self.assertIn("OneAgent status:", output)
+        self.assertIn("I am OneAgent.", output)
         self.assertIn("Mission:", output)
         self.assertIn("AI model: gpt-5-codex", output)
         self.assertNotIn("action mode", output)
@@ -81,7 +81,7 @@ class OneagentCliTests(unittest.TestCase):
             self.assertIn('name: "gary"', text)
             self.assertIn('package: "oneagent"', text)
             self.assertIn(f'path: "{root.resolve()}"', text)
-            self.assertIn("Initialized current worktree instance for Oneagent.", output)
+            self.assertIn("Initialized current worktree instance for OneAgent.", output)
             self.assertIn(f"Metadata: {metadata.resolve()}", output)
 
     def test_init_can_create_linked_git_worktree_instance(self) -> None:
@@ -90,7 +90,7 @@ class OneagentCliTests(unittest.TestCase):
             instance = Path(directory) / "instances" / "gary-oneagent"
             root.mkdir()
             _git(root, "init")
-            (root / "README.md").write_text("Oneagent\n", encoding="utf-8")
+            (root / "README.md").write_text("OneAgent\n", encoding="utf-8")
             _git(root, "add", ".")
             _git(root, "commit", "-m", "seed")
 
@@ -107,7 +107,7 @@ class OneagentCliTests(unittest.TestCase):
             self.assertIn('name: "gary"', text)
             self.assertIn(f'path: "{instance.resolve()}"', text)
             self.assertIn('branch: "agent/oneagent-gary"', text)
-            self.assertIn("Created worktree instance for Oneagent.", output)
+            self.assertIn("Created worktree instance for OneAgent.", output)
             self.assertIn(f"Worktree: {instance.resolve()}", output)
 
     @patch("oneagent.cli.model_summary", return_value="AI model: gpt-5-codex")
@@ -143,25 +143,25 @@ class OneagentCliTests(unittest.TestCase):
         lineage_command.assert_called_once_with("ancestors", ROOT, prefix="", command_name="ancestors")
         self.assertIn("Ancestors: no direct parent configured.", output)
 
-    @patch("oneagent.cli.skills_command", return_value="Oneagent skills:")
+    @patch("oneagent.cli.skills_command", return_value="OneAgent skills:")
     def test_skills_command_uses_shared_command(self, skills_command: MagicMock) -> None:
         output = _run_repl_commands("skills lucy", "exit")
 
         skills_command.assert_called_once_with("skills lucy", ROOT, prefix="")
-        self.assertIn("Oneagent skills:", output)
+        self.assertIn("OneAgent skills:", output)
 
     def test_teach_command_is_not_user_facing(self) -> None:
         output = _run_repl_commands("teach natural agency", "exit")
 
-        self.assertIn("Oneagent CLI is admin-only now.", output)
-        self.assertNotIn("Oneagent created a lesson.", output)
+        self.assertIn("OneAgent CLI is admin-only now.", output)
+        self.assertNotIn("OneAgent created a lesson.", output)
 
-    @patch("oneagent.cli.learn_command", return_value="Oneagent inspected Lucy's teach skill.")
+    @patch("oneagent.cli.learn_command", return_value="OneAgent inspected Lucy's teach skill.")
     def test_learn_command_uses_shared_command(self, learn_command: MagicMock) -> None:
         output = _run_repl_commands("learn teach from lucy", "exit")
 
         learn_command.assert_called_once_with("learn teach from lucy", ROOT, prefix="")
-        self.assertIn("Oneagent inspected Lucy's teach skill.", output)
+        self.assertIn("OneAgent inspected Lucy's teach skill.", output)
 
     @patch("oneagent.cli._schedule_daemon_restart")
     @patch("oneagent.cli._record_direct_action")
@@ -172,7 +172,7 @@ class OneagentCliTests(unittest.TestCase):
         record_direct_action: MagicMock,
         schedule_restart: MagicMock,
     ) -> None:
-        update_from_authoritative.return_value.message = "Oneagent pulled latest main and doctor passed."
+        update_from_authoritative.return_value.message = "OneAgent pulled latest main and doctor passed."
         update_from_authoritative.return_value.direct_action_result = "Updating 1111111..2222222"
         update_from_authoritative.return_value.restart_required = True
 
@@ -185,12 +185,12 @@ class OneagentCliTests(unittest.TestCase):
             ROOT,
         )
         schedule_restart.assert_called_once_with(ROOT)
-        self.assertIn("Oneagent pulled latest main and doctor passed.", output)
+        self.assertIn("OneAgent pulled latest main and doctor passed.", output)
 
     def test_unknown_input_is_admin_only_message(self) -> None:
         output = _run_repl_commands("add test4 to README", "commit this", "exit")
 
-        self.assertEqual(output.count("Oneagent CLI is admin-only now."), 2)
+        self.assertEqual(output.count("OneAgent CLI is admin-only now."), 2)
         self.assertIn(
             "Use the configured chat provider for conversation, repository edits, and self-evolution.",
             output,
@@ -245,7 +245,7 @@ class OneagentCliTests(unittest.TestCase):
                 root=root,
             )
 
-        self.assertEqual(output.count("Oneagent CLI is admin-only now."), 2)
+        self.assertEqual(output.count("OneAgent CLI is admin-only now."), 2)
         self.assertFalse((root / ".oneagent" / "config.yaml").exists())
 
     def test_setup_ancestor_writes_repo_side_lineage_parent(self) -> None:
@@ -275,7 +275,7 @@ class OneagentCliTests(unittest.TestCase):
             output = _run_repl_commands(
                 "setup ancestor our-ark/research-agent",
                 "setup ancestor https://github.com/our-ark/oneagent dev",
-                "setup ancestor https://github.com/our-ark/oneagent --name Oneagent",
+                "setup ancestor https://github.com/our-ark/oneagent --name OneAgent",
                 "exit",
                 root=root,
             )
@@ -304,7 +304,7 @@ class OneagentCliTests(unittest.TestCase):
         output = _run_repl_commands("thinking", "exit")
 
         model_summary.assert_called_once_with(ROOT)
-        self.assertIn("Oneagent thinking status:", output)
+        self.assertIn("OneAgent thinking status:", output)
         self.assertIn("thinking xhigh", output)
         self.assertIn("thinking max", output)
         self.assertIn("thinking ultra", output)
@@ -359,7 +359,7 @@ class OneagentCliTests(unittest.TestCase):
         ]
         run_immune_system.return_value.diagnosis = DoctorDiagnosis(
             summary="1 test(s) failed.",
-            failing_tests=["tests.test_oneagent_cli.OneagentCliTests.test_help"],
+            failing_tests=["tests.test_oneagent_cli.OneAgentCliTests.test_help"],
             likely_files=["tests/test_oneagent_cli.py"],
             suggested_action="Inspect the failing tests, make one focused repair pass, then run doctor again.",
         )
@@ -369,7 +369,7 @@ class OneagentCliTests(unittest.TestCase):
         self.assertIn("Doctor failed.", output)
         self.assertIn("- tests: failed (FAILED (failures=1))", output)
         self.assertIn("Diagnosis: 1 test(s) failed.", output)
-        self.assertIn("- tests.test_oneagent_cli.OneagentCliTests.test_help", output)
+        self.assertIn("- tests.test_oneagent_cli.OneAgentCliTests.test_help", output)
         self.assertIn("- tests/test_oneagent_cli.py", output)
         self.assertIn("Failed check: tests", output)
         self.assertIn("Check output:", output)
@@ -415,7 +415,7 @@ def _git(root: Path, *args: str) -> None:
         [
             "git",
             "-c",
-            "user.name=Oneagent Test",
+            "user.name=OneAgent Test",
             "-c",
             "user.email=oneagent-test@example.com",
             *args,

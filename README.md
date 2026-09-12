@@ -1,6 +1,10 @@
-# Oneagent
+# OneAgent
 
-Oneagent is a Genesis-created agent descended from Enoch.
+OneAgent is a Genesis-created agent descended from Enoch.
+
+This repository is the Enoch-derived starting point for the team’s implementation
+of *One Agent, Anywhere*. It currently contains inherited Enoch capabilities only;
+UAAP and cross-application features have not been added. No Ruth code is included.
 
 ## Mission
 

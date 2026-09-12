@@ -28,14 +28,14 @@ from oneagent.extensions.schedules import (
 )
 
 
-class OneagentExtensionScheduleConformanceTests(
+class OneAgentExtensionScheduleConformanceTests(
     ExtensionScheduleConformanceMixin,
     unittest.TestCase,
 ):
     pass
 
 
-class OneagentExtensionScheduleTests(unittest.TestCase):
+class OneAgentExtensionScheduleTests(unittest.TestCase):
     def test_schedule_spec_is_bounded_and_normalized(self) -> None:
         spec = ExtensionScheduleSpec(
             " Daily-Refresh ",

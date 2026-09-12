@@ -4,7 +4,7 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import MagicMock, patch
 
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.app.effects import DaemonEffectFence
 from oneagent.app.epoch import StaleDaemonEpoch, begin_daemon_epoch
 from oneagent.app.models import WorkOutcome
@@ -18,14 +18,14 @@ class DaemonEffectFenceTests(unittest.TestCase):
             root = Path(directory)
             runtime = _Runtime()
             forge = MagicMock()
-            stale = OneagentApplication(
+            stale = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
                 runtime=runtime,
                 forge=forge,
             )
-            OneagentApplication(load_identity(), root, _Chat())
+            OneAgentApplication(load_identity(), root, _Chat())
 
             with self.assertRaises(StaleDaemonEpoch):
                 stale._respond_read_only_turn(42, "hello")
@@ -77,7 +77,7 @@ class DaemonEffectFenceTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             chat = _Chat()
-            app = OneagentApplication(load_identity(), root, chat, runtime=_Runtime())
+            app = OneAgentApplication(load_identity(), root, chat, runtime=_Runtime())
             queued = app.workflow.enqueue(42, "do the work")
             job = app.workflow.start_next()
             assert job is not None

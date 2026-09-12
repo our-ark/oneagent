@@ -69,7 +69,7 @@ def validate_storage_layout(layout: StorageLayout) -> StorageLayout:
     if layout.api_version != STORAGE_API_VERSION:
         raise StorageLayoutError(
             f"Storage layout uses API version {layout.api_version}; "
-            f"Oneagent supports version {STORAGE_API_VERSION}."
+            f"OneAgent supports version {STORAGE_API_VERSION}."
         )
     if layout.software_body == layout.private_state:
         raise StorageLayoutError("Software body and private state must use different roots.")

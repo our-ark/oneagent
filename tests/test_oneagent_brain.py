@@ -28,7 +28,7 @@ from oneagent.memory.store import remember_memory
 from oneagent.providers import RuntimeExecutionControl
 
 
-class OneagentBrainTests(unittest.TestCase):
+class OneAgentBrainTests(unittest.TestCase):
     def test_default_progress_interval_is_one_minute(self) -> None:
         self.assertEqual(brain.DEFAULT_PROGRESS_INTERVAL_SECONDS, 60)
 
@@ -46,7 +46,7 @@ class OneagentBrainTests(unittest.TestCase):
                 summary = model_summary()
 
         self.assertIn("AI model: Codex CLI default", summary)
-        self.assertIn("Oneagent config codex.model", summary)
+        self.assertIn("OneAgent config codex.model", summary)
         self.assertIn("Codex config model are not set", summary)
 
     def test_model_summary_reports_codex_config_model_and_reasoning(self) -> None:
@@ -123,9 +123,9 @@ class OneagentBrainTests(unittest.TestCase):
                 summary = model_summary(root)
 
         self.assertIn("AI model: gpt-oneagent-local", summary)
-        self.assertIn("Model source: Oneagent config codex.model", summary)
+        self.assertIn("Model source: OneAgent config codex.model", summary)
         self.assertIn("Reasoning effort: high", summary)
-        self.assertIn("Reasoning source: Oneagent config codex.reasoning_effort", summary)
+        self.assertIn("Reasoning source: OneAgent config codex.reasoning_effort", summary)
 
     def test_model_summary_reports_oneagent_reasoning_override(self) -> None:
         with TemporaryDirectory() as temp:
@@ -137,7 +137,7 @@ class OneagentBrainTests(unittest.TestCase):
             summary = model_summary(root)
 
         self.assertIn("Reasoning effort: high", summary)
-        self.assertIn("Reasoning source: Oneagent config codex.reasoning_effort", summary)
+        self.assertIn("Reasoning source: OneAgent config codex.reasoning_effort", summary)
 
     @patch("oneagent.brain._codex_binary", return_value="/usr/local/bin/codex")
     @patch("oneagent.brain.subprocess.run")
@@ -250,7 +250,7 @@ class OneagentBrainTests(unittest.TestCase):
                 summary = model_summary(root)
 
         self.assertIn("AI model: gpt-oneagent-local", summary)
-        self.assertIn("Model source: Oneagent config codex.model", summary)
+        self.assertIn("Model source: OneAgent config codex.model", summary)
 
     @patch("oneagent.brain.shutil.which", return_value="/usr/local/bin/codex")
     @patch("oneagent.brain.subprocess.run")
@@ -520,7 +520,7 @@ class OneagentBrainTests(unittest.TestCase):
         prompt = run.call_args.kwargs["input"]
         self.assertEqual(answer, "Hello Roy")
         self.assertNotIn("--ephemeral", args)
-        self.assertIn("Oneagent startup context:", prompt)
+        self.assertIn("OneAgent startup context:", prompt)
         self.assertIn("Identity and long-term memory.", prompt)
         self.assertIn("Human message:\n\nhello", prompt)
         _memory.assert_called_once_with(root, identity=load_identity())
@@ -566,7 +566,7 @@ class OneagentBrainTests(unittest.TestCase):
         self.assertIsNotNone(state)
         assert state is not None
         self.assertEqual(state.turn_count, 10)
-        self.assertNotIn("Persistent Oneagent context sync:", last_input)
+        self.assertNotIn("Persistent OneAgent context sync:", last_input)
         self.assertIn("resumed session: yes", last_input)
         self.assertIn("session id: session-123", last_input)
 
@@ -639,7 +639,7 @@ class OneagentBrainTests(unittest.TestCase):
         args = run.call_args.args[0]
         prompt = run.call_args.kwargs["input"]
         self.assertNotIn("resume", args)
-        self.assertIn("Oneagent startup context:", prompt)
+        self.assertIn("OneAgent startup context:", prompt)
         self.assertIn("Old memory should not be sent.", prompt)
         self.assertIn("Human message:\n\nhello", prompt)
         _memory.assert_called_once_with(root, identity=load_identity())
@@ -741,7 +741,7 @@ class OneagentBrainTests(unittest.TestCase):
 
     @patch(
         "oneagent.brain._run_codex_result",
-        side_effect=BrainCancelled("Oneagent cancelled the active Codex run."),
+        side_effect=BrainCancelled("OneAgent cancelled the active Codex run."),
     )
     def test_act_in_session_does_not_retry_cancelled_session(
         self, run_codex: MagicMock
@@ -772,7 +772,7 @@ class OneagentBrainTests(unittest.TestCase):
 
     @patch(
         "oneagent.brain._run_codex_result",
-        side_effect=BrainTimedOut("Oneagent waited too long for Codex to answer."),
+        side_effect=BrainTimedOut("OneAgent waited too long for Codex to answer."),
     )
     def test_respond_does_not_retry_or_forget_timed_out_session(
         self, run_codex: MagicMock
@@ -873,7 +873,7 @@ class OneagentBrainTests(unittest.TestCase):
             resolution = brain.resolve_codex_executable(root)
 
         self.assertEqual(resolution.path, str(configured))
-        self.assertEqual(resolution.source, "Oneagent config codex.executable")
+        self.assertEqual(resolution.source, "OneAgent config codex.executable")
 
     @patch("oneagent.brain.shutil.which", return_value="/usr/local/bin/codex")
     def test_environment_codex_executable_precedes_oneagent_config(self, _which: MagicMock) -> None:
@@ -920,7 +920,7 @@ class OneagentBrainTests(unittest.TestCase):
             resolution = brain.resolve_codex_executable(root)
 
         self.assertIsNone(resolution.path)
-        self.assertEqual(resolution.source, "Oneagent config codex.executable")
+        self.assertEqual(resolution.source, "OneAgent config codex.executable")
         self.assertIn("does not exist or is not executable", resolution.detail)
 
     @patch("oneagent.brain.time.sleep", side_effect=KeyboardInterrupt)

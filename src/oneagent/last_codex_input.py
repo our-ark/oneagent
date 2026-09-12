@@ -57,7 +57,7 @@ def last_codex_input_message(root: Path | None = None) -> str:
         lines.extend(
             [
                 "",
-                "Note: this is the exact new input Oneagent sent to Codex. The token count can also include Codex-managed context from the resumed session.",
+                "Note: this is the exact new input OneAgent sent to Codex. The token count can also include Codex-managed context from the resumed session.",
             ]
         )
     lines.extend(["", "Input payload:", "```text", prompt, "```"])

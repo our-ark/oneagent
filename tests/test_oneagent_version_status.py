@@ -61,7 +61,7 @@ def _status(
     return output, provider
 
 
-class OneagentVersionStatusTests(unittest.TestCase):
+class OneAgentVersionStatusTests(unittest.TestCase):
     def test_all_revisions_equal_is_current(self) -> None:
         revision = "1111111111111111111111111111111111111111"
 

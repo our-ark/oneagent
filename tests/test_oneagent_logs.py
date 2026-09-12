@@ -13,7 +13,7 @@ from oneagent.logs import conversation_log_path, log_conversation_turn, log_syst
 from oneagent.paths import oneagent_home
 
 
-class OneagentLogsTests(unittest.TestCase):
+class OneAgentLogsTests(unittest.TestCase):
     def test_conversation_turns_are_written_to_daily_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

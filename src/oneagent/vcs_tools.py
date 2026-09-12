@@ -1,4 +1,4 @@
-"""Provider-neutral version-control operations used by Oneagent core."""
+"""Provider-neutral version-control operations used by OneAgent core."""
 
 from __future__ import annotations
 

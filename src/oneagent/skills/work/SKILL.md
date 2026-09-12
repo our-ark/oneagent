@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use this skill when Oneagent should manage persistent work instead of treating every request as a single foreground chat turn.
+Use this skill when OneAgent should manage persistent work instead of treating every request as a single foreground chat turn.
 
 The work skill covers three core execution modes:
 
@@ -24,7 +24,7 @@ Worker state is local runtime state under `.oneagent/`:
 - `.oneagent/cron.json`
 - `.oneagent/artifacts/learning/`
 
-Do not treat every successful job as inheritable. Oneagent records an inheritable learning artifact only when completed work changes a skill package under `src/<agent>/skills/<skill-name>/`.
+Do not treat every successful job as inheritable. OneAgent records an inheritable learning artifact only when completed work changes a skill package under `src/<agent>/skills/<skill-name>/`.
 
 ## Operation
 
@@ -75,6 +75,6 @@ When work is queued:
 
 ## Inheritance
 
-This is Oneagent's explicit work capability. Descendant agents can inherit it when they need autonomous background work, scheduled maintenance, or skill-level learning artifacts.
+This is OneAgent's explicit work capability. Descendant agents can inherit it when they need autonomous background work, scheduled maintenance, or skill-level learning artifacts.
 
-Implicit teaching is part of the work model: Oneagent does not expose `/teach`, but successful skill changes can produce inheritable skill artifacts automatically.
+Implicit teaching is part of the work model: OneAgent does not expose `/teach`, but successful skill changes can produce inheritable skill artifacts automatically.

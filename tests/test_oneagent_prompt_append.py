@@ -22,7 +22,7 @@ from oneagent.prompt_append import (
 )
 
 
-class OneagentPromptAppendTests(unittest.TestCase):
+class OneAgentPromptAppendTests(unittest.TestCase):
     def test_read_only_prompt_points_work_to_commands(self) -> None:
         prompt = read_only_turn_prompt("make the CLI clearer")
 
@@ -35,7 +35,7 @@ class OneagentPromptAppendTests(unittest.TestCase):
         self.assertNotIn(EDIT_REQUEST_START, prompt)
         self.assertIn(MEMORY_REQUEST_START, prompt)
         self.assertIn(TASK_REGRESSION_START, prompt)
-        self.assertIn("Oneagent owns regression bookkeeping", prompt)
+        self.assertIn("OneAgent owns regression bookkeeping", prompt)
         self.assertNotIn("Roy", prompt)
 
     def test_read_only_prompt_uses_secondary_chat_command_prefix(self) -> None:

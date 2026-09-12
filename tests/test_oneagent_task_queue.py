@@ -60,7 +60,7 @@ from oneagent.tasks.events import (
 from oneagent.tasks import queue as task_queue
 
 
-class OneagentTaskQueueTests(unittest.TestCase):
+class OneAgentTaskQueueTests(unittest.TestCase):
     def test_schema_11_queue_is_read_and_rewritten_with_neutral_fields(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)

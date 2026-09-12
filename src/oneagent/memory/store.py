@@ -133,7 +133,7 @@ def apply_memory_candidates(
 def forget_memory(query: str, root: Path | None = None) -> ForgetResult:
     normalized = normalize(query)
     if not normalized:
-        return ForgetResult(0, 0, "Tell Oneagent which memory to forget.")
+        return ForgetResult(0, 0, "Tell OneAgent which memory to forget.")
 
     path = long_term_memory_path(root)
     with file_transaction(path):

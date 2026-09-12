@@ -24,7 +24,7 @@ VERIFY_TIMEOUT_SECONDS = 30
 
 
 class ValidationEnvironmentError(RuntimeError):
-    """Raised when Oneagent cannot prepare its isolated test environment."""
+    """Raised when OneAgent cannot prepare its isolated test environment."""
 
 
 @dataclass(frozen=True)
@@ -97,7 +97,7 @@ def ensure_validation_environment(
         raise
     except OSError as error:
         raise ValidationEnvironmentError(
-            f"Could not prepare Oneagent's managed validation environment: {error}"
+            f"Could not prepare OneAgent's managed validation environment: {error}"
         ) from error
 
 
@@ -251,7 +251,7 @@ def _create_environment(spec: _EnvironmentSpec, temporary: Path) -> None:
     )
     if creation.returncode != 0:
         raise ValidationEnvironmentError(
-            "Could not create Oneagent's managed validation environment: "
+            "Could not create OneAgent's managed validation environment: "
             + _command_error(creation)
         )
 
@@ -286,7 +286,7 @@ def _create_environment(spec: _EnvironmentSpec, temporary: Path) -> None:
     )
     if installation.returncode != 0:
         raise ValidationEnvironmentError(
-            "Could not install Oneagent's validation prerequisites: "
+            "Could not install OneAgent's validation prerequisites: "
             + _command_error(installation)
         )
     if not _backend_is_available(

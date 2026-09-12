@@ -29,7 +29,7 @@ def setup_command(
             prefix=prefix,
         )
     except ProviderError as error:
-        return f"Oneagent could not configure the chat provider: {error}"
+        return f"OneAgent could not configure the chat provider: {error}"
 
 
 def ancestor_setup_command(argument: str, root: Path, *, prefix: str = "") -> str:
@@ -70,7 +70,7 @@ def save_ancestor(name: str, repo: str, branch: str, root: Path) -> str:
     )
     parent = parse_lineage_parent(text)
     if parent is None:
-        return "Oneagent could not parse that lineage parent."
+        return "OneAgent could not parse that lineage parent."
     path = root / LINEAGE_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")

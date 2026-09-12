@@ -55,7 +55,7 @@ from oneagent.workflows.contracts import (
 
 
 class LocalWorkflowEngine:
-    """File-backed single-owner workflow engine used by Oneagent."""
+    """File-backed single-owner workflow engine used by OneAgent."""
 
     api_version = WORKFLOW_API_VERSION
     features = frozenset(

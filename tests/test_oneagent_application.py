@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from oneagent.app.core import OneagentApplication, TaskContextSnapshot
+from oneagent.app.core import OneAgentApplication, TaskContextSnapshot
 from oneagent.application import (
     APPLICATION_COMPOSITION_API_VERSION,
     ApplicationComposition,
@@ -192,14 +192,14 @@ class ApplicationCompositionTests(unittest.TestCase):
             shutil.copyfile(ROOT / "src/oneagent/body.yaml", identity_path)
             identity_path.write_text(
                 identity_path.read_text(encoding="utf-8").replace(
-                    "name: Oneagent",
+                    "name: OneAgent",
                     "name: Noah",
                     1,
                 ),
                 encoding="utf-8",
             )
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(identity_path),
                 root,
                 chat,
@@ -271,7 +271,7 @@ class ApplicationCompositionTests(unittest.TestCase):
         )
         chat = _PeerChat()
         with TemporaryDirectory() as temp:
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -289,7 +289,7 @@ class ApplicationCompositionTests(unittest.TestCase):
                 )
             )
 
-        self.assertEqual(received, [("Oneagent", "/shutdown", "lily")])
+        self.assertEqual(received, [("OneAgent", "/shutdown", "lily")])
         self.assertEqual(chat.sent, [])
 
     def test_descendant_delivery_preserves_literal_content(self) -> None:
@@ -439,7 +439,7 @@ class ApplicationCompositionTests(unittest.TestCase):
 
     @staticmethod
     def _presented_application(root, chat, identity, *, presentation=None, **kwargs):
-        return OneagentApplication(
+        return OneAgentApplication(
             identity,
             root,
             chat,

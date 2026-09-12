@@ -405,8 +405,8 @@ def evidence_candidate_prompt(
         {
             "evidence_ids": ["existing evidence ID"],
             "title": "short candidate title",
-            "rationale": "why the cited evidence supports a durable Oneagent improvement",
-            "proposed_change": "small reversible change to Oneagent's body or workflow",
+            "rationale": "why the cited evidence supports a durable OneAgent improvement",
+            "proposed_change": "small reversible change to OneAgent's body or workflow",
             "expected_benefit": "specific observable benefit",
             "risk": "specific bounded risk",
             "test_plan": "specific verification plan",
@@ -420,7 +420,7 @@ def evidence_candidate_prompt(
             "Returning an empty array is valid when no evidence supports a durable actionable change.",
             "Reference only supplied evidence IDs and do not combine feedback and experience in one candidate.",
             "Do not duplicate an existing candidate.",
-            "Candidates must improve Oneagent itself, not merely repeat ordinary user work.",
+            "Candidates must improve OneAgent itself, not merely repeat ordinary user work.",
             "Keep every change small, reversible, testable, and grounded in the cited evidence.",
             "Do not change identity, mission, secrets, credentials, permissions, merge authority, deployment, or daemon configuration.",
             f"Required response schema: {json.dumps(schema, sort_keys=True)}",
@@ -613,7 +613,7 @@ def _run_scan(
 
 def evidence_scan_prompt(source: str, records: list[dict[str, object]]) -> str:
     source_guidance = (
-        "The records are verbatim user messages paired with Oneagent's replies. "
+        "The records are verbatim user messages paired with OneAgent's replies. "
         "Use the replies to resolve references, but treat the user's words as the feedback signal."
         if source == "feedback"
         else (
@@ -625,7 +625,7 @@ def evidence_scan_prompt(source: str, records: list[dict[str, object]]) -> str:
         {
             "observation": "what the records demonstrate",
             "evidence_type": "short semantic category",
-            "affected_area": "Oneagent subsystem or workflow",
+            "affected_area": "OneAgent subsystem or workflow",
             "desired_outcome": "observable improvement, without prescribing implementation",
             "confidence": "number from 0.0 to 1.0",
             "explicit": "boolean; true only when a human stated it directly",
@@ -634,7 +634,7 @@ def evidence_scan_prompt(source: str, records: list[dict[str, object]]) -> str:
     ]
     return "\n".join(
         [
-            f"Extract possible {source} evidence for improving Oneagent's own body or operating workflow.",
+            f"Extract possible {source} evidence for improving OneAgent's own body or operating workflow.",
             "Return exactly one JSON array and no prose.",
             f"Return at most {MAX_SIGNALS_PER_SCAN} evidence signals.",
             "Returning an empty array is correct when the records contain no improvement evidence.",
@@ -888,7 +888,7 @@ def _signal_from_json(raw: Mapping[str, object]) -> EvidenceSignal | None:
         source=source,
         observation=observation,
         evidence_type=clean_text(str(raw.get("evidence_type") or "observation")),
-        affected_area=clean_text(str(raw.get("affected_area") or "Oneagent workflow")),
+        affected_area=clean_text(str(raw.get("affected_area") or "OneAgent workflow")),
         desired_outcome=clean_text(str(raw.get("desired_outcome") or "")),
         confidence=_loaded_confidence(raw.get("confidence")),
         explicit=bool(raw.get("explicit", False)),

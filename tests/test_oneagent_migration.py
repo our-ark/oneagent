@@ -39,7 +39,7 @@ PROVIDERS = {
 }
 
 
-class OneagentMigrationTests(unittest.TestCase):
+class OneAgentMigrationTests(unittest.TestCase):
     def test_export_uses_real_clean_git_body_revision(self) -> None:
         with TemporaryDirectory() as directory:
             base = Path(directory)

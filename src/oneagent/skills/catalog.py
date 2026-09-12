@@ -54,7 +54,7 @@ def skills_command(text: str, root: Path, *, prefix: str = "/") -> str:
             return format_agent_skills(agent, source=source)
         agent = load_agent_skills(target, root=root)
     except SkillsError as error:
-        return f"Oneagent could not inspect skills: {error}"
+        return f"OneAgent could not inspect skills: {error}"
     return format_agent_skills(agent)
 
 

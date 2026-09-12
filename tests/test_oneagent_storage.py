@@ -36,7 +36,7 @@ from oneagent.tasks.events import load_task_events, task_event_path
 from oneagent.tasks.queue import enqueue_task, task_queue_path
 
 
-class OneagentStorageTests(unittest.TestCase):
+class OneAgentStorageTests(unittest.TestCase):
     def test_default_layout_separates_body_state_and_artifacts(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)

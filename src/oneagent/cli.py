@@ -65,7 +65,7 @@ ADMIN_COMMANDS = (
     AdminCommand("help", "Show this help.", "help [command]", "_admin_help"),
     AdminCommand(
         "init",
-        "Create or claim a local Oneagent instance worktree.",
+        "Create or claim a local OneAgent instance worktree.",
         "init [--instance name] [--worktree path] [--branch branch]",
         "_admin_init",
     ),
@@ -84,13 +84,13 @@ ADMIN_COMMANDS = (
     ),
     AdminCommand(
         "thinking",
-        "Show or set Oneagent's Codex thinking level.",
+        "Show or set OneAgent's Codex thinking level.",
         "thinking [low|medium|high|xhigh|max|ultra|default]",
         "_admin_thinking",
     ),
     AdminCommand(
         "mission",
-        "Show or update Oneagent's mission.",
+        "Show or update OneAgent's mission.",
         "mission [new mission]",
         "_admin_mission",
     ),
@@ -108,7 +108,7 @@ ADMIN_COMMANDS = (
     ),
     AdminCommand(
         "skills",
-        "Show declared skills for Oneagent or another local agent.",
+        "Show declared skills for OneAgent or another local agent.",
         "skills [agent]",
         "_admin_skills",
     ),
@@ -120,7 +120,7 @@ ADMIN_COMMANDS = (
     ),
     AdminCommand(
         "doctor",
-        "Run Oneagent's local health checks.",
+        "Run OneAgent's local health checks.",
         "doctor",
         "_admin_doctor",
     ),
@@ -140,16 +140,16 @@ ADMIN_COMMANDS = (
     ),
     AdminCommand(
         "update",
-        "Update from the authoritative repository, run doctor, and restart Oneagent if safe.",
+        "Update from the authoritative repository, run doctor, and restart OneAgent if safe.",
         "update",
         "_admin_update",
     ),
-    AdminCommand("exit", "Put Oneagent back to sleep.", "exit", "_admin_exit"),
+    AdminCommand("exit", "Put OneAgent back to sleep.", "exit", "_admin_exit"),
 )
 
 ADMIN_ONLY_MESSAGE = "\n".join(
     [
-        "Oneagent CLI is admin-only now.",
+        "OneAgent CLI is admin-only now.",
         "Use the configured chat provider for conversation, repository edits, and self-evolution.",
         "Type `help` to see available CLI commands.",
     ]
@@ -174,7 +174,7 @@ def main(argv: list[str] | None = None) -> None:
 
 
 def _print_wake(identity: Identity) -> None:
-    print("Oneagent is awake.")
+    print("OneAgent is awake.")
     print()
     print(f"Name: {identity.name}")
     print(f"Role: {_humanize(identity.role)}")
@@ -198,7 +198,7 @@ def _repl(identity: Identity, root: Path) -> None:
             continue
         result = _command_output(raw_command, identity, root)
         if result is EXIT:
-            print("Oneagent is asleep.")
+            print("OneAgent is asleep.")
             return
         if result:
             print(result)
@@ -246,7 +246,7 @@ def admin_help(topic: str = "") -> str:
         "Use help <command> for detailed usage.",
         "Example: help setup",
         "",
-        "Oneagent CLI is admin-only. Use the configured chat provider for conversation, "
+        "OneAgent CLI is admin-only. Use the configured chat provider for conversation, "
         "repository edits, and self-evolution.",
     ]
     return "\n".join(lines)
@@ -423,7 +423,7 @@ def _init_instance(identity: Identity, text: str, root: Path) -> str:
             branch=options["branch"],
         )
     except (InstanceError, ValueError) as error:
-        return f"Oneagent could not initialize that instance: {error}"
+        return f"OneAgent could not initialize that instance: {error}"
     return format_instance_init_result(result)
 
 

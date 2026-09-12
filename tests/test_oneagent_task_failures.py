@@ -9,10 +9,10 @@ sys.path.insert(0, str(ROOT / "src"))
 from oneagent.tasks.failures import classify_task_failure
 
 
-class OneagentTaskFailureTests(unittest.TestCase):
+class OneAgentTaskFailureTests(unittest.TestCase):
     def test_dirty_worktree_is_non_retryable(self) -> None:
         failure = classify_task_failure(
-            "Oneagent could not complete the requested work yet: "
+            "OneAgent could not complete the requested work yet: "
             "Worktree is not clean. Commit, stash, or discard changes before evolving."
         )
 
@@ -34,8 +34,8 @@ class OneagentTaskFailureTests(unittest.TestCase):
         self.assertFalse(timeout.retryable)
 
     def test_transient_network_and_service_failures_are_retryable(self) -> None:
-        network = classify_task_failure("Oneagent could not continue: connection reset by peer.")
-        service = classify_task_failure("Oneagent could not continue: HTTP 503 service unavailable.")
+        network = classify_task_failure("OneAgent could not continue: connection reset by peer.")
+        service = classify_task_failure("OneAgent could not continue: HTTP 503 service unavailable.")
 
         self.assertEqual(network.code, "network_error")
         self.assertTrue(network.retryable)
@@ -43,7 +43,7 @@ class OneagentTaskFailureTests(unittest.TestCase):
         self.assertTrue(service.retryable)
 
     def test_unknown_failure_defaults_to_non_retryable(self) -> None:
-        failure = classify_task_failure("Oneagent could not finish for an unfamiliar reason.")
+        failure = classify_task_failure("OneAgent could not finish for an unfamiliar reason.")
 
         self.assertEqual(failure.code, "unknown_failure")
         self.assertEqual(failure.failure_class, "permanent")
@@ -51,7 +51,7 @@ class OneagentTaskFailureTests(unittest.TestCase):
 
     def test_missing_runtime_is_specific_and_non_retryable(self) -> None:
         failure = classify_task_failure(
-            "Oneagent cannot find the Codex CLI. Configure it in Oneagent config."
+            "OneAgent cannot find the Codex CLI. Configure it in OneAgent config."
         )
 
         self.assertEqual(failure.code, "runtime_not_found")

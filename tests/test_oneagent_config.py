@@ -17,7 +17,7 @@ from oneagent.tasks.config import (
 )
 
 
-class OneagentConfigTests(unittest.TestCase):
+class OneAgentConfigTests(unittest.TestCase):
     def test_write_section_value_adds_new_section(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)

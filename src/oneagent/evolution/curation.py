@@ -142,7 +142,7 @@ def semantic_curation_prompt(
     }
     return "\n".join(
         [
-            "Curate Oneagent's bounded self-evolution candidate pool semantically.",
+            "Curate OneAgent's bounded self-evolution candidate pool semantically.",
             "Return exactly one JSON object and no prose.",
             "Recommend at most one existing candidate. It is valid to recommend none. Do not invent an ID or a new candidate.",
             "Treat provenance as immutable evidence; never rewrite or reclassify its source or actors.",

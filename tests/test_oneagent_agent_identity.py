@@ -18,7 +18,7 @@ from oneagent.commands import identity_summary
 from oneagent.identity import load_body_identity
 
 
-class OneagentAgentIdentityTests(unittest.TestCase):
+class OneAgentAgentIdentityTests(unittest.TestCase):
     def test_packages_the_public_portable_identity_schema(self) -> None:
         schema = agent_identity_schema()
 
@@ -72,9 +72,9 @@ class OneagentAgentIdentityTests(unittest.TestCase):
             summary = identity_summary(load_body_identity(), root)
 
         self.assertIn("I am EMBER-HARBOR-01 (Ember Harbor).", summary)
-        self.assertIn("Body: Oneagent", summary)
+        self.assertIn("Body: OneAgent", summary)
         self.assertIn("Body role: descendant_agent", summary)
-        self.assertIn("Lineage: Origin -> Oneagent -> EMBER-HARBOR-01", summary)
+        self.assertIn("Lineage: Origin -> OneAgent -> EMBER-HARBOR-01", summary)
 
 
 def _identity() -> dict:
@@ -96,8 +96,8 @@ def _identity() -> dict:
         "origin": {
             "activated_at": "2026-01-02T03:04:05Z",
             "activation_event": "synthetic test activation",
-            "body": "Oneagent",
-            "lineage": ["Origin", "Oneagent"],
+            "body": "OneAgent",
+            "lineage": ["Origin", "OneAgent"],
         },
         "mission": {
             "roles": ["research-assistant"],

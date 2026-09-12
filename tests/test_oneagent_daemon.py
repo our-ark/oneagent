@@ -49,7 +49,7 @@ class _Service:
         return "service manifest"
 
 
-class OneagentDaemonTests(unittest.TestCase):
+class OneAgentDaemonTests(unittest.TestCase):
     def test_install_validates_chat_and_delegates_to_service(self) -> None:
         service = _Service()
         with tempfile.TemporaryDirectory() as directory:
@@ -95,7 +95,7 @@ class OneagentDaemonTests(unittest.TestCase):
             ):
                 result = daemon.doctor(root)
 
-        self.assertIn("Oneagent service doctor:", result)
+        self.assertIn("OneAgent service doctor:", result)
         self.assertIn("- config: ok", result)
         self.assertIn("Service provider: test-service", result)
 

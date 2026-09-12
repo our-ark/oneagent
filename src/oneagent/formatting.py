@@ -89,7 +89,7 @@ def format_publish_result(result: LocalPublishResult) -> str:
     files = "\n".join(f"- {path}" for path in result.changed_files)
     return "\n".join(
         [
-            "Oneagent committed this change.",
+            "OneAgent committed this change.",
             f"Branch: {result.branch}",
             f"Commit: {result.commit_sha} {result.commit_message}",
             "Files:",
@@ -105,7 +105,7 @@ def format_remote_publish_result(result: RemotePublishResult) -> str:
     if not result.pushed:
         return "\n".join(
             [
-                "Oneagent kept this branch locally.",
+                "OneAgent kept this branch locally.",
                 f"Branch: {result.branch}",
                 f"Remote: {result.remote}",
                 "Review URL: unavailable",
@@ -114,7 +114,7 @@ def format_remote_publish_result(result: RemotePublishResult) -> str:
         )
     return "\n".join(
         [
-            "Oneagent pushed this branch.",
+            "OneAgent pushed this branch.",
             f"Branch: {result.branch}",
             f"Remote: {result.remote}",
             f"Commits pushed: {result.ahead_count}",
@@ -127,10 +127,10 @@ def format_remote_publish_result(result: RemotePublishResult) -> str:
 def format_pr_result(result: PullRequestResult) -> str:
     lines = []
     if result.created:
-        lines.append("Oneagent opened a pull request.")
+        lines.append("OneAgent opened a pull request.")
         lines.append(f"PR URL: {result.url or 'unavailable'}")
     else:
-        lines.append("Oneagent could not open a pull request automatically.")
+        lines.append("OneAgent could not open a pull request automatically.")
         if result.note:
             lines.append(f"Reason: {result.note}")
         if result.fallback_url:

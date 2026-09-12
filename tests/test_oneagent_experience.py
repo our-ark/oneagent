@@ -25,7 +25,7 @@ from oneagent.tasks.queue import (
 )
 
 
-class OneagentExperienceTests(unittest.TestCase):
+class OneAgentExperienceTests(unittest.TestCase):
     def test_declares_eight_task_sources_and_full_terminal_lifecycle(self) -> None:
         self.assertEqual(
             TASK_SOURCES,

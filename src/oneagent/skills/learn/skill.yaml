@@ -1,9 +1,9 @@
 name: learn
 version: 0.3.0
 summary: Assess an immutable published skill snapshot and create a bounded evolution candidate when applicable.
-owner: Oneagent
+owner: OneAgent
 catalog_implementation: shared-library
-catalog_library_owner: Oneagent
+catalog_library_owner: OneAgent
 catalog_library_package: our-ark-skill-catalog
 catalog_library_contract: skill-catalog/v1
 catalog_library_commit: 946ff26f93bff3f6eefeb5deb81ca4db1127266f

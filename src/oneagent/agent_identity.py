@@ -25,7 +25,7 @@ class AgentIdentityError(ValueError):
 
 @lru_cache(maxsize=1)
 def agent_identity_schema() -> dict[str, Any]:
-    """Load Oneagent's packaged copy of the portable Agent Identity schema."""
+    """Load OneAgent's packaged copy of the portable Agent Identity schema."""
     target = resources.files("oneagent")
     for part in SCHEMA_RESOURCE:
         target = target.joinpath(part)
@@ -50,7 +50,7 @@ def load_agent_identity(path: Path) -> dict[str, Any]:
 
 
 def active_agent_identity_path(root: Path | None = None) -> Path:
-    """Return the private personal identity contract for one Oneagent instance."""
+    """Return the private personal identity contract for one OneAgent instance."""
     return private_state_path(SELF_FILENAME, root)
 
 

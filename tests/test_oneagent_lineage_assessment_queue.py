@@ -22,7 +22,7 @@ from oneagent.lineage.assessment_queue import (
 )
 
 
-class OneagentLineageAssessmentQueueTests(unittest.TestCase):
+class OneAgentLineageAssessmentQueueTests(unittest.TestCase):
     def test_job_lifecycle_is_durable(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)

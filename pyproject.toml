@@ -1,7 +1,7 @@
 [project]
 name = "oneagent"
 version = "0.6.1"
-description = "Oneagent is a Genesis-created local agent."
+description = "OneAgent is a Genesis-created local agent."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]

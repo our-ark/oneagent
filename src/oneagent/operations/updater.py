@@ -36,9 +36,9 @@ def update_from_authoritative(
     root: Path,
     *,
     repository: RepositoryProvider | None = None,
-    application_name: str = "Oneagent",
+    application_name: str = "OneAgent",
 ) -> UpdateResult:
-    application_name = application_name.strip() or "Oneagent"
+    application_name = application_name.strip() or "OneAgent"
     repository = repository or as_repository_provider(load_provider("vcs", root))
     try:
         working_copy = repository.inspect_working_copy(root)
@@ -160,7 +160,7 @@ def update_from_authoritative(
 def update_from_main(
     root: Path,
     *,
-    application_name: str = "Oneagent",
+    application_name: str = "OneAgent",
 ) -> UpdateResult:
     """Compatibility alias for integrations using the original Git-specific name."""
     return update_from_authoritative(root, application_name=application_name)

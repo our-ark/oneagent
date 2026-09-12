@@ -22,7 +22,7 @@ from oneagent.evolution.evidence import (
 from oneagent.logs import log_conversation_turn
 
 
-class OneagentFeedbackEvidenceTests(unittest.TestCase):
+class OneAgentFeedbackEvidenceTests(unittest.TestCase):
     def test_scans_configured_message_batch_semantically(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)

@@ -123,7 +123,7 @@ def status_message(
     if allowed_chat_id is None and chat_id is not None:
         lines.append("")
         lines.append(
-            f"Configure the {provider_label} provider to lock Oneagent to this conversation, then restart Oneagent."
+            f"Configure the {provider_label} provider to lock OneAgent to this conversation, then restart OneAgent."
         )
     lines.extend(["", code_version_summary_fn(root, chat_provider)])
     return "\n".join(lines)
@@ -244,7 +244,7 @@ def thinking_command(
         write_config(runtime.config_section, "reasoning_effort", None, root)
         return "\n".join(
             [
-                "Oneagent cleared her local thinking override.",
+                "OneAgent cleared her local thinking override.",
                 "",
                 thinking_status(
                     root,
@@ -261,7 +261,7 @@ def thinking_command(
     write_config(runtime.config_section, "reasoning_effort", choice, root)
     return "\n".join(
         [
-            f"Oneagent thinking level set to {choice}.",
+            f"OneAgent thinking level set to {choice}.",
             "",
             thinking_status(
                 root,
@@ -283,7 +283,7 @@ def thinking_status(
     command = f"{prefix}thinking"
     return "\n".join(
         [
-            "Oneagent thinking status:",
+            "OneAgent thinking status:",
             model_summary_fn(root),
             "",
             f"Set with {', '.join(f'{command} {choice}' for choice in reasoning_efforts)}, "
@@ -309,7 +309,7 @@ def thinking_usage(
 
 def thinking_lock_message(chat_provider: str = "chat") -> str:
     return (
-        f"Oneagent needs {_provider_label(chat_provider)} to be locked to one conversation "
+        f"OneAgent needs {_provider_label(chat_provider)} to be locked to one conversation "
         "before changing her thinking level."
     )
 
@@ -347,17 +347,17 @@ def config_command(
         value = parts[2].strip().lower()
         if value in {"default", "reset", "oneagent"}:
             write_section_value("agent", "profile", None, root)
-            message = "Oneagent profile selection reset to the built-in oneagent profile."
+            message = "OneAgent profile selection reset to the built-in oneagent profile."
         else:
             try:
                 load_profile(root, name=value)
             except ProfileError as error:
                 return str(error)
             write_section_value("agent", "profile", value, root)
-            message = f"Oneagent profile set to {value}."
+            message = f"OneAgent profile set to {value}."
         return "\n\n".join(
             [
-                message + " Restart Oneagent to activate it.",
+                message + " Restart OneAgent to activate it.",
                 profile_config_status(
                     root,
                     prefix=prefix,
@@ -380,7 +380,7 @@ def config_command(
                 selected = provider_name(kind, root)
             except ProviderError as error:
                 return str(error)
-            message = f"Oneagent {kind} provider reset to {selected}."
+            message = f"OneAgent {kind} provider reset to {selected}."
         else:
             try:
                 choices = available_providers(kind, root)
@@ -392,7 +392,7 @@ def config_command(
                     f"Available: {', '.join(choices) or 'none'}."
                 )
             write_section_value("providers", kind, value, root)
-            message = f"Oneagent {kind} provider set to {value}."
+            message = f"OneAgent {kind} provider set to {value}."
         return "\n\n".join([message, provider_config_status(root, prefix=prefix)])
     if setting == "runtime":
         if len(parts) < 3:
@@ -448,12 +448,12 @@ def config_command(
         runtime_label = runtime.name.title()
         if value.lower() in {"default", "reset"}:
             write_section_value(section, "model", None, root)
-            message = f"Oneagent cleared her local {runtime_label} model override."
+            message = f"OneAgent cleared her local {runtime_label} model override."
         elif not _MODEL_PATTERN.fullmatch(value):
             return f"{runtime_label} model must be one model identifier without spaces."
         else:
             write_section_value(section, "model", value, root)
-            message = f"Oneagent {runtime_label} model set to {value}."
+            message = f"OneAgent {runtime_label} model set to {value}."
         return "\n\n".join(
             [message, model_config_status(root, prefix=prefix, runtime=runtime)]
         )
@@ -473,13 +473,13 @@ def config_command(
         reasoning_efforts = _runtime_reasoning_efforts(runtime, root)
         if value in {"default", "reset"}:
             write_section_value(section, "reasoning_effort", None, root)
-            message = f"Oneagent cleared her local {runtime_label} reasoning effort override."
+            message = f"OneAgent cleared her local {runtime_label} reasoning effort override."
         elif value not in reasoning_efforts:
             choices = _format_choices((*reasoning_efforts, "default"))
             return f"{runtime_label} reasoning effort must be {choices}."
         else:
             write_section_value(section, "reasoning_effort", value, root)
-            message = f"Oneagent {runtime_label} reasoning effort set to {value}."
+            message = f"OneAgent {runtime_label} reasoning effort set to {value}."
         return "\n\n".join(
             [
                 message,
@@ -506,7 +506,7 @@ def config_status(
     default = " (default)" if settings.uses_default_timeout else ""
     command = f"{prefix}config"
     lines = [
-        "Oneagent config:",
+        "OneAgent config:",
         f"- Task timeout: {format_task_timeout(settings.timeout_seconds)}{default}",
         f"- Profile: {active_profile_name or _selected_profile_name(root)}",
         f"- Providers: {_provider_summary(root)}",
@@ -573,7 +573,7 @@ def model_config_status(
             lines.append(f"- {option.slug}{current_label}{description}")
     else:
         lines.append(
-            f"- unavailable; Oneagent could not find compatible models in the installed {runtime_label} catalog"
+            f"- unavailable; OneAgent could not find compatible models in the installed {runtime_label} catalog"
         )
     lines.extend(
         [
@@ -588,7 +588,7 @@ def model_config_status(
 
 def provider_config_status(root: Path, *, prefix: str = "/") -> str:
     command = f"{prefix}config"
-    lines = ["Oneagent providers:"]
+    lines = ["OneAgent providers:"]
     for kind in PROVIDER_KINDS:
         choices = ", ".join(available_providers(kind, root)) or "none"
         try:
@@ -601,7 +601,7 @@ def provider_config_status(root: Path, *, prefix: str = "/") -> str:
             "",
             f"Set with {command} provider <chat|runtime|vcs|forge|service> <name>.",
             f"Reset with {command} provider <kind> default.",
-            "Restart Oneagent after changing a provider.",
+            "Restart OneAgent after changing a provider.",
         ]
     )
     return "\n".join(lines)
@@ -618,14 +618,14 @@ def profile_config_status(
     running = active_profile_name.strip() or selected
     choices = ", ".join(available_profiles()) or "oneagent"
     lines = [
-        "Oneagent profiles:",
+        "OneAgent profiles:",
         f"- Running: {running}",
         f"- Selected for restart: {selected}",
         f"- Available: {choices}",
         "",
         f"Set with {command} profile <name>.",
         f"Reset with {command} profile default.",
-        "Restart Oneagent after changing the profile.",
+        "Restart OneAgent after changing the profile.",
     ]
     return "\n".join(lines)
 
@@ -739,7 +739,7 @@ def lineage_command(
                 ]
             )
     except LineageError as error:
-        return f"Oneagent could not complete lineage command: {error}"
+        return f"OneAgent could not complete lineage command: {error}"
     return lineage_usage(prefix, command_name=command_name)
 
 
@@ -775,7 +775,7 @@ def inherit_command(
             candidate = find_parent_inbox_candidate(argument, root)
             if candidate is None:
                 return (
-                    f"Oneagent could not find direct-parent change {argument}. "
+                    f"OneAgent could not find direct-parent change {argument}. "
                     f"Run {prefix}{command_name} first."
                 )
             return format_candidate(candidate)
@@ -785,7 +785,7 @@ def inherit_command(
             existing = find_parent_inbox_candidate(argument, root)
             if existing is None:
                 return (
-                    f"Oneagent could not find direct-parent change {argument}. "
+                    f"OneAgent could not find direct-parent change {argument}. "
                     f"Run {prefix}{command_name} first."
                 )
             if existing.status != STATUS_PENDING:
@@ -796,7 +796,7 @@ def inherit_command(
             candidate = mark_inbox_candidate(argument, "ignored", root, note="Ignored by user command.")
             return f"Dismissed direct-parent change {candidate.id}."
     except LineageError as error:
-        return f"Oneagent could not complete inherit command: {error}"
+        return f"OneAgent could not complete inherit command: {error}"
     return lineage_usage(prefix, command_name=command_name)
 
 
@@ -824,7 +824,7 @@ def help_message(topic: str = "", *, command_prefix: str = "/") -> str:
         )
 
     lines = [
-        "Oneagent commands:",
+        "OneAgent commands:",
         "",
         f"Use {command_prefix}help <command> for detailed usage and subcommands.",
         f"Example: {command_prefix}help worktree",
@@ -851,7 +851,7 @@ def help_message(topic: str = "", *, command_prefix: str = "/") -> str:
         [
             "",
             "For repository changes, say the request naturally. "
-            "Oneagent will publish completed edits for review automatically.",
+            "OneAgent will publish completed edits for review automatically.",
         ]
     )
     return "\n".join(lines)
@@ -885,7 +885,7 @@ def pr_usage(prefix: str = "/") -> str:
             f"{prefix}pr - list open reviews in the current repository",
             f"{prefix}pr show <review id or URL> - inspect one review",
             f"{prefix}pr merge <review id or URL> - land exactly that review",
-            "A review target is required; Oneagent will not infer one from the current workspace or conversation.",
+            "A review target is required; OneAgent will not infer one from the current workspace or conversation.",
         ]
     )
 
@@ -910,10 +910,10 @@ def worktree_usage(prefix: str = "/") -> str:
 
 def action_lock_message(chat_provider: str = "chat") -> str:
     label = _provider_label(chat_provider)
-    setup = f"Configure the {label} provider with a locked conversation and restart Oneagent."
+    setup = f"Configure the {label} provider with a locked conversation and restart OneAgent."
     return "\n".join(
         [
-            f"Oneagent will not change code or coordinate repository changes unless {label} is locked to one conversation.",
+            f"OneAgent will not change code or coordinate repository changes unless {label} is locked to one conversation.",
             setup,
         ]
     )
@@ -939,7 +939,7 @@ def _start_usage(prefix: str) -> str:
     return "\n".join(
         [
             f"{prefix}start - show getting-started guidance",
-            "This is a Telegram onboarding command. It does not start or restart the Oneagent daemon.",
+            "This is a Telegram onboarding command. It does not start or restart the OneAgent daemon.",
         ]
     )
 
@@ -949,7 +949,7 @@ def _task_usage(prefix: str) -> str:
     return "\n".join(
         [
             "Task commands:",
-            f"{command} <request> - queue background work for Oneagent",
+            f"{command} <request> - queue background work for OneAgent",
             f"{command} cancel <id> - cancel a queued background task",
             f"{command} resume <id|all> - continue paused tasks with the same ids",
             f"{command} retry <id> - retry a failed task as a new linked task",
@@ -1025,14 +1025,14 @@ CORE_COMMANDS = (
         "self",
         "Common",
         "",
-        "show Oneagent's identity, role, ancestor, and mission",
+        "show OneAgent's identity, role, ancestor, and mission",
     ),
     CoreCommand(
         "mission",
         "mission",
         "Common",
         "[text]",
-        "show or update Oneagent's mission",
+        "show or update OneAgent's mission",
     ),
     CoreCommand(
         "status",
@@ -1047,7 +1047,7 @@ CORE_COMMANDS = (
         "task",
         "Work",
         "<request>",
-        "queue background work for Oneagent",
+        "queue background work for OneAgent",
         _task_usage,
     ),
     CoreCommand(
@@ -1142,7 +1142,7 @@ CORE_COMMANDS = (
         "restart",
         "System",
         "",
-        "restart Oneagent's chat daemon from the locked conversation",
+        "restart OneAgent's chat daemon from the locked conversation",
     ),
 )
 

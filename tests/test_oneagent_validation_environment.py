@@ -18,7 +18,7 @@ from oneagent.validation_environment import (
 )
 
 
-class OneagentValidationEnvironmentTests(unittest.TestCase):
+class OneAgentValidationEnvironmentTests(unittest.TestCase):
     def test_provisions_locked_environment_once_and_reuses_it(self) -> None:
         with TemporaryDirectory() as temporary:
             root = Path(temporary)

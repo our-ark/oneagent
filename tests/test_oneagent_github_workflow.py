@@ -28,7 +28,7 @@ from our_ark_github.workflow import (
 from oneagent.immune import DoctorDiagnosis
 
 
-class OneagentGithubWorkflowTests(unittest.TestCase):
+class OneAgentGithubWorkflowTests(unittest.TestCase):
     @patch("our_ark_github.workflow.current_branch", return_value="main")
     def test_refuses_protected_branch_by_default(self, _current_branch: MagicMock) -> None:
         with self.assertRaisesRegex(PublishError, "Refusing to publish from main"):
@@ -318,15 +318,15 @@ class OneagentGithubWorkflowTests(unittest.TestCase):
     ) -> None:
         run_git.side_effect = [
             _git_result(returncode=0, stdout="abc123"),
-            _git_result(returncode=0, stdout="Add Oneagent feature"),
-            _git_result(returncode=0, stdout="Add Oneagent feature"),
+            _git_result(returncode=0, stdout="Add OneAgent feature"),
+            _git_result(returncode=0, stdout="Add OneAgent feature"),
             _git_result(returncode=0, stdout="https://github.com/our-ark/genesis.git"),
         ]
 
         result = create_pull_request(root=ROOT)
 
         self.assertFalse(result.created)
-        self.assertEqual(result.title, "Add Oneagent feature")
+        self.assertEqual(result.title, "Add OneAgent feature")
         self.assertEqual(result.note, "GitHub CLI is not available.")
         self.assertEqual(
             result.fallback_url,
@@ -348,8 +348,8 @@ class OneagentGithubWorkflowTests(unittest.TestCase):
     ) -> None:
         run_git.side_effect = [
             _git_result(returncode=0, stdout="abc123"),
-            _git_result(returncode=0, stdout="Add Oneagent feature"),
-            _git_result(returncode=0, stdout="Add Oneagent feature"),
+            _git_result(returncode=0, stdout="Add OneAgent feature"),
+            _git_result(returncode=0, stdout="Add OneAgent feature"),
             _git_result(returncode=0, stdout="https://github.com/our-ark/genesis.git"),
         ]
         run.return_value.returncode = 0
@@ -382,8 +382,8 @@ class OneagentGithubWorkflowTests(unittest.TestCase):
     ) -> None:
         run_git.side_effect = [
             _git_result(returncode=0, stdout="abc123"),
-            _git_result(returncode=0, stdout="Add Oneagent feature"),
-            _git_result(returncode=0, stdout="Add Oneagent feature"),
+            _git_result(returncode=0, stdout="Add OneAgent feature"),
+            _git_result(returncode=0, stdout="Add OneAgent feature"),
             _git_result(returncode=0, stdout="https://github.com/our-ark/oneagent.git"),
         ]
         create = MagicMock(
@@ -396,7 +396,7 @@ class OneagentGithubWorkflowTests(unittest.TestCase):
             stdout=json.dumps(
                 {
                     "url": "https://github.com/our-ark/oneagent/pull/12",
-                    "title": "Add Oneagent feature",
+                    "title": "Add OneAgent feature",
                     "body": "Existing body",
                     "isDraft": False,
                     "state": "OPEN",

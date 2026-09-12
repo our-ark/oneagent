@@ -3,14 +3,14 @@
 ## Purpose
 
 Assess whether a visible skill published by a non-parent Our-Ark agent offers a
-bounded capability that Oneagent should adapt. An applicable assessment creates an
-evolution candidate; it never edits Oneagent directly.
+bounded capability that OneAgent should adapt. An applicable assessment creates an
+evolution candidate; it never edits OneAgent directly.
 
 ## Use When
 
 - The human selects a named skill with `/learn <skill> from <agent>`.
 - The source agent publishes the skill through the configured forge.
-- Oneagent should evaluate a portable capability rather than inherit a direct-parent
+- OneAgent should evaluate a portable capability rather than inherit a direct-parent
   change.
 
 ## Procedure
@@ -21,7 +21,7 @@ evolution candidate; it never edits Oneagent directly.
    direct-parent packages deterministically.
 4. Build a temporary in-memory snapshot containing the source commit, package
    contents, version, link, and content hash.
-5. Give that snapshot, Oneagent's mission and declared skills, and a bounded list
+5. Give that snapshot, OneAgent's mission and declared skills, and a bounded list
    of current candidates to one fresh read-only Codex session.
 6. Require one structured result: `applicable` with complete candidate fields,
    or `not_applicable` with a reason and no candidate.
@@ -33,7 +33,7 @@ evolution candidate; it never edits Oneagent directly.
 ## Boundary
 
 Learning is assessment, not synchronization, inheritance, or execution. Codex
-authors the candidate contents, while Oneagent validates and persists them. A
+authors the candidate contents, while OneAgent validates and persists them. A
 not-applicable result creates no candidate or separate assessment record.
 
 ## Validation

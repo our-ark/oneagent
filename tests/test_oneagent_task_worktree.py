@@ -163,7 +163,7 @@ def _create_agent_worktree(base: Path) -> tuple[Path, Path]:
     resident = base / "instance"
     source.mkdir()
     _git(source, "init", "-b", "main")
-    _git(source, "config", "user.name", "Oneagent Test")
+    _git(source, "config", "user.name", "OneAgent Test")
     _git(source, "config", "user.email", "oneagent@example.com")
     (source / "README.md").write_text("initial\n", encoding="utf-8")
     _git(source, "add", "README.md")

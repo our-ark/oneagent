@@ -146,7 +146,7 @@ class ExtensionCommandResult:
         if self.api_version != EXTENSION_COMMAND_RESULT_API_VERSION:
             raise AgentExtensionError(
                 "Extension command result uses API version "
-                f"{self.api_version}; Oneagent supports version "
+                f"{self.api_version}; OneAgent supports version "
                 f"{EXTENSION_COMMAND_RESULT_API_VERSION}."
             )
         if not isinstance(self.final_text, str):
@@ -268,7 +268,7 @@ class ExtensionTaskEvent:
 
 @dataclass(frozen=True)
 class ExtensionWorkflow:
-    """Namespaced access to Oneagent's single governed task workflow."""
+    """Namespaced access to OneAgent's single governed task workflow."""
 
     extension_name: str
     _enqueue: Callable[..., TaskJob] = field(repr=False)
@@ -728,7 +728,7 @@ class ExtensionLifecycleHooks:
 
 @dataclass(frozen=True)
 class AgentExtension:
-    """A trusted domain module composed into Oneagent's application lifecycle."""
+    """A trusted domain module composed into OneAgent's application lifecycle."""
 
     name: str
     api_version: int = AGENT_EXTENSION_API_VERSION
@@ -742,7 +742,7 @@ class AgentExtension:
         if self.api_version != AGENT_EXTENSION_API_VERSION:
             raise AgentExtensionError(
                 f"Agent extension {name} uses API version {self.api_version}; "
-                f"Oneagent supports version {AGENT_EXTENSION_API_VERSION}."
+                f"OneAgent supports version {AGENT_EXTENSION_API_VERSION}."
             )
         heading = self.help_heading.strip() or f"Extension ({name})"
         if "\n" in heading or len(heading) > 80:

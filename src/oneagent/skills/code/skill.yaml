@@ -1,7 +1,7 @@
 name: code
 version: 0.1.0
-summary: Inspect, modify, test, and explain changes to Oneagent's local code body.
-owner: Oneagent
+summary: Inspect, modify, test, and explain changes to OneAgent's local code body.
+owner: OneAgent
 status: active
 mode: workspace-write
 entrypoint: src/oneagent/brain.py

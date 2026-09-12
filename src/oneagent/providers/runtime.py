@@ -190,13 +190,13 @@ class CodexRuntime(FunctionAgentRuntime):
         value = args[1].strip()
         if value.lower() in {"auto", "default", "reset"}:
             write_section_value(self.config_section, "executable", None, root)
-            message = "Oneagent Codex executable reset to automatic discovery."
+            message = "OneAgent Codex executable reset to automatic discovery."
         else:
             candidate = resolve_codex_executable_value(value)
             if candidate.path is None:
-                return f"Oneagent could not set the Codex executable: {candidate.detail}"
+                return f"OneAgent could not set the Codex executable: {candidate.detail}"
             write_section_value(self.config_section, "executable", value, root)
-            message = f"Oneagent Codex executable set to {candidate.path}."
+            message = f"OneAgent Codex executable set to {candidate.path}."
         return "\n\n".join([message, self.config_status(root, prefix=prefix)])
 
     def config_summary(self, root: Path) -> str:
@@ -418,7 +418,7 @@ def _codex_health(root: Path | None = None) -> ProviderHealth:
             for part in (
                 "Codex binary was not found.",
                 resolution.detail,
-                "Set codex.executable in Oneagent config, set ONEAGENT_CODEX_BIN, "
+                "Set codex.executable in OneAgent config, set ONEAGENT_CODEX_BIN, "
                 "or install codex on PATH.",
             )
             if part

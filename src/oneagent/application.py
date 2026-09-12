@@ -33,7 +33,7 @@ class ApplicationCompositionError(RuntimeError):
 
 
 def _load_default_identity(path: Path) -> Identity:
-    """Prefer Oneagent's mutable source identity, with wheel data as fallback."""
+    """Prefer OneAgent's mutable source identity, with wheel data as fallback."""
 
     return load_identity(path if path.is_file() else None)
 
@@ -108,7 +108,7 @@ class ApplicationComponents:
 
 @dataclass(frozen=True)
 class ApplicationComposition:
-    """Versioned descendant-owned inputs to Oneagent application startup."""
+    """Versioned descendant-owned inputs to OneAgent application startup."""
 
     name: str = "oneagent"
     api_version: int = APPLICATION_COMPOSITION_API_VERSION
@@ -139,7 +139,7 @@ class ApplicationComposition:
         if self.api_version != APPLICATION_COMPOSITION_API_VERSION:
             raise ApplicationCompositionError(
                 f"Application composition {name} uses API version "
-                f"{self.api_version}; Oneagent supports version "
+                f"{self.api_version}; OneAgent supports version "
                 f"{APPLICATION_COMPOSITION_API_VERSION}."
             )
         if not isinstance(self.presentation, ApplicationPresentation):
@@ -307,7 +307,7 @@ def run_application(
     *,
     chat_provider_name: str = "",
 ) -> None:
-    """Run a composed descendant through Oneagent's owned lifecycle."""
+    """Run a composed descendant through OneAgent's owned lifecycle."""
 
     from oneagent.app.core import main
 

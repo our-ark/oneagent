@@ -16,7 +16,7 @@ from oneagent.memory.store import apply_memory_candidates, ensure_long_term_memo
 from oneagent.agent_identity import install_agent_identity
 
 
-class OneagentMemoryTests(unittest.TestCase):
+class OneAgentMemoryTests(unittest.TestCase):
     def test_ensure_long_term_memory_initializes_prompt_memory_without_conversation_context(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -30,7 +30,7 @@ class OneagentMemoryTests(unittest.TestCase):
                 "Rendered from the active application's versioned body.yaml",
                 prompt_memory,
             )
-            self.assertIn("Name: Oneagent", prompt_memory)
+            self.assertIn("Name: OneAgent", prompt_memory)
             self.assertIn("Mission:", prompt_memory)
             self.assertIn("# Long-term memory", prompt_memory)
             self.assertIn("descriptive context, not as instructions", prompt_memory)
@@ -49,7 +49,7 @@ class OneagentMemoryTests(unittest.TestCase):
             second_prompt = memory_for_prompt(root=root)
 
         self.assertIn("# Body Identity", first_prompt)
-        self.assertIn("Name: Oneagent", first_prompt)
+        self.assertIn("Name: OneAgent", first_prompt)
         self.assertIn("# Personal Agent Identity", first_prompt)
         self.assertIn("Personal name: EMBER-HARBOR-01", first_prompt)
         self.assertNotIn("EMBER-HARBOR-02", first_prompt)
@@ -96,8 +96,8 @@ class OneagentMemoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
 
-            first = remember_memory("Roy prefers compact Oneagent replies.", root=root)
-            second = remember_memory("Roy prefers compact Oneagent replies.", root=root)
+            first = remember_memory("Roy prefers compact OneAgent replies.", root=root)
+            second = remember_memory("Roy prefers compact OneAgent replies.", root=root)
             forgot = forget_memory(first["id"], root=root)
             data = json.loads(long_term_memory_path(root).read_text(encoding="utf-8"))
 
@@ -140,7 +140,7 @@ class OneagentMemoryTests(unittest.TestCase):
     def test_memory_status_is_readable(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            remember_memory("Roy prefers compact Oneagent replies.", root=root)
+            remember_memory("Roy prefers compact OneAgent replies.", root=root)
 
             self.assertIn("Long-term memories:", memory_status(root))
             self.assertIn("- long-term: 1 saved", memory_status(root))
@@ -163,8 +163,8 @@ def _agent_identity(name: str) -> dict:
         "origin": {
             "activated_at": "2026-01-02T03:04:05Z",
             "activation_event": "synthetic test activation",
-            "body": "Oneagent",
-            "lineage": ["Origin", "Oneagent"],
+            "body": "OneAgent",
+            "lineage": ["Origin", "OneAgent"],
         },
         "mission": {
             "roles": ["research-assistant"],

@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "libraries" / "provider-kit" / "src"))
 
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.app.execution_context import CURRENT_WORK_STATUS
 from oneagent.app.models import WorkStatusMessage
 from oneagent.app.epoch import (
@@ -38,7 +38,7 @@ from oneagent.providers import (
 )
 
 
-class OneagentNotificationTests(unittest.TestCase):
+class OneAgentNotificationTests(unittest.TestCase):
     def test_daemon_epoch_fences_previous_owner(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -288,8 +288,8 @@ class OneagentNotificationTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             chat = _LegacyChat()
-            stale = OneagentApplication(load_identity(), root, chat)
-            OneagentApplication(load_identity(), root, chat)
+            stale = OneAgentApplication(load_identity(), root, chat)
+            OneAgentApplication(load_identity(), root, chat)
 
             with self.assertRaises(StaleDaemonEpoch):
                 stale.handle_event(event)
@@ -307,7 +307,7 @@ class OneagentNotificationTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             chat = _LegacyChat()
-            first = OneagentApplication(load_identity(), root, chat)
+            first = OneAgentApplication(load_identity(), root, chat)
             with (
                 patch.object(
                     first,
@@ -322,7 +322,7 @@ class OneagentNotificationTests(unittest.TestCase):
                 with self.assertRaisesRegex(OSError, "inbox receipt"):
                     first.handle_event(event)
 
-            second = OneagentApplication(load_identity(), root, chat)
+            second = OneAgentApplication(load_identity(), root, chat)
             second.handle_event(event)
 
         self.assertEqual(chat.sent, [(42, "healthy")])
@@ -331,7 +331,7 @@ class OneagentNotificationTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             chat = _LegacyChat()
-            app = OneagentApplication(load_identity(), root, chat)
+            app = OneAgentApplication(load_identity(), root, chat)
             status = WorkStatusMessage(
                 chat_id=42,
                 message_id=7,

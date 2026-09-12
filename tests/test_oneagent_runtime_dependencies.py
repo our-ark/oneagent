@@ -22,7 +22,7 @@ PINNED_REQUIREMENT = (
 )
 
 
-class OneagentRuntimeDependencyTests(unittest.TestCase):
+class OneAgentRuntimeDependencyTests(unittest.TestCase):
     def test_uses_local_source_without_installing(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)

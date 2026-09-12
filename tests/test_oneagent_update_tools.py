@@ -9,7 +9,7 @@ from oneagent.operations.update_tools import schedule_daemon_restart, schedule_d
 from oneagent.providers.vcs import GitVersionControlProvider
 
 
-class OneagentUpdateToolsTests(unittest.TestCase):
+class OneAgentUpdateToolsTests(unittest.TestCase):
     def test_git_provider_updates_and_restores_authoritative_revision(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
@@ -74,8 +74,8 @@ class OneagentUpdateToolsTests(unittest.TestCase):
 
     @staticmethod
     def _configure_git(root: Path) -> None:
-        OneagentUpdateToolsTests._git(root, "config", "user.name", "Oneagent Tests")
-        OneagentUpdateToolsTests._git(root, "config", "user.email", "oneagent@example.test")
+        OneAgentUpdateToolsTests._git(root, "config", "user.name", "OneAgent Tests")
+        OneAgentUpdateToolsTests._git(root, "config", "user.email", "oneagent@example.test")
 
     @staticmethod
     def _git(root: Path, *args: str) -> str:

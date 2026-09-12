@@ -5,7 +5,7 @@ import threading
 import unittest
 from unittest.mock import patch
 
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.app.epoch import StaleDaemonEpoch, begin_daemon_epoch
 from oneagent.app.models import WorkOutcome
 from oneagent.identity import load_identity
@@ -83,7 +83,7 @@ class WorkflowEngineTests(unittest.TestCase):
             runtime = _Runtime()
             epoch = begin_daemon_epoch(root, provider="test")
             workflow = _RecordingWorkflow(workflow_root)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 chat,
@@ -137,7 +137,7 @@ class WorkflowEngineTests(unittest.TestCase):
             root = Path(directory)
             epoch = begin_daemon_epoch(root, provider="test")
             workflow = LocalWorkflowEngine(root, epoch=epoch)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -175,7 +175,7 @@ class WorkflowEngineTests(unittest.TestCase):
             root = Path(directory)
             epoch = begin_daemon_epoch(root, provider="test")
             workflow = LocalWorkflowEngine(root, epoch=epoch)
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 _Chat(),
@@ -222,7 +222,7 @@ class WorkflowEngineTests(unittest.TestCase):
                 WorkflowEngineError,
                 "uses API version",
             ):
-                OneagentApplication(
+                OneAgentApplication(
                     load_identity(),
                     root,
                     _Chat(),

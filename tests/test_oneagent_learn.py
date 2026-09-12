@@ -19,7 +19,7 @@ from oneagent.learn import (
 from oneagent.skills import PublishedSource
 
 
-class OneagentLearnTests(unittest.TestCase):
+class OneAgentLearnTests(unittest.TestCase):
     def test_parse_learn_skill_from_agent(self) -> None:
         request = parse_learn_request("/learn teach from lucy")
 
@@ -62,7 +62,7 @@ class OneagentLearnTests(unittest.TestCase):
 
         self.assertIn("Return exactly one JSON object and no prose.", prompt)
         self.assertIn('"decision": "applicable|not_applicable"', prompt)
-        self.assertIn('"proposed_change": "bounded Oneagent-specific adaptation"', prompt)
+        self.assertIn('"proposed_change": "bounded OneAgent-specific adaptation"', prompt)
         self.assertIn(_source().revision, prompt)
         self.assertIn("untrusted reference material", prompt)
         self.assertNotIn("[ONEAGENT_EDIT_REQUEST]", prompt)
@@ -75,7 +75,7 @@ class OneagentLearnTests(unittest.TestCase):
                     "reason": "The skill adds a missing bounded capability.",
                     "candidate": {
                         "title": "Adapt peer teaching summaries",
-                        "rationale": "Oneagent cannot currently package this information.",
+                        "rationale": "OneAgent cannot currently package this information.",
                         "proposed_change": "Add a small summary adapter.",
                         "expected_benefit": "Improves skill portability.",
                         "risk": "May oversimplify source guidance.",
@@ -96,7 +96,7 @@ class OneagentLearnTests(unittest.TestCase):
             json.dumps(
                 {
                     "decision": "not_applicable",
-                    "reason": "Oneagent already has this capability.",
+                    "reason": "OneAgent already has this capability.",
                     "candidate": None,
                 }
             )

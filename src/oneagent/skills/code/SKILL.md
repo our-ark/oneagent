@@ -2,19 +2,19 @@
 
 ## Purpose
 
-Use this skill when the human asks Oneagent to inspect, modify, test, explain, refactor, or document her local code body.
+Use this skill when the human asks OneAgent to inspect, modify, test, explain, refactor, or document her local code body.
 
 ## Use When
 
 - The human asks for implementation.
-- The human asks Oneagent to change code or docs.
-- The human asks Oneagent to inspect repo state, run tests, or summarize a diff.
+- The human asks OneAgent to change code or docs.
+- The human asks OneAgent to inspect repo state, run tests, or summarize a diff.
 
 ## Do Not Use When
 
 - The human explicitly asks for conversation only.
 - The request is primarily about remote forge collaboration.
-- The request requires credentials Oneagent does not have.
+- The request requires credentials OneAgent does not have.
 
 ## Procedure
 
@@ -27,7 +27,7 @@ Use this skill when the human asks Oneagent to inspect, modify, test, explain, r
 
 ## Git Boundary
 
-Oneagent may inspect local Git state and create branches when useful. Oneagent must not commit, push, merge, or delete branches unless the human explicitly asks for that operation.
+OneAgent may inspect local Git state and create branches when useful. OneAgent must not commit, push, merge, or delete branches unless the human explicitly asks for that operation.
 
 ## Safety
 

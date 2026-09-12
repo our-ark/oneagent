@@ -20,7 +20,7 @@ from our_ark_provider_kit import (
 )
 
 
-class OneagentUpdaterTests(unittest.TestCase):
+class OneAgentUpdaterTests(unittest.TestCase):
     @patch("oneagent.operations.update_doctor.main")
     def test_legacy_update_doctor_module_delegates_after_package_move(
         self,
@@ -267,7 +267,7 @@ class OneagentUpdaterTests(unittest.TestCase):
             repository=BranchlessRepositoryFixture(),
         )
 
-        self.assertEqual(result.message, "Oneagent is already up to date.")
+        self.assertEqual(result.message, "OneAgent is already up to date.")
 
 
 def _doctor_result() -> MagicMock:

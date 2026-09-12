@@ -64,7 +64,7 @@ class CommandContext:
         context: str = "",
         required_capabilities: tuple[str, ...] = (),
     ) -> TaskJob:
-        """Queue human-requested work through Oneagent's single task queue."""
+        """Queue human-requested work through OneAgent's single task queue."""
         return self._enqueue(
             request,
             context,
@@ -248,7 +248,7 @@ class AgentProfile:
         if self.api_version != PROFILE_API_VERSION:
             raise ProfileError(
                 f"Profile {name} uses API version {self.api_version}; "
-                f"Oneagent supports version {PROFILE_API_VERSION}."
+                f"OneAgent supports version {PROFILE_API_VERSION}."
             )
         seen: set[str] = set()
         for spec in self.commands:

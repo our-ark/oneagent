@@ -25,7 +25,7 @@ from oneagent.immune import DoctorDiagnosis, ImmuneResult
 from oneagent.logs import log_conversation_turn
 from oneagent.tasks.events import load_task_events
 from oneagent.tasks.queue import begin_next_task, task_queue_status
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from our_ark_telegram import TelegramConfig, telegram_event
 
 
@@ -34,7 +34,7 @@ RESIDENT_BRANCH = "agent/oneagent-gary"
 PR_URL = "https://github.com/our-ark/oneagent/pull/900"
 
 
-class OneagentEvolutionEndToEndTests(unittest.TestCase):
+class OneAgentEvolutionEndToEndTests(unittest.TestCase):
     def setUp(self) -> None:
         self._temporary_directory = tempfile.TemporaryDirectory()
         self.addCleanup(self._temporary_directory.cleanup)
@@ -80,7 +80,7 @@ class OneagentEvolutionEndToEndTests(unittest.TestCase):
         self.addCleanup(publish_doctor.stop)
 
         self.client = _RecordingTelegramClient(CHAT_ID)
-        self.bot = OneagentApplication(load_identity(), self.instance, self.client)
+        self.bot = OneAgentApplication(load_identity(), self.instance, self.client)
 
     def test_evolve_approve_publishes_ready_pr_from_latest_main_with_one_progress_message(
         self,
@@ -283,7 +283,7 @@ class OneagentEvolutionEndToEndTests(unittest.TestCase):
         self.source.mkdir()
         _git(self.base, "init", "--bare", str(self.remote))
         _git(self.source, "init", "-b", "main")
-        _git(self.source, "config", "user.name", "Oneagent E2E")
+        _git(self.source, "config", "user.name", "OneAgent E2E")
         _git(self.source, "config", "user.email", "oneagent-e2e@example.com")
         (self.source / ".gitignore").write_text(
             ".agent/instance.yaml\n.oneagent/\n",
@@ -395,7 +395,7 @@ class OneagentEvolutionEndToEndTests(unittest.TestCase):
         executable.chmod(0o755)
 
     def _add_feedback_candidate(self, text: str) -> str:
-        message = f"I want Oneagent to {text.lower()}."
+        message = f"I want OneAgent to {text.lower()}."
         log_conversation_turn(
             chat_id=CHAT_ID,
             message=message,
@@ -508,7 +508,7 @@ def _feedback_evidence_response(prompt: str, message: str) -> str:
             {
                 "observation": message,
                 "evidence_type": "explicit feedback",
-                "affected_area": "Oneagent workflow",
+                "affected_area": "OneAgent workflow",
                 "desired_outcome": "The requested reliability improvement is observable.",
                 "confidence": 1.0,
                 "explicit": True,

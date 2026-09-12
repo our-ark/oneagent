@@ -20,12 +20,12 @@ from oneagent.skills import (
 )
 
 
-class OneagentSkillsTests(unittest.TestCase):
+class OneAgentSkillsTests(unittest.TestCase):
     def test_loads_oneagent_skills_from_body_and_skill_metadata(self) -> None:
         agent = load_agent_skills(root=ROOT)
 
         names = [skill.name for skill in agent.skills]
-        self.assertEqual(agent.name, "Oneagent")
+        self.assertEqual(agent.name, "OneAgent")
         self.assertIn("skill-library", names)
         self.assertIn("code", names)
         self.assertIn("inherit", names)
@@ -67,7 +67,7 @@ class OneagentSkillsTests(unittest.TestCase):
             agent = load_agent_skills(root=Path(directory))
 
         names = [skill.name for skill in agent.skills]
-        self.assertEqual(agent.name, "Oneagent")
+        self.assertEqual(agent.name, "OneAgent")
         self.assertIn("skill-library", names)
         self.assertIn("code", names)
         self.assertIn("inherit", names)
@@ -97,7 +97,7 @@ class OneagentSkillsTests(unittest.TestCase):
             ROOT / "src" / "oneagent" / "skills" / "skill-library" / "skill.yaml"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("owner: Oneagent", metadata)
+        self.assertIn("owner: OneAgent", metadata)
         self.assertIn("contract: skill-library/v1", metadata)
         self.assertIn("implementation: procedural", metadata)
 
@@ -218,13 +218,13 @@ class OneagentSkillsTests(unittest.TestCase):
             with patch("oneagent.skills.catalog._published_text", side_effect=SkillsError("boom")):
                 output = skills_command("skills missing", Path(directory), prefix="")
 
-        self.assertIn("Oneagent could not inspect skills", output)
+        self.assertIn("OneAgent could not inspect skills", output)
 
     def test_skills_command_reports_missing_local_path(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = skills_command("skills ./missing", Path(directory), prefix="")
 
-        self.assertIn("Oneagent could not inspect skills", output)
+        self.assertIn("OneAgent could not inspect skills", output)
 
     def test_skills_command_keeps_named_agent_independent_from_local_checkout(self) -> None:
         def published_text(agent: str, path: str, **_kwargs) -> str:

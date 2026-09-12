@@ -542,7 +542,7 @@ def _evolve_skip_reason(proposal: EvolveProposal) -> str:
     return "no-candidate"
 
 
-def _format_evolve_proposal(proposal: EvolveProposal, *, display_name: str = "Oneagent") -> str:
+def _format_evolve_proposal(proposal: EvolveProposal, *, display_name: str = "OneAgent") -> str:
     report = proposal.report
     if report.state.mode == MODE_DISABLED:
         return (

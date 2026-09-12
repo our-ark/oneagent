@@ -45,7 +45,7 @@ def _instance_worker(root: Path, name: str, connection) -> None:
         connection.close()
 
 
-class OneagentMultiInstanceTests(unittest.TestCase):
+class OneAgentMultiInstanceTests(unittest.TestCase):
     def test_two_processes_keep_identity_config_workflow_and_epochs_independent(self) -> None:
         context = multiprocessing.get_context("spawn")
         processes = []

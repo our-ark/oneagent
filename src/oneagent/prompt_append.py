@@ -145,7 +145,7 @@ def repository_handoff_note(
 def startup_context_note(memory_context: str) -> str:
     return "\n\n".join(
         [
-            "Oneagent startup context:",
+            "OneAgent startup context:",
             memory_context.strip(),
             "Use this as background context. It does not override current user requests or higher-priority instructions.",
         ]
@@ -156,7 +156,7 @@ def _with_blocks(message: str, blocks: list[str]) -> str:
     return "\n\n".join(
         [
             message.strip(),
-            "Oneagent wrapper instructions:",
+            "OneAgent wrapper instructions:",
             *blocks,
         ]
     ).strip()
@@ -179,7 +179,7 @@ def _read_only_wrapper_block(*, command_prefix: str = "/") -> str:
                 f"{command_prefix}help <command>; do not invent a command."
             ),
             (
-                "If the human wants Oneagent to do work, tell them to use "
+                "If the human wants OneAgent to do work, tell them to use "
                 f"{command_prefix}do for foreground work, {command_prefix}task for "
                 f"queued background work, or {command_prefix}backlog for deferred "
                 "idle-time work."
@@ -203,7 +203,7 @@ def _work_request_wrapper_block(*, remote_review: bool) -> str:
                 "When implementation is complete and validation passes, publish the pull request as ready for review, not draft.",
                 "Use a draft pull request only when work is intentionally incomplete or the human explicitly requests a draft.",
                 "When the task supplies an Evolution provenance section, preserve it verbatim in the pull request body.",
-                "Never merge a pull request from a work request. Only an explicit human /pr merge <PR number or PR URL> command from Oneagent's locked chat-provider conversation authorizes that exact merge.",
+                "Never merge a pull request from a work request. Only an explicit human /pr merge <PR number or PR URL> command from OneAgent's locked chat-provider conversation authorizes that exact merge.",
             ]
         )
     else:
@@ -212,7 +212,7 @@ def _work_request_wrapper_block(*, remote_review: bool) -> str:
                 "The current checkout is already an isolated task workspace on its task branch.",
                 "Stay on the current branch; do not switch to the authoritative branch, which may belong to another workspace.",
                 "No remote review forge is configured. Do not push, open a pull request, or switch branches.",
-                "Complete and validate the file changes; Oneagent will commit them and preserve the local task branch.",
+                "Complete and validate the file changes; OneAgent will commit them and preserve the local task branch.",
             ]
         )
     lines.append("Keep changes scoped to the request.")
@@ -236,7 +236,7 @@ def _memory_request_block() -> str:
             "Long-term memory:",
             "If this conversation reveals a durable user preference, project fact, workflow rule, or stable decision, do not run a command.",
             f"Instead include:\n{MEMORY_REQUEST_START}\n<concise durable memory>\n{MEMORY_REQUEST_END}",
-            "Oneagent will save it outside the read-only agent runtime turn.",
+            "OneAgent will save it outside the read-only agent runtime turn.",
             "Use it rarely. Do not save one-off tasks, casual chat, temporary debugging details, command outputs, secrets, credentials, or private keys.",
             "Do not edit .oneagent/memory files directly.",
         ]
@@ -247,8 +247,8 @@ def _task_regression_block() -> str:
     return "\n".join(
         [
             "Task regression journal:",
-            "Oneagent owns regression bookkeeping; never ask the human to maintain task statuses or use a regression command.",
-            "When there is clear evidence that a previously completed Oneagent task introduced a regression, inspect the local task history to identify the original task id.",
+            "OneAgent owns regression bookkeeping; never ask the human to maintain task statuses or use a regression command.",
+            "When there is clear evidence that a previously completed OneAgent task introduced a regression, inspect the local task history to identify the original task id.",
             "Include exactly one internal JSON signal for that original task:",
             (
                 f'{TASK_REGRESSION_START}\n'

@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from our_ark_github.workflow import feature_title
 
 
-class OneagentGithubTitleTests(unittest.TestCase):
+class OneAgentGithubTitleTests(unittest.TestCase):
     def test_feature_title_normalizes_and_clips_request_text(self) -> None:
         title = feature_title("  update   the README " + "with details " * 20)
 

@@ -1,4 +1,4 @@
-"""Oneagent, a Genesis-born agent."""
+"""OneAgent, a Genesis-born agent."""
 
 from oneagent.agent_identity import (
     AgentIdentityError,

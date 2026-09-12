@@ -486,7 +486,7 @@ def _shutdown_message(
     return channel_shutdown_message(identity, provider, reason, display_name=display_name)
 
 
-class OneagentApplication:
+class OneAgentApplication:
     def __init__(
         self,
         identity: Identity,
@@ -642,7 +642,7 @@ class OneagentApplication:
                 except StaleDaemonEpoch:
                     raise
                 except Exception as error:
-                    print(f"Oneagent {provider_label(self.channel_name)} polling error: {error}")
+                    print(f"OneAgent {provider_label(self.channel_name)} polling error: {error}")
                     time.sleep(5)
         finally:
             self._stop_cron_scheduler()
@@ -2123,7 +2123,7 @@ class OneagentApplication:
             except StaleDaemonEpoch:
                 return
             except Exception as error:
-                print(f"Oneagent cron scheduler error: {error}")
+                print(f"OneAgent cron scheduler error: {error}")
                 wait_seconds = 1.0
             self._cron_scheduler_wake.wait(timeout=wait_seconds)
 
@@ -3710,7 +3710,7 @@ class OneagentApplication:
                     self._enqueue_due_cron_jobs()
                     self._enqueue_due_extension_schedules()
                 except Exception as error:
-                    print(f"Oneagent scheduler error after task completion: {error}")
+                    print(f"OneAgent scheduler error after task completion: {error}")
                 if self.workflow.inspect().paused_count:
                     return
         except StaleDaemonEpoch:
@@ -4885,7 +4885,7 @@ def main(
             "extensions": [extension.name for extension in extensions],
         },
     )
-    bot = OneagentApplication(
+    bot = OneAgentApplication(
         identity=identity,
         root=root,
         client=chat_provider,
@@ -4909,13 +4909,13 @@ def main(
         if _allowed_conversation_id(chat_provider) is None:
             print(
                 f"{provider_label.title()} conversation lock is not set; all conversations "
-                "accepted by the provider can reach Oneagent."
+                "accepted by the provider can reach OneAgent."
             )
         else:
             try:
                 bot.notify_startup()
             except (OSError, ChatProviderError) as error:
-                print(f"Oneagent could not send startup notification: {error}")
+                print(f"OneAgent could not send startup notification: {error}")
         bot.run_forever()
     except StaleDaemonEpoch as error:
         print(f"\n{identity.name} stopped because a newer daemon took ownership: {error}")
@@ -4927,14 +4927,14 @@ def main(
         print(f"\n{identity.name} stopped listening on {provider_label}.")
 
 
-def _notify_shutdown(bot: OneagentApplication, reason: str) -> None:
+def _notify_shutdown(bot: OneAgentApplication, reason: str) -> None:
     bot.stop_workers()
     sent = _allowed_conversation_id(bot.client) is not None
     try:
         bot.notify_shutdown(reason)
     except (OSError, ChatProviderError) as error:
         sent = False
-        print(f"Oneagent could not send shutdown notification: {error}")
+        print(f"OneAgent could not send shutdown notification: {error}")
     _record_lifecycle_shutdown(
         bot.root,
         reason,
@@ -5055,7 +5055,7 @@ def _task_context_snapshot_prompt(request: str, *, provider: str = "chat") -> st
     return "\n".join(
         [
             "Task context snapshot request:",
-            "The human just created this Oneagent work request:",
+            "The human just created this OneAgent work request:",
             request.strip(),
             "",
             f"Using only prior conversation context from this same {provider_label(provider)} session, write a concrete task brief for the worker.",
@@ -5078,7 +5078,7 @@ def _parse_task_context_snapshot(reply: str) -> TaskContextSnapshot:
         return TaskContextSnapshot()
     if normalized.upper().startswith(NEEDS_CLARIFICATION_PREFIX):
         question = normalized[len(NEEDS_CLARIFICATION_PREFIX) :].strip()
-        return TaskContextSnapshot(clarification=question or "What should Oneagent do?")
+        return TaskContextSnapshot(clarification=question or "What should OneAgent do?")
     if normalized.rstrip(".").casefold() == NO_EXTRA_TASK_CONTEXT.rstrip(".").casefold():
         return TaskContextSnapshot()
     return TaskContextSnapshot(

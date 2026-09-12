@@ -16,7 +16,7 @@ except ImportError:  # pragma: no cover - fcntl is unavailable on Windows.
 
 
 class StateError(RuntimeError):
-    """Base error for durable Oneagent state."""
+    """Base error for durable OneAgent state."""
 
 
 class StateCorruptionError(StateError):
@@ -24,7 +24,7 @@ class StateCorruptionError(StateError):
 
     def __init__(self, path: Path, detail: str) -> None:
         super().__init__(
-            f"Oneagent state at {path} is unreadable ({detail}). "
+            f"OneAgent state at {path} is unreadable ({detail}). "
             "The file was preserved; repair or move it before retrying."
         )
         self.path = path

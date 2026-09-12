@@ -17,7 +17,7 @@ from oneagent.backlog import (
 )
 
 
-class OneagentBacklogTests(unittest.TestCase):
+class OneAgentBacklogTests(unittest.TestCase):
     def test_add_backlog_item_persists_priority_and_context(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)

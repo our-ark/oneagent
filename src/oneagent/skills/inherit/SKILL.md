@@ -2,17 +2,17 @@
 
 ## Purpose
 
-Use this skill when Oneagent should inherit changes from her direct parent.
+Use this skill when OneAgent should inherit changes from her direct parent.
 
 Inheritance is lineage-level parent adoption. It is separate from learning:
 
 - `inherit` discovers and adapts direct-parent candidate changes;
-- `learn` adapts lessons or non-lineage learning inputs into Oneagent's own body;
-- `work` lets Oneagent run queue, backlog, cron, and skill-only automatic learning artifacts.
+- `learn` adapts lessons or non-lineage learning inputs into OneAgent's own body;
+- `work` lets OneAgent run queue, backlog, cron, and skill-only automatic learning artifacts.
 
 ## Operations
 
-Oneagent uses this skill through ancestor commands:
+OneAgent uses this skill through ancestor commands:
 
 - `/ancestors`
 - `/inherit`
@@ -23,7 +23,7 @@ Oneagent uses this skill through ancestor commands:
 
 ## Boundary
 
-Inheritance only flows through Oneagent's direct parent. If Oneagent's parent has not inherited a grandparent change, Oneagent should not inherit it directly.
+Inheritance only flows through OneAgent's direct parent. If OneAgent's parent has not inherited a grandparent change, OneAgent should not inherit it directly.
 
 `/inherit` discovers direct-parent PRs and commits, stores them in private state,
 and queues fresh Codex assessment sessions in a durable background worker. The
@@ -52,4 +52,4 @@ the scan cursor.
 
 Inheritance changes are governed by their own inbox and lifecycle. They are not Evolution evidence or Evolution candidates.
 
-Teaching is implicit: Oneagent's descendants can inspect Oneagent's skills and lineage changes, and Oneagent's work skill can emit inheritable skill artifacts without exposing a user-facing `/teach` command.
+Teaching is implicit: OneAgent's descendants can inspect OneAgent's skills and lineage changes, and OneAgent's work skill can emit inheritable skill artifacts without exposing a user-facing `/teach` command.

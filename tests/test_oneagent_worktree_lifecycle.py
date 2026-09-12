@@ -12,14 +12,14 @@ from oneagent.instance import instance_branch
 from oneagent.tasks.worktree import prepare_task_worktree, remove_task_worktree
 
 
-class OneagentWorktreeLifecycleTests(unittest.TestCase):
+class OneAgentWorktreeLifecycleTests(unittest.TestCase):
     def test_task_branch_uses_main_commit_without_checking_out_main(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / "oneagent"
             instance = Path(directory) / "oneagent-gary"
             source.mkdir()
             _git(source, "init", "-b", "main")
-            _git(source, "config", "user.name", "Oneagent Test")
+            _git(source, "config", "user.name", "OneAgent Test")
             _git(source, "config", "user.email", "oneagent@example.com")
             (source / ".gitignore").write_text(".agent/instance.yaml\n.oneagent/\n", encoding="utf-8")
             (source / "README.md").write_text("first\n", encoding="utf-8")

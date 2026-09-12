@@ -1,1 +1,1 @@
-"""Provider-neutral Oneagent application orchestration."""
+"""Provider-neutral OneAgent application orchestration."""

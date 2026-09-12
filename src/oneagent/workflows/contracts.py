@@ -217,7 +217,7 @@ def validate_workflow_engine(engine: WorkflowEngine) -> WorkflowEngine:
     if engine.api_version != WORKFLOW_API_VERSION:
         raise WorkflowEngineError(
             f"Workflow engine uses API version {engine.api_version}; "
-            f"Oneagent supports version {WORKFLOW_API_VERSION}."
+            f"OneAgent supports version {WORKFLOW_API_VERSION}."
         )
     return engine
 

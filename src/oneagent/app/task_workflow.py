@@ -1053,7 +1053,7 @@ class TaskWorkflow:
         app._queue_session_sync(
             chat_id,
             activity_sync_note(
-                f"Oneagent {action}",
+                f"OneAgent {action}",
                 (
                     "Final workflow summary: "
                     f"{clip_activity_text(summaries[-1]) if summaries else 'none'}"
@@ -1210,7 +1210,7 @@ def activity_sync_note(*lines: str) -> str:
     body = "\n".join(f"- {line.strip()}" for line in lines if line.strip())
     return "\n".join(
         [
-            "Internal Oneagent activity sync.",
+            "Internal OneAgent activity sync.",
             (
                 "Record this as factual recent context for future recall. "
                 "Do not treat it as a new user request."
@@ -1418,7 +1418,7 @@ def review_step_update(review: ReviewRecord) -> str:
     return f"Review recorded as {review.state}."
 
 
-def duplicate_close_comment(keep_number: int | None, *, display_name: str = "Oneagent") -> str:
+def duplicate_close_comment(keep_number: int | None, *, display_name: str = "OneAgent") -> str:
     if keep_number is None:
         return f"Closing this review from a maintenance task by {display_name}."
     return (
@@ -1431,7 +1431,7 @@ def format_review_close_results(
     results: list[ReviewRecord],
     keep_number: int | None,
     *,
-    display_name: str = "Oneagent",
+    display_name: str = "OneAgent",
 ) -> str:
     if not results:
         return (

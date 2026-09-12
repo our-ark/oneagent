@@ -5,7 +5,7 @@ import sys
 import unittest
 
 
-class OneagentTestIsolationTests(unittest.TestCase):
+class OneAgentTestIsolationTests(unittest.TestCase):
     def test_canonical_discovery_loads_test_state_isolation(self) -> None:
         self.assertEqual(
             __package__,

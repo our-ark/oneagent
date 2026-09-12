@@ -1,7 +1,7 @@
 name: teach
 version: 0.1.0
-summary: Hidden skill for making Oneagent's useful skill-level changes inheritable by descendants without exposing a /teach command.
-owner: Oneagent
+summary: Hidden skill for making OneAgent's useful skill-level changes inheritable by descendants without exposing a /teach command.
+owner: OneAgent
 status: active
 exposure: hidden
 mode: implicit

@@ -34,7 +34,7 @@ class PrivateStateError(RuntimeError):
 
 
 class UnsupportedPrivateStateError(PrivateStateError):
-    """Raised when state is corrupt or newer than this Oneagent build."""
+    """Raised when state is corrupt or newer than this OneAgent build."""
 
 
 class PrivateStateMigrationError(PrivateStateError):
@@ -269,7 +269,7 @@ def plan_private_state(root: Path | None = None) -> PrivateStatePlan:
             if version > schema.current_version:
                 errors.append(
                     f"{path}: unsupported schema version {version}; "
-                    f"this Oneagent supports {schema.current_version}"
+                    f"this OneAgent supports {schema.current_version}"
                 )
                 continue
             try:
@@ -297,7 +297,7 @@ def assert_private_state_supported(root: Path | None = None) -> PrivateStatePlan
     plan = plan_private_state(root)
     if not plan.valid:
         raise UnsupportedPrivateStateError(
-            "Private state is not supported by this Oneagent build:\n- "
+            "Private state is not supported by this OneAgent build:\n- "
             + "\n- ".join(plan.errors)
         )
     return plan
@@ -431,14 +431,14 @@ def _manifest_status(root: Path | None) -> tuple[str, tuple[str, ...]]:
     elif schema_version > PRIVATE_STATE_MANIFEST_SCHEMA_VERSION:
         errors.append(
             f"{path}: unsupported manifest schema version {schema_version}; "
-            f"this Oneagent supports {PRIVATE_STATE_MANIFEST_SCHEMA_VERSION}"
+            f"this OneAgent supports {PRIVATE_STATE_MANIFEST_SCHEMA_VERSION}"
         )
     if state_version is None:
         errors.append(f"{path}: state_version must be a non-negative integer")
     elif state_version > PRIVATE_STATE_VERSION:
         errors.append(
             f"{path}: unsupported private-state version {state_version}; "
-            f"this Oneagent supports {PRIVATE_STATE_VERSION}"
+            f"this OneAgent supports {PRIVATE_STATE_VERSION}"
         )
     if not isinstance(schemas, dict) or any(
         not isinstance(key, str)
@@ -470,7 +470,7 @@ def _manifest_status(root: Path | None) -> tuple[str, tuple[str, ...]]:
                     "invalid",
                     (
                         f"{path}: {pattern} uses unsupported schema version {version}; "
-                        f"this Oneagent supports {expected_version}",
+                        f"this OneAgent supports {expected_version}",
                     ),
                 )
         return "outdated", ()
@@ -744,7 +744,7 @@ def require_daemon_stopped(root: Path | None = None) -> None:
     pid = _positive_int(current.get("pid"))
     if pid is not None and _pid_is_alive(pid):
         raise PrivateStateMigrationError(
-            f"Stop the running Oneagent daemon (pid {pid}) before applying private-state migration."
+            f"Stop the running OneAgent daemon (pid {pid}) before applying private-state migration."
         )
 
 

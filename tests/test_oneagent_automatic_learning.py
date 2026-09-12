@@ -12,7 +12,7 @@ from oneagent.automatic_learning import learning_artifact_path, learning_index_p
 from oneagent.identity import load_identity
 
 
-class OneagentAutomaticLearningTests(unittest.TestCase):
+class OneAgentAutomaticLearningTests(unittest.TestCase):
     def test_records_skill_learning_artifact_index_and_markdown(self) -> None:
         with TemporaryDirectory() as temp:
             root = Path(temp)
@@ -22,7 +22,7 @@ class OneagentAutomaticLearningTests(unittest.TestCase):
                 request="add a cron skill",
                 result="\n".join(
                     [
-                        "Oneagent opened a pull request.",
+                        "OneAgent opened a pull request.",
                         "PR URL: https://github.com/our-ark/oneagent/pull/42",
                         "Files:",
                         "- src/oneagent/skills/cron/SKILL.md",

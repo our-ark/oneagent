@@ -29,7 +29,7 @@ from oneagent.agent_identity import install_agent_identity
 from tests.test_oneagent_agent_identity import _identity
 
 
-class OneagentPrivateStateTests(unittest.TestCase):
+class OneAgentPrivateStateTests(unittest.TestCase):
     def test_portable_self_is_registered_and_schema_validated(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)

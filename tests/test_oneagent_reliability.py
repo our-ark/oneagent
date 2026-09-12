@@ -18,7 +18,7 @@ from oneagent.app.inbox import (
     inbox_path,
     mark_reply_sent,
 )
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.backlog import add_backlog_item, backlog_status
 from oneagent.codex_sessions import (
     CodexSessionState,
@@ -40,7 +40,7 @@ from oneagent.tasks.queue import (
 )
 
 
-class OneagentReliabilityTests(unittest.TestCase):
+class OneAgentReliabilityTests(unittest.TestCase):
     def test_corrupt_queue_is_preserved_and_never_replaced_with_empty_state(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
@@ -216,7 +216,7 @@ class OneagentReliabilityTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             chat = _FlakyChat()
-            app = OneagentApplication(load_identity(), root, chat)
+            app = OneAgentApplication(load_identity(), root, chat)
             with patch.object(
                 app,
                 "_dispatch_chat_event",
@@ -241,7 +241,7 @@ class OneagentReliabilityTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             chat = _Chat()
-            app = OneagentApplication(load_identity(), root, chat)
+            app = OneAgentApplication(load_identity(), root, chat)
             with patch("builtins.print"), patch.object(
                 app,
                 "_dispatch_chat_event",

@@ -88,7 +88,7 @@ class LocalForgeProvider:
 
     @staticmethod
     def feature_title(text: str) -> str:
-        return " ".join(text.strip().split())[:72].strip() or "Oneagent feature"
+        return " ".join(text.strip().split())[:72].strip() or "OneAgent feature"
 
     def prepare_local_publish(
         self,

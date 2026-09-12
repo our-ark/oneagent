@@ -44,7 +44,7 @@ from oneagent.tasks.events import record_task_event
 from oneagent.tasks.queue import TaskJob, begin_next_task, enqueue_task, fail_task
 
 
-class OneagentEvolveTests(unittest.TestCase):
+class OneAgentEvolveTests(unittest.TestCase):
     def test_default_state_is_co_evolve(self) -> None:
         with TemporaryDirectory() as temp:
             state = load_evolve_state(Path(temp))
@@ -107,7 +107,7 @@ class OneagentEvolveTests(unittest.TestCase):
                     rationale="Enosh has a portable research synthesis capability.",
                     proposed_change="Add a bounded research summary adapter.",
                     expected_benefit="Improves research handoffs.",
-                    risk="Source assumptions may not fit Oneagent.",
+                    risk="Source assumptions may not fit OneAgent.",
                     test_plan="Add focused adapter tests.",
                 ),
                 root,
@@ -203,7 +203,7 @@ class OneagentEvolveTests(unittest.TestCase):
             )
             created = synthesize_evolve_candidates_from_evidence(
                 root,
-                mission="Improve Oneagent safely.",
+                mission="Improve OneAgent safely.",
                 generator=lambda _prompt: json.dumps(
                     [
                         {
@@ -685,7 +685,7 @@ def _feedback_candidate(root: Path, message: str):
                     "source": "feedback",
                     "observation": message,
                     "evidence_type": "explicit feedback",
-                    "affected_area": "Oneagent workflow",
+                    "affected_area": "OneAgent workflow",
                     "desired_outcome": message,
                     "confidence": 1.0,
                     "explicit": True,

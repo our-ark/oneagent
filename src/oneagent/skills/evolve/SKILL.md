@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use this skill when Oneagent should inspect, propose, or govern a small
+Use this skill when OneAgent should inspect, propose, or govern a small
 self-evolution step. Evolution is an evidence-to-change pipeline, not a generic
 task runner:
 
@@ -35,7 +35,7 @@ candidate changes.
 
 The feedback scanner reads unprocessed conversation turns in configurable
 batches, defaulting to 20 user messages. Each record contains the exact user
-message and Oneagent reply, plus a stable `conversation:<id>` reference. Credential
+message and OneAgent reply, plus a stable `conversation:<id>` reference. Credential
 values are redacted before the records leave storage.
 
 The scanner runs in a fresh stateless runtime invocation. It receives no normal
@@ -97,7 +97,7 @@ is currently no command that deletes evidence.
 
 ## Candidate pathways
 
-Oneagent has four candidate sources:
+OneAgent has four candidate sources:
 
 - `feedback`: synthesized from feedback evidence;
 - `experience`: synthesized from task-history evidence;
@@ -117,7 +117,7 @@ candidates. It may return an empty array. Every returned candidate must:
 
 - cite known evidence IDs;
 - use evidence from only one source;
-- be small, reversible, testable, and about improving Oneagent;
+- be small, reversible, testable, and about improving OneAgent;
 - provide rationale, proposed change, benefit, risk, and test plan; and
 - pass protected-scope and dangerous-action validation.
 
@@ -132,12 +132,12 @@ bounded generation pass.
 ### Brainstorming
 
 `/evolve brainstorm [theme]` starts one fresh stateless, read-only Codex
-session. It receives Oneagent's mission, the selected theme, declared skills, up
+session. It receives OneAgent's mission, the selected theme, declared skills, up
 to 30 existing candidates, and up to 12 recent completed-work summaries. It may
 inspect the repository read-only to check novelty.
 
 The session must return an exact JSON array containing zero to three complete
-candidate drafts. Oneagent then validates required fields, field bounds,
+candidate drafts. OneAgent then validates required fields, field bounds,
 protected scope, dangerous actions, and duplicates before writing candidates
 directly to `.oneagent/evolve_candidates.json`. There is no brainstorming
 artifact or later conversion pass.

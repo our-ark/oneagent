@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON_CANDIDATES = ("python3.13", "python3.12", "python3.11", "python3", "python")
 
 
-class OneagentLauncherTests(unittest.TestCase):
+class OneAgentLauncherTests(unittest.TestCase):
     def test_launchers_probe_for_supported_python(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             bin_dir = Path(directory)

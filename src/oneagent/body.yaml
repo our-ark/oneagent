@@ -1,4 +1,4 @@
-name: Oneagent
+name: OneAgent
 kind: agent
 role: descendant_agent
 generation: 4
@@ -30,7 +30,7 @@ skills:
     path: src/oneagent/skills/skill-library
   - name: code
     version: 0.1.0
-    description: "Inspect, modify, test, and explain changes to Oneagent's local code body."
+    description: "Inspect, modify, test, and explain changes to OneAgent's local code body."
     path: src/oneagent/skills/code
   - name: inherit
     version: 0.1.0

@@ -20,7 +20,7 @@ from oneagent.cron import (
 )
 
 
-class OneagentCronTests(unittest.TestCase):
+class OneAgentCronTests(unittest.TestCase):
     def test_parse_and_format_intervals(self) -> None:
         self.assertEqual(parse_cron_interval("10m"), 600)
         self.assertEqual(parse_cron_interval("2 hours"), 7200)

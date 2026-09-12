@@ -24,7 +24,7 @@ from oneagent.tasks.events import record_task_event
 from oneagent.tasks.queue import task_queue_status
 
 
-class OneagentEvolveCurationTests(unittest.TestCase):
+class OneAgentEvolveCurationTests(unittest.TestCase):
     def test_all_sources_enter_bounded_curation_with_unchanged_provenance(self) -> None:
         candidates = tuple(_candidate(source, index) for index, source in enumerate(_sources(), start=1))
         report = EvolveReport(

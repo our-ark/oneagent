@@ -82,7 +82,7 @@ class ExtensionScheduleSpec:
         if self.api_version != EXTENSION_SCHEDULE_API_VERSION:
             raise ExtensionScheduleError(
                 f"Extension schedule {self.name!r} uses API version "
-                f"{self.api_version}; Oneagent supports version "
+                f"{self.api_version}; OneAgent supports version "
                 f"{EXTENSION_SCHEDULE_API_VERSION}."
             )
         name = _schedule_name(self.name)

@@ -10,7 +10,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from oneagent.app.core import OneagentApplication
+from oneagent.app.core import OneAgentApplication
 from oneagent.commands import config_command
 from oneagent.config import read_section
 from oneagent.identity import load_identity
@@ -100,7 +100,7 @@ class _EntryPoints(list):
         return self if group == "our_ark.profiles" else ()
 
 
-class OneagentProfileTests(unittest.TestCase):
+class OneAgentProfileTests(unittest.TestCase):
     @patch(
         "oneagent.app.core.assert_private_state_supported",
         side_effect=UnsupportedPrivateStateError("future state"),
@@ -110,7 +110,7 @@ class OneagentProfileTests(unittest.TestCase):
             root = Path(temp)
 
             with self.assertRaisesRegex(UnsupportedPrivateStateError, "future state"):
-                OneagentApplication(
+                OneAgentApplication(
                     load_identity(),
                     root,
                     _Chat(),
@@ -149,7 +149,7 @@ class OneagentProfileTests(unittest.TestCase):
         with TemporaryDirectory() as temp:
             root = Path(temp)
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 root,
                 chat,
@@ -206,7 +206,7 @@ class OneagentProfileTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -250,7 +250,7 @@ class OneagentProfileTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -274,7 +274,7 @@ class OneagentProfileTests(unittest.TestCase):
         runtime = _Runtime()
         profile = AgentProfile(name="researcher", prompt_contributors=(context,))
         with TemporaryDirectory() as temp:
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 _Chat(),
@@ -299,7 +299,7 @@ class OneagentProfileTests(unittest.TestCase):
             ),
         )
         with TemporaryDirectory() as temp:
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 _Chat(),
@@ -318,7 +318,7 @@ class OneagentProfileTests(unittest.TestCase):
         )
         with TemporaryDirectory() as temp:
             with self.assertRaisesRegex(ProfileError, "conflicts with core commands: /task"):
-                OneagentApplication(
+                OneAgentApplication(
                     load_identity(),
                     Path(temp),
                     _Chat(),
@@ -378,7 +378,7 @@ class OneagentProfileTests(unittest.TestCase):
 
         self.assertIn("Running: oneagent", initial)
         self.assertIn("Available: oneagent, researcher", initial)
-        self.assertIn("Restart Oneagent to activate it", changed)
+        self.assertIn("Restart OneAgent to activate it", changed)
         self.assertIn("Selected for restart: researcher", changed)
         self.assertEqual(reset_section, {})
         self.assertIn("Selected for restart: oneagent", reset)
@@ -387,7 +387,7 @@ class OneagentProfileTests(unittest.TestCase):
         profile = AgentProfile(name="researcher")
         with TemporaryDirectory() as temp:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,
@@ -451,7 +451,7 @@ class OneagentProfileTests(unittest.TestCase):
             "oneagent.app.core._record_system_event"
         ) as record_event:
             chat = _Chat()
-            app = OneagentApplication(
+            app = OneAgentApplication(
                 load_identity(),
                 Path(temp),
                 chat,

@@ -1,7 +1,7 @@
 name: inherit
 version: 0.1.0
 summary: Discover ancestor skills; assess, inspect, and selectively adapt direct-parent changes.
-owner: Oneagent
+owner: OneAgent
 status: active
 mode: lineage-awareness
 entrypoint: src/oneagent/lineage/core.py

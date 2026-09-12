@@ -1,4 +1,4 @@
-"""Reusable conformance suites for Oneagent extension implementations."""
+"""Reusable conformance suites for OneAgent extension implementations."""
 
 from oneagent.runtime_dependencies import activate_runtime_dependencies
 

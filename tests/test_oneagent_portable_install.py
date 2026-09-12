@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
     (ROOT / "libraries").is_dir() and (ROOT / ".github").is_dir(),
     "repository release tests are outside the inheritable agent body",
 )
-class OneagentPortableInstallTests(unittest.TestCase):
+class OneAgentPortableInstallTests(unittest.TestCase):
     def test_ci_provisions_locked_build_backend_before_offline_wheel_test(self) -> None:
         workflow = (ROOT / ".github" / "workflows" / "tests.yml").read_text(
             encoding="utf-8"
@@ -533,7 +533,7 @@ def _write_fake_codex(path: Path) -> None:
                 raise SystemExit("Installed profile context did not reach the task prompt.")
             cwd = Path(args[args.index("--cd") + 1])
             (cwd / "PORTABLE_RESULT.md").write_text(
-                "Completed by installed Oneagent.\\n",
+                "Completed by installed OneAgent.\\n",
                 encoding="utf-8",
             )
             output = Path(args[args.index("--output-last-message") + 1])
@@ -710,7 +710,7 @@ _INSTALLED_TASK_SCRIPT = textwrap.dedent(
     import sys
 
     from oneagent import agent_identity_schema
-    from oneagent.app.core import OneagentApplication
+    from oneagent.app.core import OneAgentApplication
     from oneagent.app.epoch import daemon_epoch_guard
     from oneagent.application import (
         APPLICATION_COMPOSITION_API_VERSION,
@@ -777,7 +777,7 @@ _INSTALLED_TASK_SCRIPT = textwrap.dedent(
         return result.stdout.strip()
 
     git("init", "-b", "main")
-    git("config", "user.name", "Portable Oneagent")
+    git("config", "user.name", "Portable OneAgent")
     git("config", "user.email", "portable@example.com")
     (root / ".gitignore").write_text(".oneagent/\\n.agent/instance.yaml\\n", encoding="utf-8")
     (root / "README.md").write_text("portable body\\n", encoding="utf-8")
@@ -814,7 +814,7 @@ _INSTALLED_TASK_SCRIPT = textwrap.dedent(
     profile = components.profile
     extensions = components.extensions
     workflow = components.workflow
-    app = OneagentApplication(
+    app = OneAgentApplication(
         identity=components.identity,
         root=root,
         client=chat,

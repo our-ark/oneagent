@@ -46,7 +46,7 @@ Identity = BodyIdentity
 
 
 def load_body_identity(path: Path | None = None) -> BodyIdentity:
-    """Load Oneagent's versioned body identity."""
+    """Load OneAgent's versioned body identity."""
     text = _read_body_text(path)
     data = _parse_oneagent_yaml(text)
 
@@ -137,7 +137,7 @@ def update_mission(
 
 
 def _parse_oneagent_yaml(text: str) -> dict[str, Any]:
-    """Parse the small YAML subset used by Oneagent's body file."""
+    """Parse the small YAML subset used by OneAgent's body file."""
     data: dict[str, Any] = {}
     current_key: str | None = None
     current_list: list[Any] | None = None

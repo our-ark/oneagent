@@ -84,11 +84,11 @@ _TOKEN_USAGE: ContextVar[TokenUsage] = ContextVar("oneagent_token_usage", defaul
 
 
 class BrainError(AgentRuntimeError):
-    """Raised when Oneagent cannot reach her Codex brain."""
+    """Raised when OneAgent cannot reach her Codex brain."""
 
 
 class BrainCancelled(BrainError, AgentRuntimeCancelled):
-    """Raised when Oneagent's human cancels an active Codex run."""
+    """Raised when OneAgent's human cancels an active Codex run."""
 
 
 class BrainTimedOut(BrainError, AgentRuntimeTimedOut):
@@ -153,14 +153,14 @@ def model_summary(root: Path | None = None) -> str:
         model_source = "ONEAGENT_CODEX_MODEL"
     elif oneagent_model:
         model = oneagent_model
-        model_source = "Oneagent config codex.model"
+        model_source = "OneAgent config codex.model"
     elif config_model:
         model = config_model
         model_source = str(config_path)
     else:
         model = "Codex CLI default"
         model_source = (
-            "Codex, because ONEAGENT_CODEX_MODEL, Oneagent config codex.model, "
+            "Codex, because ONEAGENT_CODEX_MODEL, OneAgent config codex.model, "
             "and Codex config model are not set"
         )
 
@@ -179,7 +179,7 @@ def model_summary(root: Path | None = None) -> str:
         lines.extend(
             [
                 f"Reasoning effort: {oneagent_reasoning}",
-                "Reasoning source: Oneagent config codex.reasoning_effort",
+                "Reasoning source: OneAgent config codex.reasoning_effort",
             ]
         )
     elif config_reasoning:
@@ -665,7 +665,7 @@ def _run_codex_result(
     if codex is None:
         detail = f" {resolution.detail}" if resolution.detail else ""
         raise BrainError(
-            "Oneagent cannot find the Codex CLI."
+            "OneAgent cannot find the Codex CLI."
             f"{detail} Configure it with `/config runtime codex executable <path>` "
             "or expose `codex` on PATH."
         )
@@ -726,7 +726,7 @@ def _run_codex_result(
                     check=False,
                 )
             except subprocess.TimeoutExpired as exc:
-                raise BrainTimedOut("Oneagent waited too long for Codex to answer.") from exc
+                raise BrainTimedOut("OneAgent waited too long for Codex to answer.") from exc
 
         output.seek(0)
         answer = output.read().strip()
@@ -918,10 +918,10 @@ def _run_with_progress(
                     now = time.monotonic()
                     if control.timed_out or now >= deadline:
                         _stop_process(process)
-                        raise BrainTimedOut("Oneagent waited too long for Codex to answer.")
+                        raise BrainTimedOut("OneAgent waited too long for Codex to answer.")
                     if control.cancelled:
                         _stop_process(process)
-                        raise BrainCancelled("Oneagent cancelled the active Codex run.")
+                        raise BrainCancelled("OneAgent cancelled the active Codex run.")
 
                     if now >= next_update:
                         control.emit_progress(
@@ -936,7 +936,7 @@ def _run_with_progress(
                     time.sleep(sleep_for)
             except KeyboardInterrupt as exc:
                 _stop_process(process)
-                raise BrainCancelled("Oneagent cancelled the active Codex run.") from exc
+                raise BrainCancelled("OneAgent cancelled the active Codex run.") from exc
 
             stdout_file.seek(0)
             stderr_file.seek(0)
@@ -1104,7 +1104,7 @@ def resolve_codex_executable(root: Path | None = None) -> CodexExecutableResolut
     if oneagent_configured:
         return resolve_codex_executable_value(
             oneagent_configured,
-            "Oneagent config codex.executable",
+            "OneAgent config codex.executable",
         )
 
     path_codex = shutil.which("codex")

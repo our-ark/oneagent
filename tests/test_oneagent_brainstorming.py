@@ -14,7 +14,7 @@ from oneagent.evolution.sources.brainstorming import (
 )
 
 
-class OneagentBrainstormingTests(unittest.TestCase):
+class OneAgentBrainstormingTests(unittest.TestCase):
     def test_prepares_bounded_context_for_a_fresh_read_only_session(self) -> None:
         request = prepare_brainstorm_request(
             "auditable evolution",
