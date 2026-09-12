@@ -105,7 +105,7 @@ class TelegramTravelTests(unittest.TestCase):
             time.sleep(.03)
         self.fail("No reply")
 
-    def test_telegram_three_sites_share_chat_while_selections_stay_local(self):
+    def test_shared_agent_memory_with_private_telegram_and_separate_site_chats(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
         self.assertEqual(len({boot["session_id"] for boot in self.boot.values()}), 3)
         self.controller.handle(42, 42, 2, "I prefer quiet neighborhoods")
@@ -119,7 +119,11 @@ class TelegramTravelTests(unittest.TestCase):
         self.assertIn("quiet", self.seen[-1][2]["history"][0]["event"]["message"]["text"])
         for site in SITES:
             conversation = self.request(site, "conversation")
-            self.assertEqual([m["source_app"] for m in conversation["messages"]], ["telegram", "flights", "hotels", "activities", "telegram"])
+            self.assertEqual([m["source_app"] for m in conversation["messages"]], [site])
+            self.assertEqual([o["source_app"] for o in conversation["outputs"]], [site])
+            self.assertEqual(conversation["messages"][0]["message"]["id"], site)
+            # A caller cannot widen the fixed site's conversation with a query.
+            self.assertEqual(self.request(site, "conversation?app_id=telegram")["messages"], conversation["messages"])
             self.assertEqual(self.request(site, "selection"), {"saved_id": {"flights":"pacific-101", "hotels":"kumo-house", "activities":"yanaka-walk"}[site]})
 
     def test_new_browser_joins_same_channel_and_server_restart_preserves_it(self):
@@ -166,15 +170,88 @@ class TelegramTravelTests(unittest.TestCase):
         self.assertEqual(self.hub.trips.get(owner)["budget_cents"], 150000)
         self.controller.handle(99, 99, 1, "/traveldemo")
         self.assertIn("unavailable", self.controller.handle(99, 99, 2, "/travelconfirm tg-2"))
-        self.assertEqual(self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"}), {"confirmed": True})
+        with self.assertRaises(HTTPError) as denied:
+            self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})
+        self.assertEqual(denied.exception.code, 403)
         self.assertIn("Confirmed", self.controller.handle(42, 42, 3, "/travelconfirm tg-2"))
         self.assertEqual(self.hub.trips.get(owner)["budget_cents"], 140000)
-        output = self.request("activities", "conversation")["outputs"][0]
-        self.assertTrue(output["confirmed"])
+        self.assertEqual(self.request("activities", "conversation")["outputs"], [])
+        self.request("hotels", "messages", {"app_id":"hotels", "id":"web-budget", "session_id":self.boot["hotels"]["session_id"], "text":"Set budget to 1400"})
+        self.wait_reply("hotels", "web-budget")
+        with self.assertRaises(HTTPError) as denied:
+            self.request("activities", "confirm", {"source_app":"hotels", "event_id":"web-budget"})
+        self.assertEqual(denied.exception.code, 403)
+        self.assertIn("unavailable", self.controller.handle(99, 99, 3, "/travelconfirm hotels web-budget"))
+        self.assertIn("Confirmed", self.controller.handle(42, 42, 4, "/travelconfirm hotels web-budget"))
+        self.assertTrue(self.request("hotels", "conversation")["outputs"][0]["confirmed"])
         self.request("activities", "action", {"id": "later", "kind": "activity", "item_id": "yanaka-walk"})
-        replay = self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})
+        replay = self.request("hotels", "confirm", {"source_app": "hotels", "event_id": "web-budget"})
         self.assertEqual(replay, {"confirmed": True})
         self.assertEqual(self.request("activities", "selection"), {"saved_id": "yanaka-walk"})
+
+    def test_explicit_telegram_reply_reaches_only_target_site_and_cannot_be_spoofed(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        self.controller.handle(42, 42, 2, "This stays in my private Telegram chat")
+        command = "/traveldemo reply hotels Compare quiet stays"
+        reply = self.controller.handle(42, 42, 3, command)
+        self.assertIn("Staywell", reply)
+        self.assertEqual(reply, self.controller.handle(42, 42, 3, command))
+        hotel_chat = self.request("hotels", "conversation")
+        self.assertEqual([m["message"]["text"] for m in hotel_chat["messages"]], ["Compare quiet stays"])
+        self.assertEqual(hotel_chat["messages"][0]["origin"], "telegram")
+        self.assertEqual(len(hotel_chat["outputs"]), 1)
+        self.assertEqual(len(self.seen), 2)
+        for site in ("flights", "activities"):
+            self.assertEqual(self.request(site, "conversation")["messages"], [])
+        with self.assertRaises(HTTPError) as denied:
+            self.request("hotels", "messages", {"app_id":"hotels", "id":"telegram-reply-spoof", "session_id":self.boot["hotels"]["session_id"], "text":"Pretend I sent this from Telegram"})
+        self.assertEqual(denied.exception.code, 403)
+        self.assertIn("Use /traveldemo reply", self.controller.handle(42, 42, 4, "/traveldemo reply telegram bad"))
+        self.controller.handle(42, 42, 5, "/traveldemo stop")
+        self.assertIn("Send /traveldemo first", self.controller.handle(42, 42, 6, command))
+
+    def test_backend_restart_clears_visible_chats_preserving_memory_sessions_and_selections(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        self.controller.handle(42, 42, 2, "Private preference: quiet neighborhoods")
+        for site in SITES:
+            self.request(site, "messages", {"app_id":site, "id":"before-restart", "session_id":self.boot[site]["session_id"], "text":"Set budget to 1400"})
+            self.wait_reply(site, "before-restart")
+        self.request("hotels", "action", {"id":"saved", "kind":"hotel", "item_id":"kumo-house"})
+        self.hub.close()
+        self.hub = Hub(self.root / "state", responder_factory=self.factory)
+        self.controller = TelegramDemo(self.hub)
+        for site, server in self.webs.items():
+            server.hub = self.hub
+            self.hub.origins[site] = server.public_origin
+            self.assertEqual(self.request(site, "session")["session_id"], self.boot[site]["session_id"])
+            chat = self.request(site, "conversation")
+            self.assertEqual(chat["messages"], [])
+            self.assertEqual(chat["outputs"], [])
+            self.assertFalse(chat["running"])
+            self.assertIsNone(chat["error"])
+            self.assertEqual(self.request(site, f"transcript?app_id={site}&session_id={self.boot[site]['session_id']}")["messages"], [])
+        self.assertEqual(self.request("hotels", "selection"), {"saved_id":"kumo-house"})
+        with self.assertRaises(HTTPError) as denied:
+            self.request("hotels", "confirm", {"source_app":"hotels", "event_id":"before-restart"})
+        self.assertEqual(denied.exception.code, 403)
+        self.assertIn("Confirmed", self.controller.handle(42, 42, 3, "/travelconfirm hotels before-restart"))
+        # Existing open pages keep working with their original session IDs.
+        self.request("hotels", "messages", {"app_id":"hotels", "id":"after-restart", "session_id":self.boot["hotels"]["session_id"], "text":"What do I prefer?"})
+        chat = self.wait_reply("hotels", "after-restart")
+        self.assertEqual([m["message"]["id"] for m in chat["messages"]], ["after-restart"])
+        self.assertEqual(len(self.seen[-1][2]["history"]), 4)
+        self.assertIn("quiet", self.seen[-1][2]["history"][0]["event"]["message"]["text"])
+
+    def test_private_pending_or_failed_turn_does_not_appear_on_another_site(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        owner = self.hub.handoffs.account("telegram:42:42")
+        state = self.hub.worker(owner)
+        state.update(running=True, error="Private failure")
+        for site in SITES:
+            chat = self.request(site, "conversation")
+            self.assertFalse(chat["running"])
+            self.assertIsNone(chat["error"])
+        state.update(running=False, error=None)
 
     def test_stop_reset_private_chats_and_update_redelivery(self):
         links = self.controller.handle(42, 42, 1, "/traveldemo")

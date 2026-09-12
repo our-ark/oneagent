@@ -20,9 +20,9 @@ from oneagent.collaboration.handoff import HandoffStore
 from oneagent.collaboration.store import encoded, identifier, object_value
 from .agent import TravelResponder
 from .domain import CATALOG, TravelMessageStore, TripStore, item, travel_tools
+from .routing import SITES, is_telegram_reply
 
 LOG = logging.getLogger(__name__)
-SITES = ("flights", "hotels", "activities")
 APPS = ("home", *SITES, "telegram")
 
 
@@ -41,6 +41,7 @@ class Hub:
                     CREATE TABLE IF NOT EXISTS bot_routes(chat INTEGER PRIMARY KEY, url TEXT, token TEXT);
                     CREATE TABLE IF NOT EXISTS bot_owners(owner TEXT PRIMARY KEY, chat INTEGER);
                     CREATE TABLE IF NOT EXISTS mirror_outbox(owner TEXT, app TEXT, event TEXT, body TEXT, status TEXT DEFAULT 'pending', next_attempt REAL DEFAULT 0, PRIMARY KEY(owner,app,event));
+                    CREATE TABLE IF NOT EXISTS website_chat_resets(owner TEXT, app TEXT, cursor INTEGER NOT NULL, PRIMARY KEY(owner,app));
                 """)
         finally:
             db.close()
@@ -59,6 +60,7 @@ class Hub:
             server = AppServer(("127.0.0.1", 0), store, {secrets.token_hex(32): "bootstrap"})
             threading.Thread(target=server.serve_forever, daemon=True).start()
             self.stores[app_id], self.servers[app_id] = store, server
+        self.clear_website_chats()
         self.mirror_stop = threading.Event()
         self.mirror_thread = None
         if mirror_worker:
@@ -124,10 +126,27 @@ class Hub:
         owner = self.handoffs.account(f"telegram:{chat_id}:{chat_id}", include_inactive=True)
         if owner:
             self.bind_owner(owner, chat_id)
+            if previous is not None and previous != (url, token):
+                self.clear_website_chats(owner)
             # Resume the saved output/cursor transaction after either process
             # restarts, even when the browser has not reopened the conversation.
             if previous != (url, token) or owner not in self.visitors:
                 self.kick(owner)
+
+    def clear_website_chats(self, owner=None):
+        """Start fresh visible threads without losing private memory or delivery receipts."""
+        with sqlite3.connect(self.db_path) as db:
+            for app in SITES:
+                with self.stores[app].connect() as store:
+                    if owner is None:
+                        cursor = store.execute("SELECT COALESCE(MAX(cursor),0) FROM events").fetchone()[0]
+                    else:
+                        cursor = store.execute("SELECT COALESCE(MAX(cursor),0) FROM events WHERE owner=?", (owner,)).fetchone()[0]
+                db.execute("INSERT INTO website_chat_resets VALUES (?,?,?) ON CONFLICT(owner,app) DO UPDATE SET cursor=MAX(cursor,excluded.cursor)", (owner or "", app, cursor))
+
+    def website_chat_cursor(self, owner, app):
+        with sqlite3.connect(self.db_path) as db:
+            return db.execute("SELECT COALESCE(MAX(cursor),0) FROM website_chat_resets WHERE app=? AND owner IN ('',?)", (app, owner)).fetchone()[0]
 
     def bind_owner(self, owner, chat_id):
         db = sqlite3.connect(self.db_path)
@@ -163,7 +182,7 @@ class Hub:
         return respond
 
     def queue_mirror(self, owner, app, event, output):
-        if app not in SITES or not self.bot_route(owner):
+        if app not in SITES or is_telegram_reply(event["event_id"]) or not self.bot_route(owner):
             return
         body = encoded({"owner": owner, "event": event, "output": output})
         db = sqlite3.connect(self.db_path, timeout=20)
@@ -269,8 +288,17 @@ class Hub:
                           authorize=lambda who, tool, values: who == owner and tool == name and values == args)
         return self.trips.get(owner)
 
-    def conversation(self, owner):
-        """The user's companion view, never an application message-feed export."""
+    def conversation(self, owner, app=None):
+        """A website gets only its own thread; the aggregate is private to the hub."""
+        if app is not None:
+            if app not in SITES:
+                raise ValueError("Unknown website")
+            transcript = self.transcript(owner, app, self.channel(owner, app), visible_only=True)
+            return dict(transcript,
+                messages=[dict(event, source_app=app,
+                               origin="telegram" if is_telegram_reply(event["event_id"]) else app)
+                          for event in transcript["messages"]],
+                outputs=[dict(output, source_app=app) for output in transcript["outputs"]])
         db = sqlite3.connect(self.db_path)
         try:
             order = {(app, event): seq for seq, app, event in db.execute(
@@ -288,8 +316,14 @@ class Hub:
             state = self.visitors.get(owner, {})
             return dict(messages=messages, outputs=outputs, running=state.get("running", False), error=state.get("error"))
 
-    def transcript(self, owner, app, session):
+    def transcript(self, owner, app, session, *, visible_only=False):
         transcript = self.stores[app].transcript(owner, session)
+        if visible_only:
+            cutoff = self.website_chat_cursor(owner, app)
+            with self.stores[app].connect() as store:
+                visible = {row[0] for row in store.execute("SELECT id FROM events WHERE owner=? AND session=? AND cursor>?", (owner, session, cutoff))}
+            transcript["messages"] = [event for event in transcript["messages"] if event["event_id"] in visible]
+            transcript["outputs"] = [output for output in transcript["outputs"] if output["in_reply_to"] in visible]
         db = sqlite3.connect(self.db_path)
         try:
             for output in transcript["outputs"]:
@@ -302,10 +336,11 @@ class Hub:
         with self.lock:
             # Resume queued messages after a server restart when this session reopens.
             completed = {output["in_reply_to"] for output in transcript["outputs"]}
-            if owner not in self.visitors and any(message["message"]["id"] not in completed for message in transcript["messages"]):
+            pending = any(message["message"]["id"] not in completed for message in transcript["messages"])
+            if owner not in self.visitors and pending:
                 self.kick(owner)
             state = self.visitors.get(owner, {})
-            transcript.update(running=state.get("running", False), error=state.get("error"))
+            transcript.update(running=pending and state.get("running", False), error=state.get("error") if pending else None)
         return transcript
 
 
@@ -384,15 +419,17 @@ class WebHandler(BaseHTTPRequestHandler):
             elif write and url.path == "/api/links":
                 result = hub.links(owner)
             elif not write and url.path == "/api/conversation":
-                result = hub.conversation(owner)
+                result = hub.conversation(owner, self.server.app_id)
             elif write and url.path == "/api/sessions":
                 app = self.app(body["app_id"])
                 result = {"session_id": hub.channel(owner, app)} if self.server.app_id else hub.stores[app].session(owner)
             elif write and url.path == "/api/messages":
                 app = self.app(body["app_id"])
+                if is_telegram_reply(body.get("id")):
+                    raise PermissionError("This message ID is reserved for explicit Telegram replies")
                 result = hub.submit(owner, app, body)
             elif not write and url.path == "/api/transcript":
-                result = hub.transcript(owner, self.app(query["app_id"][0]), query["session_id"][0])
+                result = hub.transcript(owner, self.app(query["app_id"][0]), query["session_id"][0], visible_only=bool(self.server.app_id))
             elif not write and url.path == "/api/trip":
                 if self.server.app_id:
                     raise PermissionError("The combined itinerary is private to your agent. Ask in the companion chat.")
@@ -418,10 +455,11 @@ class WebHandler(BaseHTTPRequestHandler):
                 if self.server.app_id:
                     result = hub.trips.selection(owner, self.server.app_id)
             elif write and url.path == "/api/confirm":
-                app = body.get("source_app")
-                if app not in APPS:
-                    raise ValueError("Unknown proposal source")
-                result = hub.confirm(owner, app, identifier(body.get("event_id")))
+                app = self.app(body.get("source_app"))
+                event_id = identifier(body.get("event_id"))
+                if self.server.app_id and not any(output["in_reply_to"] == event_id for output in hub.conversation(owner, app)["outputs"]):
+                    raise PermissionError("This proposal is no longer in this website's chat. Use its confirmation command in Telegram.")
+                result = hub.confirm(owner, app, event_id)
                 if self.server.app_id:
                     result = {"confirmed": True}
             elif write and url.path == "/api/retry":

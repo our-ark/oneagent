@@ -22,6 +22,7 @@ export type Conversation = {
   messages: {
     event_id: string;
     source_app: string;
+    origin?: string;
     message: { id: string; text: string };
     context: { selected_object?: { name: string } };
   }[];
@@ -72,7 +73,7 @@ export function CompanionPanel(props: Props) {
             <strong>OneAgent</strong>
             <span>
               {props.linked
-                ? "Your conversation from Telegram"
+                ? "Your agent · synced to Telegram"
                 : "Your personal companion"}
             </span>
           </div>
@@ -102,8 +103,10 @@ export function CompanionPanel(props: Props) {
               <Orbit size={18} />
             </span>
             <p>
-              Our conversation comes with you. Each website keeps its own
-              selections.{" "}
+              This chat belongs to {props.appName}.{" "}
+              {props.linked
+                ? "Our exchanges sync to your private Telegram chat, never to other websites. "
+                : "Your messages stay in this website's chat. "}
               {selected
                 ? "Ask me about this option or how it compares."
                 : "Select an option and ask me anything about it."}
@@ -118,6 +121,7 @@ export function CompanionPanel(props: Props) {
             return (
               <React.Fragment key={`${message.source_app}:${message.event_id}`}>
                 <div className="conversation-source">
+                  {message.origin === "telegram" && "From Telegram → "}
                   {props.sources[message.source_app] || message.source_app}
                 </div>
                 <div className="user-message">
@@ -213,7 +217,7 @@ export function CompanionPanel(props: Props) {
             />
             <div className="composer-bottom">
               <span>
-                <Sparkles size={13} /> Context comes with you
+                <Sparkles size={13} /> Same agent, separate chats
               </span>
               <button
                 type="submit"
@@ -226,7 +230,7 @@ export function CompanionPanel(props: Props) {
           </form>
           {props.children}
           <div className="agent-footnote">
-            <ShieldCheck size={12} /> Your conversation stays with your agent
+            <ShieldCheck size={12} /> Fresh website chat after each restart
           </div>
           {props.testMode && (
             <div className="fixture-banner">
