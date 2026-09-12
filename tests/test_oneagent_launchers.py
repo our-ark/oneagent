@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -13,6 +14,7 @@ class OneAgentLauncherTests(unittest.TestCase):
     def test_launchers_probe_for_supported_python(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             bin_dir = Path(directory)
+            root = _copy_launchers(bin_dir)
             log = bin_dir / "launch.log"
             _write_fake_pythons(bin_dir)
             env = _launcher_env(bin_dir, log, supported={"python3.11"})
@@ -28,7 +30,7 @@ class OneAgentLauncherTests(unittest.TestCase):
                     log.write_text("", encoding="utf-8")
 
                     result = subprocess.run(
-                        [str(ROOT / script), *args],
+                        [str(root / script), *args],
                         cwd="/",
                         env=env,
                         text=True,
@@ -41,14 +43,15 @@ class OneAgentLauncherTests(unittest.TestCase):
     def test_oneagent_python_overrides_probe_when_supported(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             bin_dir = Path(directory)
+            root = _copy_launchers(bin_dir, venv=True)
             log = bin_dir / "launch.log"
             custom_python = bin_dir / "custom-python"
             _write_fake_pythons(bin_dir, extra=(custom_python.name,))
-            env = _launcher_env(bin_dir, log, supported={custom_python.name, "python3.11"})
+            env = _launcher_env(bin_dir, log, supported={custom_python.name, "python", "python3.11"})
             env["ONEAGENT_PYTHON"] = str(custom_python)
 
             result = subprocess.run(
-                [str(ROOT / "bin/oneagent"), "doctor"],
+                [str(root / "bin/oneagent"), "doctor"],
                 cwd="/",
                 env=env,
                 text=True,
@@ -61,13 +64,14 @@ class OneAgentLauncherTests(unittest.TestCase):
     def test_unsupported_oneagent_python_fails_without_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             bin_dir = Path(directory)
+            root = _copy_launchers(bin_dir, venv=True)
             log = bin_dir / "launch.log"
             _write_fake_pythons(bin_dir)
-            env = _launcher_env(bin_dir, log, supported={"python3.11"})
+            env = _launcher_env(bin_dir, log, supported={"python", "python3.11"})
             env["ONEAGENT_PYTHON"] = str(bin_dir / "python3")
 
             result = subprocess.run(
-                [str(ROOT / "bin/oneagent"), "doctor"],
+                [str(root / "bin/oneagent"), "doctor"],
                 cwd="/",
                 env=env,
                 text=True,
@@ -77,6 +81,33 @@ class OneAgentLauncherTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("ONEAGENT_PYTHON points to an unsupported interpreter", result.stderr)
             self.assertFalse(log.exists())
+
+    def test_launchers_prefer_project_venv(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bin_dir = Path(directory)
+            root = _copy_launchers(bin_dir, venv=True)
+            log = bin_dir / "launch.log"
+            _write_fake_pythons(bin_dir)
+            env = _launcher_env(bin_dir, log, supported={"python", "python3.13"})
+            for script in ("oneagent", "oneagent-agent", "oneagent-daemon"):
+                with self.subTest(script=script):
+                    log.write_text("", encoding="utf-8")
+                    result = subprocess.run(
+                        [str(root / "bin" / script)],
+                        cwd="/", env=env, text=True, capture_output=True,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertTrue(log.read_text(encoding="utf-8").startswith("python -m "))
+
+
+def _copy_launchers(directory: Path, *, venv: bool = False) -> Path:
+    root = directory / "project"
+    shutil.copytree(ROOT / "bin", root / "bin")
+    if venv:
+        venv_bin = root / ".venv" / "bin"
+        venv_bin.mkdir(parents=True)
+        _write_fake_pythons(venv_bin)
+    return root
 
 
 def _launcher_env(bin_dir: Path, log: Path, *, supported: set[str]) -> dict[str, str]:

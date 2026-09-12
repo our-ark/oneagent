@@ -16,6 +16,12 @@ oneagent_find_python() {
     return 1
   fi
 
+  candidate="$ONEAGENT_ROOT/.venv/bin/python"
+  if [[ -x "$candidate" ]] && oneagent_python_supported "$candidate"; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+
   for candidate in python3.13 python3.12 python3.11 python3 python; do
     if command -v "$candidate" >/dev/null 2>&1 && oneagent_python_supported "$candidate"; then
       printf '%s\n' "$candidate"

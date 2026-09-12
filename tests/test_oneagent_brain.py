@@ -837,6 +837,7 @@ class OneAgentBrainTests(unittest.TestCase):
         self.assertIn("danger-full-access", args)
 
     @patch.dict("os.environ", {}, clear=True)
+    @patch("oneagent.brain.read_section", return_value={})
     @patch("oneagent.brain.os.access", return_value=True)
     @patch("oneagent.brain.Path.is_file", return_value=True)
     @patch("oneagent.brain.shutil.which", return_value=None)
@@ -845,6 +846,7 @@ class OneAgentBrainTests(unittest.TestCase):
         _which: MagicMock,
         _is_file: MagicMock,
         _access: MagicMock,
+        _read_section: MagicMock,
     ) -> None:
         resolution = brain.resolve_codex_executable()
 

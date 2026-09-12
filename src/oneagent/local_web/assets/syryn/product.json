@@ -1,0 +1,34 @@
+{
+  "title": "Waterproof SYRYN 2 Bundle for Swimming",
+  "merchant": "Underwater Audio",
+  "url": "https://www.underwateraudio.com/products/syryn-mp3-player",
+  "checked_at": "2026-09-12",
+  "currency": "USD",
+  "images": [
+    "1.jpg",
+    "2.jpg",
+    "3.jpg",
+    "4.jpg",
+    "5.jpg",
+    "6.jpg",
+    "7.jpg"
+  ],
+  "variants": [
+    {
+      "id": "7303711064116",
+      "name": "Swimbuds Flip",
+      "price": 79.99,
+      "compare_at_price": 99.99,
+      "available": false,
+      "image": "1.jpg"
+    },
+    {
+      "id": "7303711195188",
+      "name": "Swimbuds Sport",
+      "price": 99.99,
+      "compare_at_price": 119.99,
+      "available": true,
+      "image": "7.jpg"
+    }
+  ]
+}

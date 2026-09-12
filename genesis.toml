@@ -10,6 +10,7 @@ body_paths = [
   "bin",
   "pyproject.toml",
   "src/oneagent",
+  "libraries/telegram",
   "tests",
 ]
 

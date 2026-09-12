@@ -1,0 +1,55 @@
+from our_ark_telegram.core import (
+    MAX_TELEGRAM_MESSAGE,
+    READ_ACK_EMOJI,
+    TELEGRAM_API,
+    TelegramClient,
+    TelegramBotPeer,
+    TelegramConfig,
+    TelegramError,
+    chunks,
+    telegram_event,
+)
+from our_ark_telegram.integration import load_config, setup_provider
+from our_ark_telegram.presentation import (
+    TELEGRAM_BREAK,
+    TelegramMessageChunk,
+    render_telegram_html,
+    telegram_message_chunks,
+)
+
+
+def create_provider(root=None):
+    from our_ark_telegram.integration import create_provider as factory
+
+    return factory(root)
+
+
+OUR_ARK_PROVIDERS = (
+    {
+        "kind": "chat",
+        "name": "telegram",
+        "factory": create_provider,
+        "setup": setup_provider,
+        "default": True,
+    },
+)
+
+
+__all__ = [
+    "MAX_TELEGRAM_MESSAGE",
+    "READ_ACK_EMOJI",
+    "TELEGRAM_API",
+    "TelegramClient",
+    "TelegramBotPeer",
+    "TelegramConfig",
+    "TelegramError",
+    "TELEGRAM_BREAK",
+    "TelegramMessageChunk",
+    "create_provider",
+    "load_config",
+    "setup_provider",
+    "chunks",
+    "render_telegram_html",
+    "telegram_message_chunks",
+    "telegram_event",
+]

@@ -165,6 +165,17 @@ from oneagent.providers.forge import (
 from oneagent.identity import Identity, identity_file_path, load_identity
 from oneagent.instance import instance_branch
 from oneagent.immune import ImmuneResult, run_immune_system
+from oneagent.local_web import (
+    LocalWebHost,
+    attach_local_shop_page_link,
+    format_shortlist_followup,
+    latest_shortlist,
+    load_local_web_settings,
+    local_web_page_url,
+    record_shortlist_from_task,
+    resolve_followup_shortlist,
+    start_local_web,
+)
 from oneagent.learn import (
     LearnError,
     learning_assessment_prompt,
@@ -582,6 +593,8 @@ class OneAgentApplication:
         self._lineage_worker_lock = threading.Lock()
         self._task_cancellations: dict[int, threading.Event] = {}
         self._stopping = False
+        self._chat_dispatch_lock = threading.Lock()
+        self._local_web = None
         reconcile_extension_schedules(
             {
                 extension.name: extension.schedules
@@ -633,6 +646,7 @@ class OneAgentApplication:
     def run_forever(self) -> None:
         self.start()
         self._start_cron_scheduler()
+        self._start_local_web()
         try:
             while True:
                 try:
@@ -645,6 +659,7 @@ class OneAgentApplication:
                     print(f"OneAgent {provider_label(self.channel_name)} polling error: {error}")
                     time.sleep(5)
         finally:
+            self._stop_local_web()
             self._stop_cron_scheduler()
 
     @property
@@ -783,6 +798,10 @@ class OneAgentApplication:
         return self.workflow.find(result.task_id)
 
     def handle_event(self, event: ChatEvent) -> None:
+        with self._chat_dispatch_lock:
+            self._handle_event_unlocked(event)
+
+    def _handle_event_unlocked(self, event: ChatEvent) -> None:
         require_current_daemon_epoch(self.daemon_epoch, self.root)
         chat_id = event.conversation_id
         message_id = event.message_id
@@ -1384,12 +1403,22 @@ class OneAgentApplication:
         job: TaskJob,
         final_status: str,
         result: str,
+        *,
+        page_url: str = "",
+        shortlist_id: str = "",
+        shortlist_title: str = "",
     ) -> str:
-        return _format_task_final_message(
+        text = _format_task_final_message(
             job,
             final_status,
             result,
             task_label=self.profile.presentation.task_label,
+        )
+        return attach_local_shop_page_link(
+            text,
+            page_url,
+            shortlist_id=shortlist_id,
+            title=shortlist_title,
         )
 
     def _profile_prompt(
@@ -2090,6 +2119,154 @@ class OneAgentApplication:
             )
             self._cron_scheduler_thread.start()
 
+    def _start_local_web(self) -> None:
+        if self._local_web is not None:
+            return
+        try:
+            settings = load_local_web_settings(self.root)
+        except ValueError as error:
+            print(f"OneAgent local shop page disabled: {error}")
+            return
+        try:
+            self._local_web = start_local_web(
+                LocalWebHost(
+                    root=self.root,
+                    conversation_id=lambda: _allowed_conversation_id(self.client),
+                    handle_chat=self.handle_local_web_message,
+                ),
+                settings=settings,
+            )
+        except OSError as error:
+            print(f"OneAgent could not start local shop page: {error}")
+            return
+        if self._local_web is not None:
+            print(
+                f"OneAgent local shop page: http://127.0.0.1:{self._local_web.port}/shop"
+            )
+
+    def _stop_local_web(self, timeout_seconds: float = 2.0) -> None:
+        server = self._local_web
+        self._local_web = None
+        if server is None:
+            return
+        try:
+            server.stop(timeout_seconds=timeout_seconds)
+        except Exception:
+            return
+
+    def handle_local_web_message(
+        self,
+        text: str,
+        shortlist_id: str = "",
+        tab: int | None = None,
+    ) -> str:
+        chat_id = _allowed_conversation_id(self.client)
+        cleaned = text.strip()
+        if chat_id is None:
+            return "OneAgent is not locked to one chat yet."
+        if not cleaned:
+            return ""
+        event = ChatEvent(
+            cursor=uuid4().hex,
+            conversation_id=chat_id,
+            text=cleaned,
+            raw={"source": "local-web"},
+        )
+        with self._chat_dispatch_lock:
+            require_current_daemon_epoch(self.daemon_epoch, self.root)
+            if self._stopping:
+                return f"{self.display_name} is stopping. Retry after restarting."
+            receipt = begin_event("local-web", event, self.root)
+            if receipt.completed:
+                return receipt.reply
+            try:
+                command, _argument = _parse_chat_command(cleaned)
+                if command:
+                    reply, logged_input = self._dispatch_chat_event(event)
+                else:
+                    reply, logged_input = self._dispatch_local_web_followup(
+                        chat_id,
+                        cleaned,
+                        shortlist_id=shortlist_id,
+                        tab=tab,
+                    )
+                receipt = complete_event(
+                    "local-web",
+                    receipt.key,
+                    self.root,
+                    reply=reply,
+                    logged_input=logged_input,
+                )
+            except StaleDaemonEpoch:
+                raise
+            except Exception as error:
+                fail_event("local-web", receipt.key, str(error), self.root)
+                return (
+                    f"{self.display_name} could not process that local shop message: "
+                    f"{type(error).__name__}."
+                )
+            self._record_turn(
+                chat_id,
+                receipt.logged_input or cleaned,
+                receipt.reply,
+            )
+            if receipt.reply:
+                self._deliver_message(
+                    chat_id,
+                    receipt.reply,
+                    notification_key=f"local-web:{receipt.key}:reply",
+                )
+            self._flush_session_syncs()
+            mark_reply_sent("local-web", receipt.key, self.root)
+            acknowledge_event("local-web", receipt.key, self.root)
+            return receipt.reply
+
+    def _dispatch_local_web_followup(
+        self,
+        chat_id: ConversationId,
+        text: str,
+        *,
+        shortlist_id: str = "",
+        tab: int | None = None,
+    ) -> tuple[str, str]:
+        try:
+            self.authorization.require(
+                "runtime.reset-usage",
+                ("runtime.respond",),
+            )
+        except CapabilityAuthorizationError:
+            pass
+        else:
+            self.runtime.reset_usage()
+        shortlist = resolve_followup_shortlist(shortlist_id, root=self.root)
+        prompt = (
+            format_shortlist_followup(text, shortlist, tab=tab)
+            if shortlist is not None
+            else text
+        )
+        return self._natural(chat_id, prompt), text
+
+    def _local_web_status_line(self) -> str:
+        latest = None
+        try:
+            latest = latest_shortlist(root=self.root)
+            url = local_web_page_url(
+                latest.id if latest else "", root=self.root,
+                settings=self._local_web.settings if self._local_web else None,
+            )
+        except ValueError:
+            return ""
+        if not url:
+            return ""
+        if latest is not None:
+            snippet = " ".join(latest.title.split())[:80]
+            link = f"[Latest shop page ({latest.id}): {snippet}]({url})"
+        else:
+            link = f"[Latest shop page on this Mac]({url})"
+        if self._local_web is None:
+            return f"Latest shop page: not running. Restart OneAgent, then open {link}."
+        return f"Latest shop page: {link}"
+
     def _stop_cron_scheduler(self, timeout_seconds: float = 7.0) -> None:
         self._cron_scheduler_stop.set()
         self._cron_scheduler_wake.set()
@@ -2130,6 +2307,7 @@ class OneAgentApplication:
     def stop_workers(self, timeout_seconds: float = 7.0) -> None:
         self._stopping = True
         deadline = time.monotonic() + max(0.0, timeout_seconds)
+        self._stop_local_web()
         self._stop_cron_scheduler(
             timeout_seconds=max(0.0, deadline - time.monotonic())
         )
@@ -2496,15 +2674,17 @@ class OneAgentApplication:
             ),
             model_summary_fn=self.runtime.model_summary,
         )
-        return "\n\n".join(
-            [
-                status,
-                _task_status_message(
-                    self.root,
-                    task_status=self.workflow.inspect(),
-                ),
-            ]
-        )
+        parts = [
+            status,
+            _task_status_message(
+                self.root,
+                task_status=self.workflow.inspect(),
+            ),
+        ]
+        local_web = self._local_web_status_line()
+        if local_web:
+            parts.append(local_web)
+        return "\n\n".join(parts)
 
     def _mission(self, text: str) -> str:
         reply = mission_command(
@@ -4324,6 +4504,27 @@ class OneAgentApplication:
                 self.root,
             )
             self._record_automatic_learning(summary_job, command=command, result=reply)
+        page_url = ""
+        shortlist = None
+        if completed_status == "completed":
+            try:
+                shortlist = self.effect_fence.run(
+                    record_shortlist_from_task,
+                    summary_job,
+                    reply,
+                    root=self.root,
+                    conversation_id=job.chat_id,
+                )
+            except (OSError, ValueError):
+                shortlist = None
+            if shortlist is not None:
+                try:
+                    page_url = local_web_page_url(
+                        shortlist.id, root=self.root,
+                        settings=self._local_web.settings if self._local_web else None,
+                    )
+                except ValueError:
+                    page_url = ""
         if task_status is not None:
             task_status.reviews = list(summary_job.review_urls)
             final_token = _CURRENT_WORK_STATUS.set(task_status)
@@ -4336,12 +4537,20 @@ class OneAgentApplication:
                 _CURRENT_WORK_STATUS.reset(final_token)
             if completed_status != "paused":
                 self._work_status_messages.pop(job.id, None)
+        final_message = self._format_task_final(
+            summary_job,
+            completed_status,
+            reply,
+            page_url=page_url,
+            shortlist_id=shortlist.id if shortlist is not None else "",
+            shortlist_title=shortlist.title if shortlist is not None else "",
+        )
         self._safe_send_message(
             job.chat_id,
-            self._format_task_final(summary_job, completed_status, reply),
+            final_message,
             notification_key=f"task:{job.id}:final",
         )
-        self._record_turn(job.chat_id, f"{command} {job.text}", reply)
+        self._record_turn(job.chat_id, f"{command} {job.text}", final_message if shortlist else reply)
         if command == "/do":
             self._maybe_start_task_worker()
 

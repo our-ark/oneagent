@@ -48,3 +48,7 @@ skills:
     version: 0.1.0
     exposure: hidden
     path: src/oneagent/skills/teach
+  - name: shop
+    version: 0.4.0
+    description: Help a buyer find and compare products across Shopify merchants using budget and category-specific constraints, then hand off one URL per Telegram message.
+    path: src/oneagent/skills/shop

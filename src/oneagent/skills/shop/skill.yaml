@@ -1,0 +1,22 @@
+name: shop
+version: 0.4.0
+summary: Help a buyer find and compare purchasable products across Shopify merchants via UCP catalog search, using budget plus category-specific constraints, then hand off one merchant URL per Telegram message without modifying commerce state.
+owner: OneAgent
+status: active
+mode: read-only-commerce
+entrypoint: none
+permissions:
+  filesystem:
+    read:
+      - .oneagent/config.yaml
+    write: false
+  network:
+    shopify_ucp_catalog: read-only
+  commerce:
+    products: read
+    cart: false
+    checkout: false
+    customer_login: false
+    orders: false
+validation:
+  command: python3 -m unittest tests.test_oneagent_skills

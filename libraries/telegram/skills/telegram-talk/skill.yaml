@@ -1,0 +1,23 @@
+name: telegram-talk
+version: 0.2.0
+summary: Talk with Enoch through Telegram, including conversation, repository work, ancestor commands, and approved GitHub workflows after chat lock.
+owner: Enoch
+implementation: shared-library
+library_owner: Enoch
+library_package: our-ark-telegram
+library_contract: telegram-channel/v1
+library_commit: 5608b4b1ce85f64c3093730fcaac9c3a458169ca
+status: active
+mode: external-tool
+entrypoint: our_ark_telegram.integration:create_provider
+permissions:
+  files:
+    read: true
+    write: approved_actions
+  network:
+    telegram: true
+  git:
+    commit: approved_action
+    push: approved_action
+validation:
+  command: python3 -m unittest discover -s tests

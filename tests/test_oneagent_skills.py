@@ -33,6 +33,7 @@ class OneAgentSkillsTests(unittest.TestCase):
         self.assertIn("learn", names)
         self.assertIn("evolve", names)
         self.assertIn("teach", names)
+        self.assertIn("shop", names)
         inherit = next(skill for skill in agent.skills if skill.name == "inherit")
         self.assertIn("ancestor skills", inherit.summary)
         work = next(skill for skill in agent.skills if skill.name == "work")
@@ -46,6 +47,14 @@ class OneAgentSkillsTests(unittest.TestCase):
         self.assertIn("Hidden skill", teach.summary)
         library = next(skill for skill in agent.skills if skill.name == "skill-library")
         self.assertIn("immutable public libraries", library.summary)
+        shop = next(skill for skill in agent.skills if skill.name == "shop")
+        self.assertIn("without modifying commerce state", shop.summary)
+        shop_skill = (ROOT / "src" / "oneagent" / "skills" / "shop" / "SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("<!-- telegram:break -->", shop_skill)
+        self.assertIn("three products become three messages", shop_skill)
+        self.assertIn("thumbnail", shop_skill)
 
     def test_body_skill_versions_match_skill_manifests(self) -> None:
         body = _parse_oneagent_yaml(
@@ -74,6 +83,7 @@ class OneAgentSkillsTests(unittest.TestCase):
         self.assertIn("work", names)
         self.assertIn("evolve", names)
         self.assertIn("teach", names)
+        self.assertIn("shop", names)
         learn = next(skill for skill in agent.skills if skill.name == "learn")
         self.assertTrue(learn.version)
         self.assertIn("Assess an immutable published skill snapshot", learn.summary)
