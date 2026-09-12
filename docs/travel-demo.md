@@ -1,6 +1,6 @@
 # Telegram → Airside → Staywell → Daylight
 
-Start in Telegram with `/traveldemo`. OneAgent activates a private demo trip and
+Start in Telegram with `/traveldemo`. OneAgent activates a private demo session and
 replies with personal links to three independent websites:
 
 | Website | Default address | Application |
@@ -17,10 +17,12 @@ Each site has its own HTML entry point, origin, cookie, scoped catalog, and
 application message feed. The companion uses the same personal agent, but each
 website displays only its own conversation. Telegram is the private home chat:
 all website exchanges sync back there, while ordinary Telegram messages and
-other websites' threads stay hidden. Each website receives only its own catalog and
-saved selection; it has no shared trip total, budget form, itinerary overview,
-or warnings derived from another site. Ask about the object currently selected on a site,
-then return to Telegram to discuss the combined itinerary.
+other websites' threads stay hidden. Each website receives only its own catalog
+and chat. Opening a card supplies the object currently being viewed as context.
+Saying “I want this hotel” records that choice in the ordinary agent conversation;
+there is no separate itinerary database, Save button, proposal, or confirmation
+command. The agent uses its existing Codex session and private conversation
+history for preferences, choices, and comparisons.
 
 ## Install and build
 
@@ -62,15 +64,14 @@ Telegram's `getUpdates` locally before starting the poller and read
 See the [Telegram Bot API](https://core.telegram.org/bots/api#getupdates).
 
 Open your bot in Telegram and send `/traveldemo`. Send your budget/preferences in
-that chat, then open the returned links. Natural-language requests can propose
-changes; `/travelconfirm tg-<message-id>` confirms a private Telegram proposal.
-A website proposal can be confirmed on its originating site or through the exact
-`/travelconfirm <site> <event-id>` command in its mirrored Telegram message. The agent
-cannot silently save a selection or change the budget.
+that chat, then open the returned links. Tell the agent your choices naturally,
+such as “I want this hotel.” Later choices replace earlier ones in conversation.
+The agent can look up catalog facts and remember your preferences; it does not
+book anything or maintain a separate structured trip record.
 
 Keep the launching Terminal open. Control+C stops the demo. A server restart
 clears the visible website chats. The private Telegram history, agent memory,
-saved selections, browser sessions, and durable notification queue are preserved.
+browser sessions and durable notification queue are preserved.
 
 ## Option B: use your existing OneAgent Telegram bot
 
@@ -101,9 +102,9 @@ text to the existing agent. Website and Telegram reasoning use the running bot�
 original runtime, identity, working directory, and `telegram:<chat-id>` session.
 A per-conversation lock serializes turns, including multi-step travel tool calls.
 Preferences you mentioned before travel mode remain available on all three sites.
-The private agent itinerary, application sessions, and existing connection links
-stay intact. Budgets, preferences, combined totals, and timing checks remain
-inside the agent conversation. A website can save only its own type of item.
+Application sessions and existing connection links stay intact. Budgets and
+choices are remembered in conversation, without a hard-coded default budget.
+Costs and timing can be compared using the read-only catalog tools when asked.
 Each companion displays only exchanges belonging to its website. Telegram
 messages remain private unless you explicitly target a website with
 `/traveldemo reply <flights|hotels|activities> <request>`. That command shares
@@ -145,16 +146,16 @@ isolation, and visitor-state cleanup. Use controlled demo access for a recording
 
 1. Before starting travel mode, tell OneAgent “I prefer quiet neighborhoods and
    a relaxed first day.” Then send `/traveldemo` and “My trip budget is $1,500.”
-   Confirm the proposed brief update. Ask for recommendations on each site to
-   check that the earlier preferences carry over.
+   Ask for recommendations on each site to check that the earlier preferences
+   carry over.
 2. Open Airside from Telegram. Select Pacific Air PA 101 and ask whether it fits.
-   Save it. The model sees that flight's authoritative facts.
+   Say “I want this flight.” The model sees that flight's authoritative facts.
 3. Open Staywell from Telegram. Its chat is separate from Airside's. Select Kumo
    House and ask “Does this work with my flight?” The agent remembers the flight
    and your preferences without copying the Airside conversation into Staywell.
-   Save the stay after comparing.
+   Say “I want this hotel” after comparing.
 4. Open Daylight. Select “Yanaka, one slow morning.” Ask whether it fits the
-   schedule and remaining budget, then save it.
+   schedule and remaining budget, then say “Let's do this.”
 5. Website exchanges also arrive in Telegram, labeled with the site and selected
    item. Back in Telegram, ask “What have we planned, and how much is left?” The
    agent can report a combined total of $1,235: $720 flight, $480 hotel, and $35
@@ -162,7 +163,7 @@ isolation, and visitor-state cleanup. Use controlled demo access for a recording
 
 All data is fictional: one-way SFO → Tokyo flights on Nov 5 arriving Nov 6, stays
 Nov 6–9 (three nights), and activities during the same trip in 2026. Catalog
-prices include mock taxes. Saved selections are not bookings or purchases. A
+prices include mock taxes. Remembering a choice does not book or purchase it. A
 late-arriving flight can prompt the agent to flag hotel reception and activity
 timing conflicts in chat. These checks do not appear as shared website widgets.
 The story is a recording guide, not a scripted agent sequence. Film the final
@@ -170,21 +171,20 @@ two-minute submission video separately.
 
 ## Resume, reset, and leave
 
-- `/traveldemo` resumes the current trip and returns fresh links.
+- `/traveldemo` resumes the demo and returns fresh links.
 - `/traveldemo reply hotels Compare the quiet stays` sends that request and its
   answer to Staywell only. Use `flights` or `activities` for the other sites.
   Ordinary Telegram messages never automatically appear on a website.
-- `/traveldemo reset` creates a fresh trip and website transcript. It revokes old
+- `/traveldemo reset` creates fresh website chats. It revokes old
   links and browser sessions; open the new links in each website. The normal
   Telegram conversation and its earlier preferences remain available.
-- `/traveldemo stop` leaves travel mode in Telegram. Saved trip state remains.
+- `/traveldemo stop` leaves travel mode in Telegram. Conversation memory remains.
 - Restarting the travel service clears all visible website chats. Restarting the
   attached agent clears the website chats for that Telegram owner when it
   reconnects. Refreshing a page or requesting fresh links does not clear chats.
   Existing browser tabs can keep sending messages without reconnecting.
   Previous exchanges remain in private agent history and Telegram, and queued
-  deliveries still recover. Old website proposals can still be confirmed using
-  their exact Telegram commands.
+  deliveries still recover.
 - Each connection link expires after 15 minutes and works once. If it has already
   been opened or expired, request new links. Link previews cannot consume it.
 - Website sessions last 24 hours. Once connected, refresh the site's plain URL or
@@ -204,21 +204,18 @@ two-minute submission video separately.
   or reset commands repeating after a failed network delivery; the outbox contains
   the returned links. A cached response also makes bot-bridge retries idempotent.
 - `travel/server.py` serves three fixed applications. Each can submit only to its
-  own feed and directly save only its own item type. `/api/session` and
-  `/api/selection` return that site’s saved ID, never the combined trip or
-  personal preferences. The old `/api/trip` and `/api/preferences` routes are
-  denied on the independent sites. Structured preference sharing is disabled.
+  own feed. `/api/session` returns only site configuration and its catalog.
+  The old `/api/trip`, `/api/selection`, `/api/preferences`, `/api/action`, and
+  `/api/confirm` routes have been removed. Structured preference sharing is disabled.
   `/api/conversation` and `/api/transcript` expose only the fixed site's visible
-  thread, never private Telegram or other site exchanges. Website confirmations
-  accept only proposals visible in that site's current chat. Confirming returns
-  only an acknowledgement to the browser. Per-site cursor cutoffs clear the
+  thread, never private Telegram or other site exchanges. Per-site cursor cutoffs clear the
   visible chats after a service or bot restart without deleting private history,
   queued notifications, or idempotency receipts.
-- `travel/domain.py` owns catalog facts, site-scoped selection views, and the
-  agent’s private itinerary, totals, warnings, and idempotent changes.
-  `travel/agent.py` uses the existing runtime with bounded tool calls.
+- `travel/domain.py` supplies read-only catalog search/get tools and freezes the
+  viewed item's facts into each message. `travel/agent.py` uses the existing
+  runtime with bounded catalog lookups and normal conversation memory.
 - `examples/travel/web/src/CompanionPanel.tsx` is the reusable UI. Hosts supply
-  context, conversation data, and action callbacks. The three entry points mount
+  context, conversation data, and messaging callbacks. The three entry points mount
   the shared travel integration with a fixed site ID.
 
 State lives in ignored `.travel-demo/`. Per-application cookies are HttpOnly and
@@ -226,7 +223,9 @@ SameSite. Writes check the exact origin and a CSRF token. Connection tokens
 travel in URL fragments, are removed before API calls, and exchange via POST;
 link previews and referrer headers do not receive them. The Telegram Bot API
 token stays server-side. Reset makes prior demo state inaccessible through old
-links but does not delete its files.
+links but does not delete its files. Legacy trip/proposal databases from older
+versions are left on disk but are no longer read or updated. Existing Codex and
+Telegram history remains available to the agent.
 
 ## Website replies in Telegram
 
@@ -234,11 +233,13 @@ After a website reply is saved, a durable travel outbox queues the user’s mess
 and agent response with the source site and selected item. The normal bot delivers
 it through `NotificationDeliveryService`. Stable IDs derived from the owner, app,
 and event make repeated delivery requests reuse the saved notification; they do
-not re-run the model or change the itinerary. Telegram-originated turns use the
+not re-run the model. Telegram-originated turns use the
 normal reply path and are never mirrored back a second time.
 An explicit `/traveldemo reply` also uses that normal reply path; its reserved
-event namespace cannot be submitted by a website. Mirrored proposals include
-their source-specific Telegram confirmation commands.
+event namespace cannot be submitted by a website. Only the conversation exchange
+is mirrored. There are no separate approval notices or `/travelconfirm` workflow.
+Previously queued standalone approval notices are retired before bot notification
+recovery; normal conversation notifications continue to recover.
 
 Both processes can restart: callback registration refreshes automatically, saved
 outbox entries retry, and the bot recovers its existing notification journal.
@@ -257,8 +258,8 @@ Tests use temporary HTTP servers and a fake Telegram transport. They cover a
 Telegram → three websites → Telegram round trip, separate origins, owner isolation,
 link scope/expiry/replay, reset revocation, sessions after restart, site data
 isolation, separate visible conversations, explicit Telegram routing, restart
-clearing, blocked cross-site reads/writes, chat-only budget
-confirmations, pre-travel preferences in the real bot session, concurrent turns,
+clearing, blocked cross-site reads/writes, read-only catalog tools, natural choice
+memory in the real bot session, pre-travel preferences, concurrent turns,
 and notification recovery after bot and backend restarts. Exercise your configured bot and real model
 before recording; automated fixtures do not prove Telegram delivery or model quality.
 

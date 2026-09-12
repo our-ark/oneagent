@@ -8,7 +8,7 @@ import unittest
 from urllib.error import HTTPError
 from urllib.request import build_opener, HTTPCookieProcessor, Request
 
-from oneagent.travel.domain import CATALOG, TripStore, TravelMessageStore, travel_tools
+from oneagent.travel.domain import CATALOG, TravelMessageStore, travel_tools
 from oneagent.travel.server import Hub, WebServer
 
 
@@ -17,33 +17,19 @@ class TravelDomainTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.trips = TripStore(self.root / 'trip.sqlite')
+        self.tools = travel_tools()
 
-    def test_total_uses_three_nights_and_includes_budget_warning(self):
-        self.trips.update('alice', {'flight_id': 'pacific-115'}, 'f')
-        result = self.trips.update('alice', {'hotel_id': 'sora-retreat'}, 'h')
-        self.assertEqual(result['total_cents'], 164000)
-        self.assertEqual(result['remaining_cents'], -14000)
-        self.assertTrue(any('budget' in w for w in result['warnings']))
-        self.assertEqual(self.trips.get('bob')['total_cents'], 0)
-
-    def test_late_arrival_crossing_midnight_requires_reception(self):
-        self.trips.update('alice', {'flight_id': 'horizon-310'}, 'f')
-        result = self.trips.update('alice', {'hotel_id': 'kumo-house'}, 'h')
-        self.assertTrue(result['estimated_hotel_arrival'].startswith('2026-11-07'))
-        self.assertTrue(any('reception closes' in w for w in result['warnings']))
-        result = self.trips.update('alice', {'hotel_id': 'aoi-central'}, 'h2')
-        self.assertFalse(any('reception closes' in w for w in result['warnings']))
-
-    def test_save_replay_is_idempotent_and_conflicts_fail(self):
-        first = self.trips.update('alice', {'flight_id': 'pacific-101'}, 'same')
-        self.assertEqual(first, self.trips.update('alice', {'flight_id': 'pacific-101'}, 'same'))
+    def test_catalog_tools_are_read_only_and_no_trip_actions_exist(self):
+        self.assertEqual({tool['name'] for tool in self.tools.descriptions()},
+                         {f'{site}.{action}' for site in ('flights', 'hotels', 'activities') for action in ('search', 'get')})
+        self.assertTrue(all(not tool['mutating'] for tool in self.tools.descriptions()))
+        hotel = self.tools.invoke('hotels.get', {'id':'kumo-house'}, owner='alice', request_id='lookup')
+        self.assertEqual(hotel['nightly_cents'], 16000)
+        for name in ('trip.get', 'trip.update_brief', 'trip.save_flight', 'trip.save_hotel', 'trip.save_activity'):
+            with self.assertRaises(KeyError):
+                self.tools.invoke(name, {}, owner='alice', request_id='removed')
         with self.assertRaises(ValueError):
-            self.trips.update('alice', {'flight_id': 'coast-208'}, 'same')
-        with self.assertRaises(ValueError):
-            self.trips.update('alice', {'flight_id': 'made-up'}, 'bad')
-        with self.assertRaises(ValueError):
-            self.trips.update('alice', {'budget_cents': True}, 'bool')
+            self.tools.invoke('hotels.get', {'id':'invented'}, owner='alice', request_id='bad')
 
     def test_app_enriches_selection_with_authoritative_catalog(self):
         store = TravelMessageStore(self.root / 'flight.sqlite', 'flights')
@@ -95,18 +81,15 @@ class TravelHTTPTests(unittest.TestCase):
             time.sleep(.03)
         self.fail('No reply')
 
-    def test_full_two_app_flow_and_save(self):
+    def test_two_app_flow_keeps_choices_in_private_agent_history(self):
         a = self.request('sessions', {'app_id':'flights'})['session_id']
         self.request('messages', {'app_id':'flights','id':'a','session_id':a,'text':'I prefer quiet places. What about this flight?','context':{'selected_id':'pacific-101'}})
         first = self.wait_reply('flights', a)
         self.assertIn('Pacific Air', first['outputs'][0]['text'])
-        self.request('action', {'id':'save-f','kind':'flight','item_id':'pacific-101'})
         b = self.request('sessions', {'app_id':'hotels'})['session_id']
         self.request('messages', {'app_id':'hotels','id':'b','session_id':b,'text':'Does this work with my flight?','context':{'selected_id':'kumo-house'}})
         second = self.wait_reply('hotels', b)
         self.assertIn('previous turns: 1', second['outputs'][0]['text'])
-        saved = self.request('action', {'id':'save-h','kind':'hotel','item_id':'kumo-house'})
-        self.assertEqual(saved['total_cents'], 120000)
         self.assertEqual(self.seen[0][1], self.seen[1][1])
         self.assertIn('quiet', self.seen[1][2]['history'][0]['event']['message']['text'])
 
@@ -121,14 +104,13 @@ class TravelHTTPTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as denied:
             self.request('preferences', {'id':'x','budget_cents':123000,'preferences':'x'}, csrf='invalid')
         self.assertEqual(denied.exception.code,403)
-        self.assertEqual(self.request('trip')['budget_cents'],150000)
+        self.assertEqual(self.request('session')['visitor'], self.boot['visitor'])
 
-    def test_new_trip_has_new_identity_and_empty_saved_state(self):
-        self.request('action', {'id':'f','kind':'flight','item_id':'pacific-101'})
+    def test_new_visitor_has_new_identity_and_empty_chat(self):
         self.request('new-trip', {})
         new = self.request('session')
         self.assertNotEqual(new['visitor'], self.boot['visitor'])
-        self.assertIsNone(new['trip']['flight'])
+        self.assertEqual(self.request('conversation')['messages'], [])
 
     def test_reopening_a_pending_session_resumes_processing(self):
         session = self.request('sessions', {'app_id':'home'})['session_id']
@@ -143,38 +125,28 @@ class TravelHTTPTests(unittest.TestCase):
         self.assertEqual(self.seen, [])
 
 class TravelReasoningTests(unittest.TestCase):
-    def test_model_cannot_execute_a_save_without_user_confirmation(self):
+    def test_stale_action_request_cannot_mutate_state_and_answer_has_no_proposal(self):
         from oneagent.travel.agent import TravelResponder
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            trips = TripStore(root / 'trips.sqlite')
-            proposals = []
             class Runtime:
                 def __init__(self):
                     self.turn = 0
                 def respond(self, identity, message, **kwargs):
                     self.turn += 1
+                    payload = json.loads(message.rsplit('\n', 1)[1])
+                    self_test.assertNotIn('trip', payload)
                     if self.turn == 1:
                         return json.dumps({'tool': {'name':'trip.save_hotel','arguments':{'id':'kumo-house'}}})
-                    self_test.assertIn('Action was not authorized', message)
-                    return json.dumps({'text':'Confirm to save this hotel.', 'proposal':{'name':'trip.save_hotel','arguments':{'id':'kumo-house'}}})
+                    self_test.assertIn('error', payload['tool_results'][0]['result'])
+                    return json.dumps({'text':"I'll remember Kumo House.",
+                                       'proposal':{'name':'trip.save_hotel','arguments':{'id':'kumo-house'}},
+                                       'shared_context':{'budget_cents':150000}})
             self_test = self
-            respond = TravelResponder('alice', root / 'runtime', trips, travel_tools(trips), lambda *values: proposals.append(values), runtime=Runtime())
+            respond = TravelResponder('alice', root / 'runtime', travel_tools(), runtime=Runtime())
             output = respond({'current':{'app_id':'hotels','event_id':'m1','context':{},'share':[]},'history':[]}, 'alice')
-            self.assertIsNone(trips.get('alice')['hotel_id'])
-            self.assertIn('Confirm', output['text'])
-            self.assertEqual(proposals[0][-1]['arguments']['id'], 'kumo-house')
-
-    def test_brief_tool_validates_and_requires_confirmation(self):
-        with tempfile.TemporaryDirectory() as directory:
-            trips = TripStore(Path(directory) / 'trips.sqlite')
-            registry = travel_tools(trips)
-            with self.assertRaises(PermissionError):
-                registry.invoke('trip.update_brief', {'budget_cents':120000}, owner='alice', request_id='x')
-            result = registry.invoke('trip.update_brief', {'budget_cents':120000}, owner='alice', request_id='x', authorize=lambda *_: True)
-            self.assertEqual(result['budget_cents'],120000)
-            with self.assertRaises(ValueError):
-                registry.invoke('trip.update_brief', {'flight_id':'invented'}, owner='alice', request_id='y', authorize=lambda *_: True)
+            self.assertEqual(output, {'text':"I'll remember Kumo House.", 'shared_context':{}})
+            self.assertFalse((root / 'trips.sqlite').exists())
 
 
 if __name__ == '__main__':

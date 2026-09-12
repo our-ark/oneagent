@@ -17,7 +17,6 @@ import "./style.css";
 import "./site-themes.css";
 import {
   CompanionPanel,
-  type AgentOutput as Output,
   type Conversation as Transcript,
 } from "./CompanionPanel";
 
@@ -66,10 +65,8 @@ type Stay = {
   image: string;
   image_alt: string;
 };
-type Selection = { saved_id: string | null };
 type Bootstrap = {
   csrf: string;
-  selection: Selection;
   catalog: { flights?: Flight[]; hotels?: Stay[]; activities?: Activity[] };
   app_id: SiteId;
   linked: boolean;
@@ -113,7 +110,6 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
 const id = () => crypto.randomUUID();
 export function TravelApp({ site }: { site: SiteId }) {
   const [boot, setBoot] = useState<Bootstrap | null>(null);
-  const [saved, setSaved] = useState<Selection>({ saved_id: null });
   const app: AppId = site;
   const appRef = useRef(app);
   const [selected, setSelected] = useState<Record<AppId, string | null>>({
@@ -125,13 +121,11 @@ export function TravelApp({ site }: { site: SiteId }) {
   const [transcript, setTranscript] = useState<Transcript>(emptyTranscript);
   const [error, setError] = useState("");
   const [connectionError, setConnectionError] = useState("");
-  const [toast, setToast] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
   const [sort, setSort] = useState("recommended");
   const [quietOnly, setQuietOnly] = useState(false);
-  const [actionPending, setActionPending] = useState(false);
 
   useEffect(() => {
     const token = new URLSearchParams(location.hash.slice(1)).get("connect");
@@ -147,16 +141,9 @@ export function TravelApp({ site }: { site: SiteId }) {
       if (data.app_id !== site)
         throw new Error("Open this website using its own Telegram link.");
       setBoot(data);
-      setSaved(data.selection);
     }
     connect().catch((e) => setError(e.message));
   }, [site]);
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(""), 4500);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
   async function ensureSession(_target: AppId): Promise<string> {
     if (!boot) throw new Error("The agent is still connecting.");
     return boot.session_id;
@@ -168,13 +155,9 @@ export function TravelApp({ site }: { site: SiteId }) {
     let timer: ReturnType<typeof setTimeout>;
     async function refresh() {
       try {
-        const [messages, updated] = await Promise.all([
-          api<Transcript>("conversation"),
-          api<Selection>("selection"),
-        ]);
+        const messages = await api<Transcript>("conversation");
         if (!cancelled) {
           setTranscript(messages);
-          setSaved(updated);
           setConnectionError("");
         }
       } catch (e) {
@@ -246,39 +229,6 @@ export function TravelApp({ site }: { site: SiteId }) {
       setSending(false);
     }
   }
-  async function save(kind: "flight" | "hotel" | "activity", itemId: string) {
-    setActionPending(true);
-    try {
-      const updated = await api<Selection>("action", {
-        id: id(),
-        kind,
-        item_id: itemId,
-      });
-      setSaved(updated);
-      setToast(
-        `${kind === "flight" ? "Flight" : kind === "hotel" ? "Hotel" : "Activity"} saved on ${titles[site]}`,
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setActionPending(false);
-    }
-  }
-  async function confirmProposal(output: Output) {
-    setActionPending(true);
-    try {
-      await api("confirm", {
-        source_app: output.source_app,
-        event_id: output.in_reply_to,
-      });
-      setSaved(await api<Selection>("selection"));
-      setToast("Confirmed with OneAgent.");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setActionPending(false);
-    }
-  }
   if (!boot)
     return (
       <main className="loading">
@@ -304,7 +254,7 @@ export function TravelApp({ site }: { site: SiteId }) {
         ]
       : app === "hotels"
         ? [
-            "Does this work with my saved flight?",
+            "Does this work with the flight we discussed?",
             "Is this better than the previous hotel?",
           ]
         : [
@@ -451,11 +401,6 @@ export function TravelApp({ site }: { site: SiteId }) {
                     <div className="flight-footer">
                       <span className="tag">{flight.tag}</span>
                       <span>{flight.baggage}</span>
-                      {saved.saved_id === flight.id && (
-                        <span className="saved-label">
-                          <Check size={14} /> Saved on {titles[app]}
-                        </span>
-                      )}
                     </div>
                     {selected.flights === flight.id && (
                       <div className="selection-detail">
@@ -469,18 +414,6 @@ export function TravelApp({ site }: { site: SiteId }) {
                             disabled={sending}
                           >
                             <MessageCircle size={16} /> Ask OneAgent
-                          </button>
-                          <button
-                            className="primary small"
-                            disabled={
-                              actionPending || saved.saved_id === flight.id
-                            }
-                            onClick={() => save("flight", flight.id)}
-                          >
-                            {saved.saved_id === flight.id
-                              ? "Saved"
-                              : "Save flight"}
-                            <Check size={16} />
                           </button>
                         </div>
                       </div>
@@ -578,11 +511,6 @@ export function TravelApp({ site }: { site: SiteId }) {
                           <MapPin size={13} />
                           {hotel.neighborhood}
                         </span>
-                        {saved.saved_id === hotel.id && (
-                          <span className="image-saved">
-                            <Check size={15} /> Saved
-                          </span>
-                        )}
                       </div>
                       <div className="hotel-card-body">
                         <div className="hotel-title">
@@ -623,23 +551,13 @@ export function TravelApp({ site }: { site: SiteId }) {
                           <button
                             className="secondary"
                             onClick={() =>
-                              send("Does this hotel work with my saved flight?")
+                              send(
+                                "Does this hotel work with the flight we discussed?",
+                              )
                             }
                             disabled={sending}
                           >
                             <MessageCircle size={15} /> Ask agent
-                          </button>
-                          <button
-                            className="primary small"
-                            disabled={
-                              actionPending || saved.saved_id === hotel.id
-                            }
-                            onClick={() => save("hotel", hotel.id)}
-                          >
-                            {saved.saved_id === hotel.id
-                              ? "Saved"
-                              : "Save stay"}
-                            <Check size={15} />
                           </button>
                         </div>
                       </div>
@@ -743,25 +661,8 @@ export function TravelApp({ site }: { site: SiteId }) {
                             >
                               <MessageCircle size={16} /> Ask OneAgent
                             </button>
-                            <button
-                              className="primary small"
-                              disabled={
-                                actionPending || saved.saved_id === activity.id
-                              }
-                              onClick={() => save("activity", activity.id)}
-                            >
-                              {saved.saved_id === activity.id
-                                ? "Saved"
-                                : "Save activity"}
-                              <Check size={16} />
-                            </button>
                           </div>
                         </div>
-                      )}
-                      {saved.saved_id === activity.id && (
-                        <span className="saved-label activity-saved">
-                          <Check size={14} /> Saved on {titles[app]}
-                        </span>
                       )}
                     </article>
                   ))}
@@ -774,7 +675,7 @@ export function TravelApp({ site }: { site: SiteId }) {
           )}
           <footer className="footer">
             <span>{titles[app]} · Tokyo demo</span>
-            <span>Demo data. Saved selections are not bookings.</span>
+            <span>Fictional options for this demo.</span>
           </footer>
         </main>
         <CompanionPanel
@@ -785,11 +686,9 @@ export function TravelApp({ site }: { site: SiteId }) {
           conversation={transcript}
           pending={pending}
           sending={sending}
-          actionPending={actionPending}
           draft={draft}
           onDraft={setDraft}
           onSend={send}
-          onConfirm={confirmProposal}
           onRetry={() =>
             api("retry", {})
               .then(() =>
@@ -816,12 +715,6 @@ export function TravelApp({ site }: { site: SiteId }) {
           </div>
         </CompanionPanel>
       </div>
-      {toast && (
-        <div role="status" className="toast">
-          <Check size={18} />
-          {toast}
-        </div>
-      )}
       {(error || connectionError) && (
         <div role="alert" className="error-toast">
           <span>{error || connectionError}</span>

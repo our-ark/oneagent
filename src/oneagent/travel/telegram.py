@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 
 from oneagent.collaboration.handoff import digest
 from oneagent.collaboration.store import encoded
-from .routing import LABELS, SITES, TELEGRAM_REPLY_PREFIX, confirmation_command
+from .routing import LABELS, SITES, TELEGRAM_REPLY_PREFIX
 
 
 class TelegramDemo:
@@ -30,7 +30,7 @@ class TelegramDemo:
         principal = f"telegram:{chat_id}:{user_id}"
         command = text.split()[0].split("@")[0].lower()
         owner = self.hub.handoffs.account(principal)
-        if command != "/traveldemo" and (not owner or (command.startswith("/") and command != "/travelconfirm")):
+        if command != "/traveldemo" and (not owner or command.startswith("/")):
             return None
         key = digest(principal)
         event = str(message_id)
@@ -46,7 +46,7 @@ class TelegramDemo:
                 action = arguments.lower()
                 if action == "stop":
                     self.hub.handoffs.stop(principal)
-                    reply = "Travel demo mode is off in Telegram. Your trip is saved; /traveldemo resumes it and /traveldemo reset starts fresh."
+                    reply = "Travel demo mode is off in Telegram. Our conversation stays with me; /traveldemo resumes the demo and /traveldemo reset starts fresh website chats."
                 elif action in {"", "reset"}:
                     owner = self.hub.handoffs.account(principal, start=True, reset=action == "reset")
                     with sqlite3.connect(self.hub.db_path) as db:
@@ -66,17 +66,7 @@ class TelegramDemo:
                         app = parts[1].lower()
                         reply = f"Sent to {LABELS[app]} only.\n\n" + self.reply(owner, app, TELEGRAM_REPLY_PREFIX + str(message_id), parts[2])
                 else:
-                    reply = "Use /traveldemo for links, /traveldemo reply <flights|hotels|activities> <request> for a website reply, /traveldemo reset for a fresh trip, or /traveldemo stop to leave demo mode."
-            elif command == "/travelconfirm":
-                parts = text.split()[1:]
-                app, event_id = ("telegram", parts[0]) if len(parts) == 1 else (parts if len(parts) == 2 else ("", ""))
-                try:
-                    if app not in (*SITES, "telegram"):
-                        raise ValueError("Unknown proposal source")
-                    trip = self.hub.confirm(owner, app, event_id)
-                    reply = f"Confirmed. Your saved trip total is ${trip['total_cents'] / 100:,.0f}, with ${trip['remaining_cents'] / 100:,.0f} remaining. These are demo selections, not bookings."
-                except ValueError:
-                    reply = "That proposal is unavailable. Ask me for a new proposal, then use its exact /travelconfirm command."
+                    reply = "Use /traveldemo for links, /traveldemo reply <flights|hotels|activities> <request> for a website reply, /traveldemo reset for fresh website chats, or /traveldemo stop to leave demo mode."
             else:
                 reply = self.reply(owner, "telegram", f"tg-{message_id}", text)
             # Persist before network delivery so transport retries never run a
@@ -94,8 +84,6 @@ class TelegramDemo:
             output = next((o for o in transcript["outputs"] if o["in_reply_to"] == event_id), None)
             if output:
                 reply = output["text"]
-                if output.get("proposal"):
-                    reply += f"\n\nTo confirm this change, send:\n{confirmation_command(app, event_id)}"
                 return reply
             if transcript["error"]:
                 raise RuntimeError(transcript["error"])
@@ -120,7 +108,7 @@ def existing_bot_reply(event, root, *, application=None):
     if not config_path:
         return None
     command = event.text.strip().split(maxsplit=1)[0].split("@")[0].lower() if event.text.strip() else ""
-    if command.startswith("/") and command not in {"/traveldemo", "/travelconfirm"}:
+    if command.startswith("/") and command != "/traveldemo":
         return None
     message = event.raw.get("message", {})
     chat, sender = message.get("chat", {}), message.get("from", {})

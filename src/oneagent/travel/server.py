@@ -19,7 +19,7 @@ from oneagent.collaboration import AgentState, AppClient, AppServer, Collaborati
 from oneagent.collaboration.handoff import HandoffStore
 from oneagent.collaboration.store import encoded, identifier, object_value
 from .agent import TravelResponder
-from .domain import CATALOG, TravelMessageStore, TripStore, item, travel_tools
+from .domain import CATALOG, TravelMessageStore, travel_tools
 from .routing import SITES, is_telegram_reply
 
 LOG = logging.getLogger(__name__)
@@ -36,7 +36,6 @@ class Hub:
             with db:
                 db.executescript("""
                     CREATE TABLE IF NOT EXISTS visitors(owner TEXT PRIMARY KEY, csrf TEXT NOT NULL);
-                    CREATE TABLE IF NOT EXISTS proposals(owner TEXT, app TEXT, event TEXT, body TEXT, PRIMARY KEY(owner,app,event));
                     CREATE TABLE IF NOT EXISTS timeline(seq INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT, app TEXT, event TEXT, UNIQUE(owner,app,event));
                     CREATE TABLE IF NOT EXISTS bot_routes(chat INTEGER PRIMARY KEY, url TEXT, token TEXT);
                     CREATE TABLE IF NOT EXISTS bot_owners(owner TEXT PRIMARY KEY, chat INTEGER);
@@ -45,10 +44,9 @@ class Hub:
                 """)
         finally:
             db.close()
-        self.trips = TripStore(self.root / "trips.sqlite")
         self.handoffs = HandoffStore(self.root / "handoffs.sqlite")
         self.origins = {}
-        self.tools = travel_tools(self.trips)
+        self.tools = travel_tools()
         self.stores, self.servers = {}, {}
         self.lock = threading.RLock()
         self.visitors = {}
@@ -56,7 +54,7 @@ class Hub:
         self.responder_factory = responder_factory
         for app_id in APPS:
             store = TravelMessageStore(self.root / f"{app_id}.sqlite", app_id,
-                                      shared_fields=[] if app_id in SITES else ["budget_cents", "preferences"])
+                                      shared_fields=[])
             server = AppServer(("127.0.0.1", 0), store, {secrets.token_hex(32): "bootstrap"})
             threading.Thread(target=server.serve_forever, daemon=True).start()
             self.stores[app_id], self.servers[app_id] = store, server
@@ -172,12 +170,11 @@ class Hub:
             if route and route[1]:
                 from .bot_bridge import call_bot
                 result = call_bot(route, {"owner": owner, "payload": payload})
-                self.set_proposal(owner, payload["current"]["app_id"], payload["current"]["event_id"], result.get("proposal"))
                 return result["answer"]
             if route:
                 raise RuntimeError("The Telegram bot is not attached. Start the normal bot with the travel control file.")
             if local is None:
-                local = TravelResponder(owner, runtime_root, self.trips, self.tools, self.set_proposal)
+                local = TravelResponder(owner, runtime_root, self.tools)
             return local(payload, key)
         return respond
 
@@ -243,14 +240,6 @@ class Hub:
                 state["running"] = False
                 state["error"] = "OneAgent couldn't finish this reply. Check the runtime connection, then retry."
 
-    def set_proposal(self, owner, app, event, proposal):
-        db = sqlite3.connect(self.db_path)
-        try:
-            with db:
-                db.execute("INSERT INTO proposals VALUES (?,?,?,?) ON CONFLICT(owner,app,event) DO UPDATE SET body=excluded.body", (owner, app, event, encoded(proposal)))
-        finally:
-            db.close()
-
     def channel(self, owner, app):
         return self.handoffs.channel(owner, app, lambda: self.stores[app].session(owner))
 
@@ -270,23 +259,6 @@ class Hub:
         # browser exchanges the one-use token via an origin-checked POST.
         return {app: origin + "/#connect=" + self.handoffs.issue(owner, app)
                 for app, origin in self.origins.items()}
-
-    def proposal(self, owner, app, event):
-        db = sqlite3.connect(self.db_path)
-        try:
-            row = db.execute("SELECT body FROM proposals WHERE owner=? AND app=? AND event=?", (owner, app, event)).fetchone()
-            if not row or not json.loads(row[0]):
-                raise ValueError("No proposal for this message")
-            return json.loads(row[0])
-        finally:
-            db.close()
-
-    def confirm(self, owner, app, event):
-        proposal = self.proposal(owner, app, event)
-        name, args = proposal["name"], proposal["arguments"]
-        self.tools.invoke(name, args, owner=owner, request_id=f"confirm:{app}:{event}",
-                          authorize=lambda who, tool, values: who == owner and tool == name and values == args)
-        return self.trips.get(owner)
 
     def conversation(self, owner, app=None):
         """A website gets only its own thread; the aggregate is private to the hub."""
@@ -324,15 +296,6 @@ class Hub:
                 visible = {row[0] for row in store.execute("SELECT id FROM events WHERE owner=? AND session=? AND cursor>?", (owner, session, cutoff))}
             transcript["messages"] = [event for event in transcript["messages"] if event["event_id"] in visible]
             transcript["outputs"] = [output for output in transcript["outputs"] if output["in_reply_to"] in visible]
-        db = sqlite3.connect(self.db_path)
-        try:
-            for output in transcript["outputs"]:
-                row = db.execute("SELECT body FROM proposals WHERE owner=? AND app=? AND event=?", (owner, app, output["in_reply_to"])).fetchone()
-                if row:
-                    output["proposal"] = json.loads(row[0])
-                    output["confirmed"] = self.trips.has_receipt(owner, f"confirm:{app}:{output['in_reply_to']}")
-        finally:
-            db.close()
         with self.lock:
             # Resume queued messages after a server restart when this session reopens.
             completed = {output["in_reply_to"] for output in transcript["outputs"]}
@@ -409,10 +372,8 @@ class WebHandler(BaseHTTPRequestHandler):
                           "app_id": site, "linked": hub.handoffs.linked(owner),
                           "session_id": hub.channel(owner, site) if site else None,
                           "mode": "test-fixture" if hub.responder_factory else "live"}
-                if site:
-                    result["selection"] = hub.trips.selection(owner, site)
-                else:
-                    result.update(visitor=owner, trip=hub.trips.get(owner), origins=hub.origins)
+                if not site:
+                    result.update(visitor=owner, origins=hub.origins)
             elif write and url.path == "/api/connect" and self.server.app_id:
                 owner, csrf, self.new_cookie = hub.handoffs.redeem(body.get("token"), self.server.app_id)
                 result = {"connected": True}
@@ -430,44 +391,12 @@ class WebHandler(BaseHTTPRequestHandler):
                 result = hub.submit(owner, app, body)
             elif not write and url.path == "/api/transcript":
                 result = hub.transcript(owner, self.app(query["app_id"][0]), query["session_id"][0], visible_only=bool(self.server.app_id))
-            elif not write and url.path == "/api/trip":
-                if self.server.app_id:
-                    raise PermissionError("The combined itinerary is private to your agent. Ask in the companion chat.")
-                result = hub.trips.get(owner)
-            elif not write and url.path == "/api/selection" and self.server.app_id:
-                result = hub.trips.selection(owner, self.server.app_id)
-            elif write and url.path == "/api/preferences":
-                if self.server.app_id:
-                    raise PermissionError("Manage personal preferences in the companion chat.")
-                result = hub.trips.update(owner, {"budget_cents": body["budget_cents"], "preferences": body["preferences"]}, identifier(body["id"]))
-            elif write and url.path == "/api/action":
-                kind = body.get("kind")
-                if kind not in {"flight", "hotel", "activity", "brief"}:
-                    raise ValueError("Invalid action")
-                if self.server.app_id and kind != {"flights": "flight", "hotels": "hotel", "activities": "activity"}[self.server.app_id]:
-                    raise PermissionError("This website can only save its own selections. Use the companion chat for other changes.")
-                name, args = (("trip.update_brief", object_value(body.get("changes"))) if kind == "brief" else ("trip.save_" + kind, {"id": body.get("item_id")}))
-                request_id = identifier(body["id"])
-                if self.server.app_id:
-                    request_id = f"site:{self.server.app_id}:{request_id}"
-                result = hub.tools.invoke(name, args, owner=owner, request_id=request_id,
-                                          authorize=lambda who, tool, values: who == owner and tool == name and values == args)
-                if self.server.app_id:
-                    result = hub.trips.selection(owner, self.server.app_id)
-            elif write and url.path == "/api/confirm":
-                app = self.app(body.get("source_app"))
-                event_id = identifier(body.get("event_id"))
-                if self.server.app_id and not any(output["in_reply_to"] == event_id for output in hub.conversation(owner, app)["outputs"]):
-                    raise PermissionError("This proposal is no longer in this website's chat. Use its confirmation command in Telegram.")
-                result = hub.confirm(owner, app, event_id)
-                if self.server.app_id:
-                    result = {"confirmed": True}
             elif write and url.path == "/api/retry":
                 hub.kick(owner)
                 result = {"queued": True}
             elif write and url.path == "/api/new-trip":
                 if self.server.app_id:
-                    raise ValueError("Use /traveldemo reset in Telegram to reset all three sites together.")
+                    raise ValueError("Use /traveldemo reset in Telegram to start fresh website chats.")
                 # Start a new visitor identity; existing histories remain private in their own workspace.
                 _, _, self.new_cookie = hub.identity("")
                 result = {"reset": True}

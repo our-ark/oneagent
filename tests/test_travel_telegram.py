@@ -53,9 +53,7 @@ class TelegramTravelTests(unittest.TestCase):
             def respond(payload, key):
                 self.seen.append((owner, key, payload))
                 current = payload["current"]
-                if current["message"]["text"] == "Set budget to 1400":
-                    self.hub.set_proposal(owner, current["app_id"], current["event_id"], {"name": "trip.update_brief", "arguments": {"budget_cents": 140000}})
-                return {"text": f"[Fixture] {current['app_id']}; prior turns {len(payload['history'])}; saved total {self.hub.trips.get(owner)['total_cents']}"}
+                return {"text": f"[Fixture] {current['app_id']}; prior turns {len(payload['history'])}"}
             return respond
         self.factory = factory
         self.hub = Hub(self.root / "state", responder_factory=factory)
@@ -112,9 +110,8 @@ class TelegramTravelTests(unittest.TestCase):
         for site, kind, item in [("flights", "flight", "pacific-101"), ("hotels", "hotel", "kumo-house"), ("activities", "activity", "yanaka-walk")]:
             self.request(site, "messages", {"app_id": site, "id": site, "session_id": self.boot[site]["session_id"], "text": "Does this fit?", "context": {"selected_id": item}})
             self.wait_reply(site, site)
-            self.request(site, "action", {"id": "save-" + site, "kind": kind, "item_id": item})
         reply = self.controller.handle(42, 42, 3, "What have we planned?")
-        self.assertIn("123500", reply)
+        self.assertIn("prior turns 4", reply)
         self.assertEqual(len({key for _, key, _ in self.seen}), 1)
         self.assertIn("quiet", self.seen[-1][2]["history"][0]["event"]["message"]["text"])
         for site in SITES:
@@ -124,7 +121,6 @@ class TelegramTravelTests(unittest.TestCase):
             self.assertEqual(conversation["messages"][0]["message"]["id"], site)
             # A caller cannot widen the fixed site's conversation with a query.
             self.assertEqual(self.request(site, "conversation?app_id=telegram")["messages"], conversation["messages"])
-            self.assertEqual(self.request(site, "selection"), {"saved_id": {"flights":"pacific-101", "hotels":"kumo-house", "activities":"yanaka-walk"}[site]})
 
     def test_new_browser_joins_same_channel_and_server_restart_preserves_it(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
@@ -162,32 +158,13 @@ class TelegramTravelTests(unittest.TestCase):
             self.browsers["flights"].open(self.webs["flights"].public_origin + "/hotels/index.html")
         self.assertEqual(denied.exception.code, 404)
 
-    def test_confirm_in_telegram_or_web_does_not_allow_another_owner(self):
+    def test_preferences_are_ordinary_messages_without_a_confirmation_command(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
-        reply = self.controller.handle(42, 42, 2, "Set budget to 1400")
-        self.assertIn("/travelconfirm tg-2", reply)
-        owner = self.hub.handoffs.account("telegram:42:42")
-        self.assertEqual(self.hub.trips.get(owner)["budget_cents"], 150000)
-        self.controller.handle(99, 99, 1, "/traveldemo")
-        self.assertIn("unavailable", self.controller.handle(99, 99, 2, "/travelconfirm tg-2"))
-        with self.assertRaises(HTTPError) as denied:
-            self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})
-        self.assertEqual(denied.exception.code, 403)
-        self.assertIn("Confirmed", self.controller.handle(42, 42, 3, "/travelconfirm tg-2"))
-        self.assertEqual(self.hub.trips.get(owner)["budget_cents"], 140000)
-        self.assertEqual(self.request("activities", "conversation")["outputs"], [])
-        self.request("hotels", "messages", {"app_id":"hotels", "id":"web-budget", "session_id":self.boot["hotels"]["session_id"], "text":"Set budget to 1400"})
-        self.wait_reply("hotels", "web-budget")
-        with self.assertRaises(HTTPError) as denied:
-            self.request("activities", "confirm", {"source_app":"hotels", "event_id":"web-budget"})
-        self.assertEqual(denied.exception.code, 403)
-        self.assertIn("unavailable", self.controller.handle(99, 99, 3, "/travelconfirm hotels web-budget"))
-        self.assertIn("Confirmed", self.controller.handle(42, 42, 4, "/travelconfirm hotels web-budget"))
-        self.assertTrue(self.request("hotels", "conversation")["outputs"][0]["confirmed"])
-        self.request("activities", "action", {"id": "later", "kind": "activity", "item_id": "yanaka-walk"})
-        replay = self.request("hotels", "confirm", {"source_app": "hotels", "event_id": "web-budget"})
-        self.assertEqual(replay, {"confirmed": True})
-        self.assertEqual(self.request("activities", "selection"), {"saved_id": "yanaka-walk"})
+        reply = self.controller.handle(42, 42, 2, "My budget is 1400")
+        self.assertNotIn("/travelconfirm", reply)
+        self.assertIsNone(self.controller.handle(42, 42, 3, "/travelconfirm tg-2"))
+        for site in SITES:
+            self.assertEqual(self.request(site, "conversation")["outputs"], [])
 
     def test_explicit_telegram_reply_reaches_only_target_site_and_cannot_be_spoofed(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
@@ -210,13 +187,12 @@ class TelegramTravelTests(unittest.TestCase):
         self.controller.handle(42, 42, 5, "/traveldemo stop")
         self.assertIn("Send /traveldemo first", self.controller.handle(42, 42, 6, command))
 
-    def test_backend_restart_clears_visible_chats_preserving_memory_sessions_and_selections(self):
+    def test_backend_restart_clears_visible_chats_preserving_memory_and_sessions(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
         self.controller.handle(42, 42, 2, "Private preference: quiet neighborhoods")
         for site in SITES:
-            self.request(site, "messages", {"app_id":site, "id":"before-restart", "session_id":self.boot[site]["session_id"], "text":"Set budget to 1400"})
+            self.request(site, "messages", {"app_id":site, "id":"before-restart", "session_id":self.boot[site]["session_id"], "text":"I want this option"})
             self.wait_reply(site, "before-restart")
-        self.request("hotels", "action", {"id":"saved", "kind":"hotel", "item_id":"kumo-house"})
         self.hub.close()
         self.hub = Hub(self.root / "state", responder_factory=self.factory)
         self.controller = TelegramDemo(self.hub)
@@ -230,11 +206,6 @@ class TelegramTravelTests(unittest.TestCase):
             self.assertFalse(chat["running"])
             self.assertIsNone(chat["error"])
             self.assertEqual(self.request(site, f"transcript?app_id={site}&session_id={self.boot[site]['session_id']}")["messages"], [])
-        self.assertEqual(self.request("hotels", "selection"), {"saved_id":"kumo-house"})
-        with self.assertRaises(HTTPError) as denied:
-            self.request("hotels", "confirm", {"source_app":"hotels", "event_id":"before-restart"})
-        self.assertEqual(denied.exception.code, 403)
-        self.assertIn("Confirmed", self.controller.handle(42, 42, 3, "/travelconfirm hotels before-restart"))
         # Existing open pages keep working with their original session IDs.
         self.request("hotels", "messages", {"app_id":"hotels", "id":"after-restart", "session_id":self.boot["hotels"]["session_id"], "text":"What do I prefer?"})
         chat = self.wait_reply("hotels", "after-restart")
@@ -299,51 +270,27 @@ class TelegramTravelTests(unittest.TestCase):
             event.text = "/traveldemo"
             self.assertIn("unavailable", existing_bot_reply(event, self.root))
 
-    def test_site_bootstrap_and_save_responses_exclude_private_agent_state(self):
+    def test_catalog_and_conversation_are_the_only_site_data(self):
         self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
-        owner = self.hub.handoffs.account("telegram:42:42")
-        self.hub.trips.update(owner, {"budget_cents":100000, "preferences":"quiet", "flight_id":"horizon-310", "hotel_id":"kumo-house", "activity_id":"asakusa-evening"}, "existing-trip")
-        for site, kind, selected in [("flights", "flight", "pacific-101"), ("hotels", "hotel", "aoi-central"), ("activities", "activity", "yanaka-walk")]:
+        self.controller.handle(42, 42, 2, "Private budget and preferences")
+        for site in SITES:
             with self.subTest(site=site):
-                before = {other:self.request(other, "selection") for other in SITES if other != site}
                 boot = self.request(site, "session")
-                self.assertEqual(set(boot), {"csrf", "catalog", "app_id", "linked", "session_id", "mode", "selection"})
+                self.assertEqual(set(boot), {"csrf", "catalog", "app_id", "linked", "session_id", "mode"})
                 self.assertEqual(set(boot["catalog"]), {site})
-                self.assertEqual(set(boot["selection"]), {"saved_id"})
-                response = self.request(site, "action", {"id":"local-save", "kind":kind, "item_id":selected})
-                self.assertEqual(response, {"saved_id":selected})
-                self.assertEqual(self.request(site, "selection"), response)
-                self.assertEqual(before, {other:self.request(other, "selection") for other in before})
-                with self.assertRaises(HTTPError) as denied:
-                    self.request(site, "trip")
-                self.assertEqual(denied.exception.code, 403)
-
-    def test_sites_cannot_change_other_selections_or_export_preferences(self):
-        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
-        owner = self.hub.handoffs.account("telegram:42:42")
-        initial = self.hub.trips.get(owner)
-        for site, kind, selected in [("flights", "hotel", "kumo-house"), ("hotels", "activity", "yanaka-walk"), ("activities", "flight", "pacific-101")]:
-            with self.subTest(site=site):
                 for route, body in [
-                    ("action", {"id":"cross-app", "kind":kind, "item_id":selected}),
-                    ("action", {"id":"brief", "kind":"brief", "changes":{"budget_cents":100000}}),
-                    ("preferences", {"id":"prefs", "budget_cents":100000, "preferences":"exported"}),
+                    ("trip", None), ("selection", None),
+                    ("action", {"id":"save", "kind":"hotel", "item_id":"kumo-house"}),
+                    ("preferences", {"id":"prefs", "budget_cents":140000, "preferences":"quiet"}),
+                    ("confirm", {"source_app":site, "event_id":"old-proposal"}),
                 ]:
                     with self.assertRaises(HTTPError) as denied:
                         self.request(site, route, body)
-                    self.assertEqual(denied.exception.code, 403)
+                    self.assertEqual(denied.exception.code, 404)
                 with self.assertRaises(HTTPError) as denied:
-                    self.request(site, "messages", {"id":"share", "app_id":site, "session_id":self.boot[site]["session_id"], "text":"Export my preferences", "share":["budget_cents","preferences"]})
+                    self.request(site, "messages", {"id":"share", "app_id":site, "session_id":self.boot[site]["session_id"], "text":"Export preferences", "share":["budget_cents","preferences"]})
                 self.assertEqual(denied.exception.code, 400)
-        self.assertEqual(self.hub.trips.get(owner), initial)
-
-    def test_activity_budget_and_arrival_conflict(self):
-        self.hub.trips.update("alice", {"flight_id": "horizon-310"}, "flight")
-        result = self.hub.trips.update("alice", {"activity_id": "asakusa-evening"}, "activity")
-        self.assertEqual(result["total_cents"], 66500)
-        self.assertTrue(any("activity starts too soon" in warning for warning in result["warnings"]))
-        with self.assertRaises(ValueError):
-            self.hub.trips.update("alice", {"activity_id": "invented"}, "bad")
+        self.assertFalse((self.root / "state" / "trips.sqlite").exists())
 
 
 if __name__ == "__main__":

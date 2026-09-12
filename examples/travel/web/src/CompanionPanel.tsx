@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import {
   ArrowUp,
-  Check,
   Orbit,
   RotateCcw,
   ShieldCheck,
@@ -15,8 +14,6 @@ export type AgentOutput = {
   in_reply_to: string;
   text: string;
   shared_context: Record<string, unknown>;
-  confirmed?: boolean;
-  proposal?: { name: string; arguments: Record<string, unknown> };
 };
 export type Conversation = {
   messages: {
@@ -38,11 +35,9 @@ type Props = {
   conversation: Conversation;
   pending: boolean;
   sending: boolean;
-  actionPending: boolean;
   draft: string;
   onDraft: (value: string) => void;
   onSend: (text?: string) => void;
-  onConfirm: (output: AgentOutput) => void;
   onRetry: () => void;
   suggestions: string[];
   mobileOpen: boolean;
@@ -53,7 +48,7 @@ type Props = {
 
 /** An app-neutral companion panel. Hosts supply context, messages, and actions. */
 export function CompanionPanel(props: Props) {
-  const { conversation, selected, pending, sending, actionPending } = props;
+  const { conversation, selected, pending, sending } = props;
   const logEnd = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const log = logEnd.current?.parentElement;
@@ -137,20 +132,6 @@ export function CompanionPanel(props: Props) {
                     </span>
                     <div>
                       <p>{output.text}</p>
-                      {output.proposal && (
-                        <button
-                          className="proposal"
-                          disabled={actionPending || output.confirmed}
-                          onClick={() => props.onConfirm(output)}
-                        >
-                          <Check size={16} />
-                          {output.confirmed
-                            ? "Confirmed"
-                            : output.proposal.name === "trip.update_brief"
-                              ? "Confirm trip brief update"
-                              : `Confirm ${output.proposal.name.replace("trip.save_", "")} selection`}
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
@@ -159,8 +140,7 @@ export function CompanionPanel(props: Props) {
           })}
           {(pending || sending) && !conversation.error && (
             <div className="thinking">
-              <Orbit size={17} className="spin" /> Thinking with your trip in
-              mind…
+              <Orbit size={17} className="spin" /> Thinking…
             </div>
           )}
           {conversation.error && (
