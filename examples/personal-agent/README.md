@@ -8,7 +8,7 @@ Requires Node 20+. From this directory run `npm install`, set `OPENAI_API_KEY` i
 
 ## Discord
 
-Create a Discord application, set its Interactions Endpoint URL to a public HTTPS proxy for `/api/discord/interactions`, and configure `DISCORD_PUBLIC_KEY` from the application's General Information page. Register two application commands: `setprefs` with string options `want` (required) and `avoid` (optional); `recommend` with required string option `platform` whose choices are `spotify`, `wechat`, `amazon`. Discord verifies the endpoint with a PING. Responses are ephemeral and preferences are scoped to the Discord user ID, stored in `PERSONAL_AGENT_DATA`. This is a separate store from the browser prototype; account linking is not implemented. Do not expose the local server publicly without authentication and operational hardening.
+Create a Discord application, set its Interactions Endpoint URL to a public HTTPS proxy for `/api/discord/interactions`, and configure `DISCORD_PUBLIC_KEY` from the application's General Information page. Set `DISCORD_APPLICATION_ID` and `DISCORD_BOT_TOKEN`, then run `npm run discord:register` to register `/setprefs` and `/recommend`. Discord verifies the endpoint with a PING. Responses are ephemeral and preferences are scoped to the Discord user ID, stored in `PERSONAL_AGENT_DATA`. This is a separate store from the browser prototype; account linking is not implemented. Do not expose the local server publicly without authentication and operational hardening.
 
 ## Boundaries
 

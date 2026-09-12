@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "server": "node server/index.js",
+    "discord:register": "node server/register-discord.js",
     "build": "vite build"
   },
   "dependencies": {
