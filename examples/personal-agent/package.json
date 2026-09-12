@@ -1,0 +1,20 @@
+{
+  "name": "oneagent-personal-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "server": "node server/index.js",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@copilotkit/react-core": "^1.50.0",
+    "@copilotkit/runtime": "^1.50.0",
+    "express": "^5.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

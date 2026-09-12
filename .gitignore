@@ -9,4 +9,5 @@ dist/
 
 .venv/
 node_modules/
+.npm-cache/
 .travel-demo/

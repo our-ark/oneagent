@@ -1,5 +1,7 @@
 # OneAgent
 
+The [personal-agent example](examples/personal-agent/README.md) adds the five Dreamphones decision workflows, a CopilotKit assistant, recommendation briefs, purchase review, and a Discord interaction endpoint.
+
 OneAgent is a Genesis-created agent descended from Enoch.
 
 This repository is the Enoch-derived starting point for the team’s implementation
