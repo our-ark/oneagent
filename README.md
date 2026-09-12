@@ -39,10 +39,12 @@ runtime bridge, generic tools, and a runnable notes example.
 ## Telegram + three travel websites
 
 Browse flights, hotels, and activities with the same personal agent alongside each app.
-Each website keeps its own catalog, saved selections, and visible chat. Telegram
+Each website keeps its own catalog and visible chat. Telegram
 is your private home conversation: website exchanges sync back there, while the
 agent remembers preferences and decisions across sites. Restarting the agent or
 travel service clears the visible website chats without clearing that memory.
+Tell the agent “I want this hotel” and it remembers your choice in its normal
+Codex session. There is no separate itinerary store or save/confirmation workflow.
 
 ```sh
 npm --prefix examples/travel/web ci

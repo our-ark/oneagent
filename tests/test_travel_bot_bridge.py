@@ -10,11 +10,11 @@ import unittest
 from unittest.mock import patch
 
 from oneagent.app.core import OneAgentApplication
-from oneagent.app.notifications import notification_records
+from oneagent.app.notifications import notification_records, persist_notification_intent
 from oneagent.collaboration.handoff import digest
 from oneagent.identity import load_identity
 from oneagent.providers.runtime import FunctionAgentRuntime
-from oneagent.providers.contracts import ChatEvent
+from oneagent.providers.contracts import ChatEvent, NotificationIntent
 from oneagent.travel.demo import ControlServer, launch_bot
 from oneagent.travel.server import Hub, SITES
 from oneagent.travel.telegram import TelegramDemo, existing_bot_reply
@@ -26,7 +26,7 @@ class ExistingConversationTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.memory, self.calls = {}, []
+        self.memory, self.calls, self.choices = {}, [], {}
         self.active, self.max_active = 0, 0
         self.guard = threading.Lock()
         def respond(identity, prompt, **kwargs):
@@ -39,10 +39,13 @@ class ExistingConversationTests(unittest.TestCase):
                 self.calls.append((identity, kwargs['cwd'], key, prompt))
                 if 'available_tools' in prompt:
                     payload = json.loads(prompt.rsplit('\n', 1)[1])
-                    self.assertNotIn('quiet', payload['trip']['preferences'])
+                    self.assertNotIn('trip', payload)
+                    self.assertTrue(all(not tool['mutating'] for tool in payload['available_tools']))
                     answer = 'Choose the quiet option.' if self.memory.get(key) == 'quiet' else 'Choose the busiest option.'
-                    if payload['current']['message']['text'] == 'Save this hotel':
-                        return json.dumps({'text':'Confirm Kumo House.', 'proposal':{'name':'trip.save_hotel','arguments':{'id':'kumo-house'}}})
+                    if payload['current']['message']['text'] == 'I want this hotel':
+                        self.choices[key] = payload['current']['context']['selected_object']['name']
+                    if key in self.choices:
+                        answer = 'You chose ' + self.choices[key] + '.'
                     return json.dumps({'text': answer, 'shared_context': {}})
                 if 'quiet neighborhoods' in prompt:
                     self.memory[key] = 'quiet'
@@ -92,12 +95,11 @@ class ExistingConversationTests(unittest.TestCase):
 
     def test_pre_travel_preference_uses_actual_bot_runtime_identity_and_session_in_every_site(self):
         self.bot._natural(42, 'I always prefer quiet neighborhoods.')
-        # Existing itinerary and handoffs must survive attachment to the bot.
+        # Existing conversation handoffs must survive attachment to the bot.
         self.controller.handle(42, 42, 101, '/traveldemo')
         original_owner = self.hub.handoffs.account('telegram:42:42')
         old_link = self.hub.handoffs.issue(original_owner, 'flights')
         old_session = self.hub.channel(original_owner, 'flights')
-        self.hub.trips.update(original_owner, {'flight_id':'pacific-101'}, 'saved-before-attach')
         owner = self.start_travel()
         self.assertEqual(owner, original_owner)
         self.assertEqual(self.hub.channel(owner, 'flights'), old_session)
@@ -105,7 +107,6 @@ class ExistingConversationTests(unittest.TestCase):
         for site in SITES:
             self.assertIn('quiet', self.turn(owner, site, site)['text'])
             self.assertEqual([m['source_app'] for m in self.hub.conversation(owner, site)['messages']], [site])
-        self.assertEqual(self.hub.trips.get(owner)['flight_id'], 'pacific-101')
         self.assertTrue(all(identity is self.bot.identity and cwd == self.bot.root and key == 'telegram:42' for identity, cwd, key, _ in self.calls))
         self.assertEqual(len(self.calls), 4)
         # Retrying a persisted website output never re-runs reasoning.
@@ -182,33 +183,48 @@ class ExistingConversationTests(unittest.TestCase):
         existing_bot_reply(self.event(event.text, 21), self.bot.root, application=self.bot)
         self.assertEqual(len(self.calls), before)
 
-    def test_mirrored_proposal_can_be_confirmed_privately_in_telegram(self):
+    def test_hotel_choice_is_remembered_in_codex_session_without_a_save_or_confirmation(self):
         owner = self.start_travel()
-        reply = self.controller.reply(owner, 'hotels', 'hotel-proposal', 'Save this hotel')
-        self.assertIn('/travelconfirm hotels hotel-proposal', reply)
+        session = self.hub.channel(owner, 'hotels')
+        self.hub.submit(owner, 'hotels', {'id':'choice', 'session_id':session, 'text':'I want this hotel', 'context':{'selected_id':'kumo-house'}})
+        for _ in range(150):
+            if self.hub.conversation(owner, 'hotels')['outputs']:
+                break
+            time.sleep(.02)
         with self.hub.worker(owner)['service'].state.lock:
             pass
-        # An exchange already delivered by the previous version keeps its
-        # original payload and ID; the new confirmation arrives separately.
-        self.bot.notifications.send(42, 'Staywell\n\nYou: Save this hotel\n\nOneAgent: Confirm Kumo House.',
-            idempotency_key='travel-mirror:' + digest(f'{owner}:hotels:hotel-proposal') + ':0')
+        chat = self.hub.conversation(owner, 'hotels')
+        self.assertEqual(chat['outputs'][0]['text'], 'You chose Kumo House.')
+        self.assertNotIn('proposal', chat['outputs'][0])
         self.hub.deliver_mirrors()
-        self.assertEqual(len(self.bot.client.sent), 2)
-        self.assertIn('/travelconfirm hotels hotel-proposal', self.bot.client.sent[1][1])
-        self.hub.deliver_mirrors()
-        self.assertEqual(len(self.bot.client.sent), 2)
-        self.assertIsNone(self.hub.trips.get(owner)['hotel_id'])
-        reply = existing_bot_reply(self.event('/travelconfirm hotels hotel-proposal', 22), self.bot.root, application=self.bot)
-        self.assertIn('Confirmed', reply)
-        self.assertEqual(self.hub.trips.get(owner)['hotel_id'], 'kumo-house')
-        self.assertTrue(self.hub.conversation(owner, 'hotels')['outputs'][0]['confirmed'])
-        self.assertEqual(self.hub.conversation(owner, 'flights')['outputs'], [])
+        self.assertEqual(len(self.bot.client.sent), 1)
+        self.assertNotIn('/travelconfirm', self.bot.client.sent[0][1])
+        self.assertIn('Kumo House', existing_bot_reply(self.event('Which hotel did I choose?', 22), self.bot.root, application=self.bot))
+        self.assertIn('Kumo House', self.turn(owner, 'activities', 'remember-hotel')['text'])
+        self.assertFalse((self.hub.root / 'trips.sqlite').exists())
+        self.hub.submit(owner, 'hotels', {'id':'new-choice', 'session_id':session, 'text':'I want this hotel', 'context':{'selected_id':'aoi-central'}})
+        for _ in range(150):
+            if len(self.hub.conversation(owner, 'hotels')['outputs']) == 2:
+                break
+            time.sleep(.02)
+        self.assertIn('Aoi Central', existing_bot_reply(self.event('Which hotel now?', 23), self.bot.root, application=self.bot))
+
+    def test_restart_retires_queued_confirmation_notice_but_recovers_normal_messages(self):
+        key = 'travel-mirror:' + digest('old-hotel-choice')
+        for suffix, text in [(':confirmation', 'Confirm this change here with: /travelconfirm hotels old'), (':0', 'Staywell: your earlier exchange')]:
+            persist_notification_intent('telegram', NotificationIntent(idempotency_key=key + suffix,
+                operation='send', conversation_id=42, text=text, daemon_epoch=self.bot.daemon_epoch.token), self.bot.root)
+        old_bot = self.bot
+        self.bot.stop_workers()
+        self.bot = OneAgentApplication(old_bot.identity, old_bot.root, old_bot.client, runtime=old_bot.runtime)
+        self.assertEqual([text for _, text in self.bot.client.sent], ['Staywell: your earlier exchange'])
+        retired = next(r for r in notification_records('telegram', self.bot.root) if r.idempotency_key == key + ':confirmation')
+        self.assertEqual(retired.status, 'terminal_failure')
 
     def test_bot_restart_clears_web_chats_but_keeps_agent_memory_and_pending_mirrors(self):
         self.bot._natural(42, 'I prefer quiet neighborhoods.')
         owner = self.start_travel()
         self.turn(owner, 'hotels', 'before-bot-restart')
-        self.hub.trips.update(owner, {'hotel_id':'kumo-house'}, 'saved-hotel')
         with self.hub.worker(owner)['service'].state.lock:
             pass
         old_bot = self.bot
@@ -221,7 +237,6 @@ class ExistingConversationTests(unittest.TestCase):
         self.hub.deliver_mirrors()
         self.assertEqual(len(self.bot.client.sent), 1)
         self.assertIn('Choose the quiet option.', self.bot.client.sent[0][1])
-        self.assertEqual(self.hub.trips.get(owner)['hotel_id'], 'kumo-house')
         self.assertIn('quiet', self.turn(owner, 'hotels', 'after-bot-restart')['text'])
         self.assertEqual([m['event_id'] for m in self.hub.conversation(owner, 'hotels')['messages']], ['after-bot-restart'])
         # Reattaching the same running bot is not a restart.

@@ -11,8 +11,8 @@ from oneagent.providers.runtime import invoke_runtime_respond
 
 
 class TravelResponder:
-    def __init__(self, owner, root, trips, tools, proposals, runtime=None, *, identity=None, session_key=None, conversation_lock=None, invoke=None):
-        self.owner, self.trips, self.tools, self.proposals = owner, trips, tools, proposals
+    def __init__(self, owner, root, tools, runtime=None, *, identity=None, session_key=None, conversation_lock=None, invoke=None):
+        self.owner, self.tools = owner, tools
         self.bridge = (SimpleNamespace(root=root, runtime=runtime, identity=identity)
                        if identity is not None else OneAgentResponder(root, runtime))
         self.session_key, self.conversation_lock, self.invoke = session_key, conversation_lock, invoke
@@ -23,15 +23,18 @@ class TravelResponder:
 
     def _respond(self, payload, session_key):
         current = payload["current"]
-        data = dict(payload, trip=self.trips.get(self.owner), available_tools=self.tools.descriptions())
+        data = dict(payload, available_tools=self.tools.descriptions())
         results = []
         for step in range(5):
             prompt = (
                 "You are OneAgent, one continuing personal agent accompanying the user across Telegram and independent flight, hotel, and activities websites. "
                 "Answer naturally, helpfully and concisely (usually under 90 words). Remember prior candidates across apps. "
-                "Resolve 'this' ONLY using the current frozen selected_object; do not confuse it with saved trip selections. "
-                "Use the saved trip and prior conversation for preferences, constraints and comparisons. "
-                "Keep preferences already established in this Telegram conversation before travel mode. An empty trip preference field does not erase those preferences. "
+                "Resolve 'this' using the current frozen selected_object. Viewing a card alone is not a choice. "
+                "Use this existing Codex/Telegram conversation and its private history for the user's preferences, budget, choices and comparisons. "
+                "When the user says 'I want this hotel' or changes a preference, acknowledge it naturally and remember it in this conversation. "
+                "A later user choice supersedes an earlier one. There is no separate itinerary database, Save step, proposal, confirmation command, or default budget. "
+                "Do not ask the user to confirm ordinary preferences or planning choices. Only the read-only catalog tools below are available. "
+                "Remembering a choice does not book or purchase anything. "
                 "All catalog data is fictional for a Nov 6-9 2026 Tokyo demo. Flights are ONE-WAY; hotels are THREE nights, "
                 "totals include mock taxes. Distinguish one-way transport cost from an entire round-trip vacation budget. "
                 "Use ISO timezone offsets for calculations, but write human-friendly local times (for example, 3:10 pm on Nov 6). Write plain paragraphs without Markdown.  Transfer estimates are fictional planning estimates; allow 60 minutes "
@@ -46,16 +49,9 @@ class TravelResponder:
                 "To explicitly send a request and answer to one website from Telegram, tell the user to use /traveldemo reply <flights|hotels|activities> <request>. "
                 "Your private memory spans all threads: use relevant preferences and decisions, but do not quote or reproduce unrelated private Telegram or other website messages. "
                 "Do not tell the user that another site's conversation is visible here. "
-                "Trip totals, budgets, warnings and other sites' saved selections are private agent context: discuss them in chat when relevant, never claim they appear on a website. "
-                "For a requested selection change, propose trip.save_flight, trip.save_hotel or trip.save_activity; the UI asks the user to confirm. "
-                "When the user changes their budget or preferences, propose trip.update_brief with those values. "
-                "Until they confirm, distinguish proposed changes from the saved trip. "
-                "Never claim a proposal has already been saved or booked. Actual saved selections are in trip. "
+                "Discuss comparisons, costs and timing in chat using the user's stated choices and catalog facts; do not invent a saved trip state. "
                 "Return ONLY one JSON object. To read a tool: {\"tool\":{\"name\":\"hotels.get\",\"arguments\":{\"id\":\"...\"}}}. "
-                "To answer: {\"text\":\"...\",\"shared_context\":{}}. To propose saving include "
-                "\"proposal\":{\"name\":\"trip.save_hotel\",\"arguments\":{\"id\":\"...\"}} alongside text. "
-                "For website turns return an empty shared_context. For other turns only return fields explicitly present in current.share, with known user-provided values. "
-                "Prefer trip's current structured budget/preferences when the user hasn't explicitly corrected them in conversation.\n"
+                "To answer: {\"text\":\"...\",\"shared_context\":{}}. Return an empty shared_context and no proposal or action fields.\n"
                 + encoded(dict(data, tool_results=results))
             )
             execution = RuntimeExecutionControl(session_key=session_key, timeout_seconds=120)
@@ -77,28 +73,5 @@ class TravelResponder:
                 continue
             if not isinstance(decision.get("text"), str) or not decision["text"].strip():
                 raise ValueError("The agent did not return an answer. Please retry.")
-            proposal = decision.get("proposal")
-            if proposal:
-                proposal = object_value(proposal)
-                name = proposal.get("name")
-                if name not in {"trip.save_flight", "trip.save_hotel", "trip.save_activity", "trip.update_brief"}:
-                    raise ValueError("Unsupported proposed action")
-                from .domain import item
-                args = object_value(proposal.get("arguments"))
-                if name == "trip.update_brief":
-                    if not args or not set(args).issubset({"budget_cents", "preferences"}):
-                        raise ValueError("Invalid brief proposal")
-                    if "budget_cents" in args and (type(args["budget_cents"]) is not int or not 10000 <= args["budget_cents"] <= 5000000):
-                        raise ValueError("Invalid proposed budget")
-                    if "preferences" in args and (not isinstance(args["preferences"], str) or len(args["preferences"]) > 2000):
-                        raise ValueError("Invalid proposed preferences")
-                else:
-                    if set(args) != {"id"}:
-                        raise ValueError("Invalid proposed action")
-                    item({"trip.save_flight": "flights", "trip.save_hotel": "hotels", "trip.save_activity": "activities"}[name], args["id"])
-            shared = object_value(decision.get("shared_context", {}))
-            if current["app_id"] in {"flights", "hotels", "activities"} or not set(shared).issubset(current.get("share", [])):
-                shared = {}  # Fail closed on structured disclosure; never deliver disallowed fields.
-            self.proposals(self.owner, current["app_id"], current["event_id"], proposal)
-            return {"text": decision["text"], "shared_context": shared}
+            return {"text": decision["text"], "shared_context": {}}
         raise ValueError("The agent reached the tool limit. Try a more specific question.")

@@ -549,10 +549,6 @@
 .theme-activities .main-content .secondary:hover:not(:disabled) {
   background: #37452a;
 }
-.theme-activities .activity-saved {
-  color: #e5ff55;
-  font-family: Arial, sans-serif;
-}
 .theme-activities .catalog-note,
 .theme-activities .footer {
   color: #a3ac97;

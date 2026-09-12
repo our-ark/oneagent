@@ -618,6 +618,9 @@ class OneAgentApplication:
         self._work_status_messages: dict[int, MessageId] = _load_task_status_messages(
             self.workflow
         )
+        if self.channel_name == "telegram":
+            from oneagent.travel.routing import retire_confirmation_notifications
+            self.effect_fence.run(retire_confirmation_notifications, self.root)
         self.notifications.recover()
         self._run_profile_hook("on_initialize")
         self._run_extension_hooks("on_initialize")

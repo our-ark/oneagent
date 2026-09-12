@@ -13,8 +13,8 @@ from oneagent.app.epoch import require_current_daemon_epoch
 from oneagent.collaboration.handoff import HandoffStore, digest
 from oneagent.collaboration.store import encoded, identifier, object_value
 from .agent import TravelResponder
-from .domain import TripStore, travel_tools
-from .routing import confirmation_command, is_telegram_reply
+from .domain import travel_tools
+from .routing import is_telegram_reply
 
 
 def local_request(url, token, body, *, timeout=650):
@@ -40,8 +40,7 @@ class BotTravelBridge(ThreadingHTTPServer):
     def __init__(self, bot, travel_root):
         self.bot, self.travel_root = bot, Path(travel_root).resolve()
         self.handoffs = HandoffStore(self.travel_root / "handoffs.sqlite")
-        self.trips = TripStore(self.travel_root / "trips.sqlite")
-        self.tools = travel_tools(self.trips)
+        self.tools = travel_tools()
         self.token = secrets.token_hex(32)
         self.registration_stop = threading.Event()
         self.registration_thread = None
@@ -108,13 +107,11 @@ class BotTravelBridge(ThreadingHTTPServer):
                     if row[0] != request_hash:
                         raise ValueError("Conflicting travel event")
                     return json.loads(row[1])
-                proposals = []
-                respond = TravelResponder(owner, self.bot.root, self.trips, self.tools,
-                    lambda _owner, _app, _event, value: proposals.append(value),
+                respond = TravelResponder(owner, self.bot.root, self.tools,
                     runtime=self.bot.runtime, identity=self.bot.identity, session_key=session_key,
                     conversation_lock=self.bot.conversation_lock(session_key), invoke=self.bot._invoke_runtime_response)
                 answer = respond(payload, session_key)
-                result = {"answer": answer, "proposal": proposals[-1] if proposals else None}
+                result = {"answer": answer}
                 with db:
                     db.execute("INSERT INTO replies VALUES (?,?,?,?,?)", (owner, app, event, request_hash, encoded(result)))
                 return result
@@ -139,10 +136,6 @@ class BotTravelBridge(ThreadingHTTPServer):
         text = f"{label}\n\nYou: {event['message']['text']}\n\nOneAgent: {output['text']}"
         key = "travel-mirror:" + digest(f"{owner}:{app}:{event_id}")
         parts = [(f"{key}:{index}", text[start:start + 3500]) for index, start in enumerate(range(0, len(text), 3500))]
-        if json.loads(row[1]).get("proposal"):
-            # Keep existing exchange payloads/IDs unchanged so an upgrade can
-            # recover older notification records without an intent conflict.
-            parts.append((f"{key}:confirmation", f"{label}\n\nConfirm this change here with:\n{confirmation_command(app, event_id)}\n\nYou can also use the confirmation button on this website."))
         # Stable per-part IDs also protect long exchanges from partial-send retries.
         with self.bot._notification_order_lock:
             for notification_id, part in parts:

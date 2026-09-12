@@ -357,33 +357,6 @@ svg {
 .secondary:hover:not(:disabled) {
   background: #f5f8f8;
 }
-.saved-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 13px;
-}
-.saved-card {
-  border: 1px solid var(--line);
-  background: white;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  text-align: left;
-  padding: 20px 17px;
-}
-.saved-card:hover {
-  border-color: #9fb6bd;
-  box-shadow: 0 4px 15px #12384407;
-}
-.saved-icon {
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  height: 44px;
-}
 .flight-icon {
   background: #eef3fa;
   color: #4972a9;
@@ -391,32 +364,6 @@ svg {
 .hotel-icon {
   background: #f4efed;
   color: #98766b;
-}
-.saved-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-.saved-copy small {
-  color: #86989c;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 1px;
-}
-.saved-copy strong {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.2px;
-}
-.saved-copy > span {
-  font-size: 11px;
-  color: #6d8187;
-}
-.saved-card > svg {
-  color: #759294;
-  width: 17px;
 }
 .footer {
   padding: 16px 0 21px;
@@ -694,13 +641,6 @@ svg {
   border-radius: 4px;
   font-size: 9px;
 }
-.saved-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #348777;
-  margin-left: auto;
-}
 .selection-detail {
   padding: 15px 18px;
   border-top: 1px solid var(--line);
@@ -792,16 +732,6 @@ svg {
   padding: 5px 7px;
   font-size: 10px;
   color: #665d54;
-}
-.image-saved {
-  position: absolute;
-  top: 11px;
-  right: 11px;
-  background: white;
-  color: #3c7969;
-  border-radius: 5px;
-  padding: 4px 7px;
-  font-size: 10px;
 }
 .hotel-card-body {
   padding: 17px;
@@ -1123,17 +1053,6 @@ svg {
     transform: rotate(360deg);
   }
 }
-.proposal {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-  font-size: 11px;
-  border-radius: 6px;
-  padding: 10px;
-  background: #1e5a56;
-  color: #fff;
-}
 .chat-error {
   border: 1px solid #eacac6;
   background: #fff5f3;
@@ -1154,7 +1073,6 @@ svg {
 .close-chat {
   display: none;
 }
-.toast,
 .error-toast {
   position: fixed;
   bottom: 25px;
@@ -1169,10 +1087,6 @@ svg {
   align-items: center;
   font-size: 13px;
   max-width: 90vw;
-}
-.toast {
-  color: white;
-  background: #1c5351;
 }
 .error-toast {
   color: #914740;
@@ -1275,9 +1189,6 @@ svg {
   }
   .continuity {
     display: none;
-  }
-  .saved-grid {
-    grid-template-columns: 1fr;
   }
   .carrier {
     min-width: 80px;
@@ -1395,9 +1306,6 @@ svg {
   .trip-hero {
     height: 275px;
   }
-  .saved-grid {
-    grid-template-columns: 1fr 1fr;
-  }
   .carrier-icon {
     display: flex;
   }
@@ -1424,9 +1332,6 @@ svg {
     width: 7px;
     border-radius: 50%;
     background: #d8eea6;
-  }
-  .toast {
-    bottom: 84px;
   }
 }
 @media (max-width: 600px) {
@@ -1509,18 +1414,6 @@ svg {
   }
   .step-pill {
     display: none;
-  }
-  .saved-grid {
-    grid-template-columns: 1fr;
-  }
-  .saved-card {
-    padding: 18px;
-  }
-  .saved-copy strong {
-    font-size: 14px;
-  }
-  .saved-copy > span {
-    font-size: 12px;
   }
   .app-heading {
     padding: 3px 0 17px;
@@ -1634,9 +1527,6 @@ svg {
   .tag {
     font-size: 8px;
   }
-  .saved-label {
-    font-size: 8px;
-  }
   .selection-detail {
     padding: 13px;
   }
@@ -1714,11 +1604,6 @@ svg {
   }
   .catalog-note {
     line-height: 1.6;
-  }
-  .toast {
-    font-size: 12px;
-    width: max-content;
-    max-width: 90vw;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1811,10 +1696,6 @@ svg {
 }
 .activity-card .selection-detail > div {
   flex-wrap: wrap;
-}
-.activity-saved {
-  display: block;
-  margin: 0 20px 20px;
 }
 .conversation-source {
   color: var(--muted);
