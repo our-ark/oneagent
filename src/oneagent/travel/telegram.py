@@ -55,8 +55,7 @@ class TelegramDemo:
                         self.hub.bind_owner(owner, chat_id)
                     links = self.hub.links(owner)
                     reply = ("Travel demo mode is on. We’re planning Tokyo, Nov 6–9, 2026. Tell me your budget and preferences here, then open any site:\n\n"
-                             + "\n\n".join(f"{LABELS[app]}\n{url}" for app, url in links.items())
-                             + "\n\nThis Telegram chat is private. Each website has its own chat; its exchanges sync back here, never to the other websites. I’ll remember your preferences across them. Restarting the agent or travel service clears the visible website chats while preserving my memory and your selections. Each link works once and expires in 15 minutes; /traveldemo gives you fresh links. Demo selections are not bookings.\n\n/traveldemo reply hotels <request> — send a request and reply to Staywell only (also supports flights or activities)\n/traveldemo reset — new trip\n/traveldemo stop — leave demo mode")
+                             + "\n\n".join(f"{LABELS[app]}\n{url}" for app, url in links.items()))
                 elif action.split(maxsplit=1)[0] == "reply":
                     parts = arguments.split(maxsplit=2)
                     if len(parts) != 3 or parts[1].lower() not in SITES:
