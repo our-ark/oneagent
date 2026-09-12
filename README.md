@@ -4,8 +4,8 @@ OneAgent is a Genesis-created agent descended from Enoch.
 
 This repository is the Enoch-derived starting point for the team’s implementation
 of *One Agent, Anywhere*. The inherited runtime is now joined by a reusable cross-application collaboration
-core. No Ruth code is included. Travel and other scenarios can integrate through
-the same app-owned message and context interfaces.
+core. No Ruth code is included. The travel demo integrates through
+the same app-owned message and context interfaces available to other scenarios.
 
 ## Mission
 
@@ -35,3 +35,17 @@ runtime bridge, generic tools, and a runnable notes example.
 ```
 
 [Provenance](docs/provenance.md) distinguishes inherited infrastructure from new work.
+
+## Travel demo website
+
+Browse flights and hotels with the same personal agent alongside each app.
+Save selections, compare options across apps, and track budget and arrival fit.
+
+```sh
+npm --prefix examples/travel/web ci
+npm --prefix examples/travel/web run build
+ONEAGENT_PYTHON="$PWD/.venv/bin/python" bin/oneagent-travel
+```
+
+Open `http://127.0.0.1:8080`. See the [travel walkthrough](docs/travel-demo.md)
+for installation, the recording story, model setup, and prototype boundaries.
