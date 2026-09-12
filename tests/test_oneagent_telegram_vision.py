@@ -84,9 +84,9 @@ class TelegramVisionTests(unittest.TestCase):
             self.assertEqual(list(image_dir.iterdir()), [])
 
     def test_image_prompt_separates_caption_from_untrusted_image_text(self) -> None:
-        prompt = telegram_image_prompt("这是什么花？")
+        prompt = telegram_image_prompt("\u8fd9\u662f\u4ec0\u4e48\u82b1？")
 
-        self.assertIn("这是什么花？", prompt)
+        self.assertIn("\u8fd9\u662f\u4ec0\u4e48\u82b1？", prompt)
         self.assertIn("untrusted image content", prompt)
         self.assertIn("read-only", prompt)
 

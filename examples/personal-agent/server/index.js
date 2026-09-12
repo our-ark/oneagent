@@ -8,6 +8,7 @@ const app = express();
 const dataFile = process.env.PERSONAL_AGENT_DATA || './personal-agent-discord.json';
 const publicKeyHex = process.env.DISCORD_PUBLIC_KEY;
 const model = process.env.COPILOT_MODEL || 'openai/gpt-4o-mini';
+app.get('/api/status', (_req, res) => res.json({ copilotEnabled: Boolean(process.env.OPENAI_API_KEY) }));
 
 // Discord must be verified against the exact raw request body before parsing.
 app.post('/api/discord/interactions', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -24,14 +25,14 @@ app.post('/api/discord/interactions', express.raw({ type: 'application/json' }),
     const all = await loadPrefs();
     all[owner] = { want: opts.want?.slice(0, 500) || '', avoid: opts.avoid?.slice(0, 500) || '' };
     await savePrefs(all);
-    content = '已保存你的偏好。使用 /recommend 获取推荐说明。';
+    content = 'Preferences saved. Use /recommend to create a recommendation brief.';
   } else if (interaction.data?.name === 'recommend') {
     const prefs = (await loadPrefs())[owner] || {};
-    const platform = ({ spotify: 'Spotify 播客', wechat: '微信内容', amazon: 'Amazon 商品' })[opts.platform];
-    if (!platform) return res.json(reply('请选择 spotify、wechat 或 amazon。'));
-    content = `给 ${platform} 的推荐说明：我想要 ${prefs.want || '请先用 /setprefs 设置偏好'}；避开 ${prefs.avoid || '未设置'}。请给出候选和理由。此命令不会修改平台推荐流或替你下单。`;
+    const platform = ({ spotify: 'Spotify podcasts', wechat: 'WeChat content', amazon: 'Amazon products' })[opts.platform];
+    if (!platform) return res.json(reply('Choose spotify, wechat, or amazon.'));
+    content = `Recommendation brief for ${platform}: I want ${prefs.want || 'preferences to be set with /setprefs'}; avoid ${prefs.avoid || 'nothing specified'}. Suggest candidates and explain why. This command does not change platform feeds or place orders.`;
   } else {
-    content = '可用命令：/setprefs 设置偏好；/recommend 生成 Spotify、微信或 Amazon 的推荐说明。';
+    content = 'Commands: /setprefs saves your preferences; /recommend creates a brief for Spotify, WeChat, or Amazon.';
   }
   return res.json(reply(content));
 });

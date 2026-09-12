@@ -10,4 +10,8 @@ dist/
 .venv/
 node_modules/
 .npm-cache/
+.pytest_cache/
+pytest-cache-files-*/
+examples/personal-agent/*.log
+examples/personal-agent/personal-agent-discord.json
 .travel-demo/

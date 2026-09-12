@@ -4,7 +4,7 @@ This example brings the five personal-agent scenarios into OneAgent: research, s
 
 ## Run locally
 
-Requires Node 20+. From this directory run `npm install`, set `OPENAI_API_KEY` in the server environment, then run `npm run server` and `npm run dev` in separate terminals. Open the Vite URL. The CopilotKit sidebar receives the current profile, policy, decisions, platform preferences, and checkout cards as context. Its model can advise but cannot execute purchases. Keep the API key on the server; never add it to the Vite frontend or commit it.
+Requires Node 20+. From this directory run `npm ci --legacy-peer-deps`, then run `npm run server` and `npm run dev` in separate terminals. Open `http://127.0.0.1:5173/`. The five scenarios, rule-based recommendation bot, and approval UI work without credentials. To enable the CopilotKit chat, set `OPENAI_API_KEY` in the server environment and restart the server. The CopilotKit sidebar receives the current profile, policy, decisions, platform preferences, and checkout cards as context. Its model can advise but cannot execute purchases. Keep the API key on the server; never add it to the Vite frontend or commit it.
 
 ## Discord
 

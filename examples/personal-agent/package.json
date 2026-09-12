@@ -12,6 +12,7 @@
     "@copilotkit/react-core": "^1.50.0",
     "@copilotkit/runtime": "^1.50.0",
     "express": "^5.0.0",
+    "mermaid": "^11.17.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

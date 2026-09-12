@@ -75,8 +75,8 @@ def forge_maintenance_request(text: str) -> ForgeMaintenanceRequest | None:
     if not numbers:
         return None
 
-    dedup_words = ("dedup", "duplicate", "duplicates", "重复", "重复的")
-    close_words = ("close", "关闭", "关掉")
+    dedup_words = ("dedup", "duplicate", "duplicates", "\u91cd\u590d", "\u91cd\u590d\u7684")
+    close_words = ("close", "\u5173\u95ed", "\u5173\u6389")
     if any(word in lowered for word in dedup_words):
         keep_number = keep_pr_number(normalized) or numbers[0]
     elif any(word in lowered for word in close_words):
@@ -97,7 +97,7 @@ def pr_numbers(text: str) -> tuple[int, ...]:
 def keep_pr_number(text: str) -> int | None:
     patterns = [
         r"(?:keep|retain)\s+(?:pr\s*)?#(\d+)",
-        r"(?:保留|留下)\s*#(\d+)",
+        r"(?:\u4fdd\u7559|\u7559\u4e0b)\s*#(\d+)",
     ]
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)

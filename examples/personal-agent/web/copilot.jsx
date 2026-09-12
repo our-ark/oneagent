@@ -13,11 +13,13 @@ function Assistant() {
     return () => { window.removeEventListener('personal-agent:changed', update); window.removeEventListener('storage', update); };
   }, []);
   useAgentContext({ description: 'The user personal agent profile, approval policy, five-scenario decisions, platform preferences, and purchase review cards. Use these only to advise. Never claim to change external recommendation feeds or place orders.', value: state });
-  return <CopilotSidebar />;
+  return <CopilotSidebar defaultOpen={false} />;
 }
 
-createRoot(document.getElementById('copilot-root')).render(
-  <CopilotKit runtimeUrl="/api/copilotkit" useSingleEndpoint>
-    <Assistant />
-  </CopilotKit>
-);
+function ChatEntry() {
+  const [enabled, setEnabled] = React.useState(false);
+  React.useEffect(() => { fetch('/api/status').then(response => response.ok ? response.json() : null).then(status => setEnabled(Boolean(status?.copilotEnabled))).catch(() => {}); }, []);
+  if (!enabled) return <div className="copilot-offline" title="Set OPENAI_API_KEY on the server to enable CopilotKit chat">AI chat needs an API key</div>;
+  return <CopilotKit runtimeUrl="/api/copilotkit" useSingleEndpoint><Assistant /></CopilotKit>;
+}
+createRoot(document.getElementById('copilot-root')).render(<ChatEntry />);

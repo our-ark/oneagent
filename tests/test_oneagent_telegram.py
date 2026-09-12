@@ -244,18 +244,18 @@ class OneAgentTelegramTests(unittest.TestCase):
                 image_path = kwargs["image_paths"][0]
                 self.assertTrue(image_path.exists())
                 self.assertEqual(image_path.read_bytes(), b"\xff\xd8\xfftelegram-photo")
-                self.assertIn("这是什么花？", prompt)
+                self.assertIn("\u8fd9\u662f\u4ec0\u4e48\u82b1？", prompt)
                 self.assertEqual(kwargs["session_key"], "telegram:42")
-                return "这是一朵向日葵。"
+                return "\u8fd9\u662f\u4e00\u6735\u5411\u65e5\u8475。"
 
             respond.side_effect = inspect_image
-            _handle_update(bot, _photo_update(chat_id=42, caption="这是什么花？"))
+            _handle_update(bot, _photo_update(chat_id=42, caption="\u8fd9\u662f\u4ec0\u4e48\u82b1？"))
 
             image_dir = root / ".oneagent" / "channels" / "telegram" / "images"
             self.assertEqual(list(image_dir.iterdir()), [])
 
         self.assertEqual(client.downloads, [("large-photo", MAX_TELEGRAM_IMAGE_BYTES)])
-        self.assertEqual(client.sent, [(42, "这是一朵向日葵。")])
+        self.assertEqual(client.sent, [(42, "\u8fd9\u662f\u4e00\u6735\u5411\u65e5\u8475。")])
 
     @patch("oneagent.app.core.respond")
     def test_photo_without_caption_gets_natural_image_prompt(
@@ -4815,7 +4815,7 @@ class OneAgentTelegramTests(unittest.TestCase):
             client = FakeTelegramClient(allowed_chat_id=42)
             bot = OneAgentApplication(load_identity(), root, client)
 
-            _handle_update(bot, _message_update(chat_id=42, text="我想让 OneAgent 支持 reminders"))
+            _handle_update(bot, _message_update(chat_id=42, text="\u6211\u60f3\u8ba9 OneAgent \u652f\u6301 reminders"))
 
         respond.assert_called_once()
         self.assertEqual(respond.call_args.kwargs["session_key"], "telegram:42")
@@ -5508,7 +5508,7 @@ class OneAgentTelegramTests(unittest.TestCase):
 
             started, start_worker = self._capture_direct_work_worker(bot)
             with start_worker:
-                _handle_update(bot, _message_update(chat_id=42, text="/do 保留 #1，关闭重复的 #2 和 #3"))
+                _handle_update(bot, _message_update(chat_id=42, text="/do \u4fdd\u7559 #1，\u5173\u95ed\u91cd\u590d\u7684 #2 \u548c #3"))
             self.assertEqual(len(started), 1)
             bot._run_direct_task_job(started[0][0], session_key=started[0][1])
 

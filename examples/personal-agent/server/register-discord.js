@@ -6,16 +6,16 @@ if (!application || !token) {
 }
 const commands = [
   {
-    name: 'setprefs', description: '保存你的推荐偏好',
+    name: 'setprefs', description: 'Save your recommendation preferences',
     options: [
-      { type: 3, name: 'want', description: '想看到或听到什么', required: true },
-      { type: 3, name: 'avoid', description: '想避开什么', required: false }
+      { type: 3, name: 'want', description: 'What you want to see or hear', required: true },
+      { type: 3, name: 'avoid', description: 'What you want to avoid', required: false }
     ]
   },
   {
-    name: 'recommend', description: '生成给平台的推荐说明',
-    options: [{ type: 3, name: 'platform', description: '选择平台', required: true, choices: [
-      { name: 'Spotify', value: 'spotify' }, { name: '微信', value: 'wechat' }, { name: 'Amazon', value: 'amazon' }
+    name: 'recommend', description: 'Create a recommendation brief for a platform',
+    options: [{ type: 3, name: 'platform', description: 'Choose a platform', required: true, choices: [
+      { name: 'Spotify', value: 'spotify' }, { name: 'WeChat', value: 'wechat' }, { name: 'Amazon', value: 'amazon' }
     ] }]
   }
 ];
