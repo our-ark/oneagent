@@ -3,5 +3,6 @@ from .service import AgentState, CollaborationService, OneAgentResponder
 from .store import MessageStore
 from .tools import Tool, ToolRegistry
 from .transport import AppClient, AppServer
+from .handoff import HandoffStore
 
-__all__ = ["AgentState", "CollaborationService", "OneAgentResponder", "MessageStore", "AppClient", "AppServer", "Tool", "ToolRegistry"]
+__all__ = ["AgentState", "CollaborationService", "OneAgentResponder", "MessageStore", "AppClient", "AppServer", "Tool", "ToolRegistry", "HandoffStore"]
