@@ -26,6 +26,7 @@ reference = [
 oneagent = "oneagent.cli:main"
 oneagent-agent = "oneagent.app.core:main"
 oneagent-daemon = "oneagent.operations.daemon:main"
+oneagent-travel = "oneagent.travel.demo:main"
 
 [build-system]
 requires = ["setuptools>=77"]
@@ -37,3 +38,5 @@ where = ["src"]
 [tool.setuptools.package-data]
 oneagent = ["body.yaml", "schemas/*.json"]
 "oneagent.skills" = ["**/*.md", "**/*.yaml"]
+
+"oneagent.travel" = ["data/*.json"]
