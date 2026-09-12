@@ -71,12 +71,15 @@ class CollaborationService:
     The host owns app registration and binds each connection to this conversation.
     One worker owns a state file; calls on this instance serialize model turns.
     Failed deliveries retry saved outputs without another model call.
+    on_output(app_id, event, output), when supplied, runs after app delivery and
+    before advancing the cursor. It must be idempotent: failed hooks are retried.
     """
-    def __init__(self, apps, state: AgentState, respond):
+    def __init__(self, apps, state: AgentState, respond, *, on_output=None):
         self.apps = {app.app_id: app for app in apps}
         if len(self.apps) != len(apps):
             raise ValueError("Duplicate app IDs")
         self.state, self.respond = state, respond
+        self.on_output = on_output
 
     def process_once(self):
         processed = 0
@@ -99,6 +102,8 @@ class CollaborationService:
                                   "text": answer["text"], "shared_context": shared}
                         self.state.save(app.app_id, event, output)
                     app.output(event["session_id"], output)
+                    if self.on_output is not None:
+                        self.on_output(app.app_id, event, output)
                     self.state.advance(app.app_id, event["cursor"])
                     processed += 1
         return processed

@@ -36,9 +36,9 @@ runtime bridge, generic tools, and a runnable notes example.
 
 [Provenance](docs/provenance.md) distinguishes inherited infrastructure from new work.
 
-## Travel demo website
+## Telegram + three travel websites
 
-Browse flights and hotels with the same personal agent alongside each app.
+Browse flights, hotels, and activities with the same personal agent alongside each app.
 Save selections, compare options across apps, and track budget and arrival fit.
 
 ```sh
@@ -47,5 +47,10 @@ npm --prefix examples/travel/web run build
 ONEAGENT_PYTHON="$PWD/.venv/bin/python" bin/oneagent-travel
 ```
 
-Open `http://127.0.0.1:8080`. See the [travel walkthrough](docs/travel-demo.md)
+Airside (flights), Staywell (hotels), and Daylight (activities) run at ports
+8080, 8081, and 8082. Add `--telegram` with your bot configured, then send
+`/traveldemo` to receive personal links that connect all three sites to the same
+conversation and receive website exchanges back in Telegram. An existing
+OneAgent Telegram daemon can use the local control
+bridge instead of a second poller. See the [travel walkthrough](docs/travel-demo.md)
 for installation, the recording story, model setup, and prototype boundaries.

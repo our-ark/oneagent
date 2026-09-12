@@ -1,0 +1,234 @@
+from http.cookiejar import CookieJar
+import json
+from pathlib import Path
+import re
+import tempfile
+import threading
+import time
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+from urllib.error import HTTPError
+from urllib.parse import urlsplit, parse_qs
+from urllib.request import build_opener, HTTPCookieProcessor, Request
+
+from oneagent.collaboration import HandoffStore
+from oneagent.travel.demo import ControlServer
+from oneagent.travel.server import Hub, SITES, WebServer
+from oneagent.travel.telegram import TelegramDemo, existing_bot_reply
+
+
+class HandoffTests(unittest.TestCase):
+    def test_scope_expiry_replay_and_reset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = HandoffStore(Path(directory) / "auth.sqlite")
+            alice = store.account("alice", start=True)
+            link = store.issue(alice, "flights")
+            with self.assertRaises(PermissionError):
+                store.redeem(link, "hotels")
+            owner, csrf, cookie = store.redeem(link, "flights")
+            self.assertEqual(owner, alice)
+            self.assertEqual(store.browser(cookie, "flights"), (alice, csrf, None))
+            with self.assertRaises(PermissionError):
+                store.redeem(link, "flights")
+            with self.assertRaises(PermissionError):
+                store.redeem(store.issue(alice, "hotels", ttl=-1), "hotels")
+            with self.assertRaises(PermissionError):
+                store.browser(cookie, "hotels", allow_new=False)
+            old = store.issue(alice, "hotels")
+            self.assertNotEqual(store.account("alice", start=True, reset=True), alice)
+            with self.assertRaises(PermissionError):
+                store.redeem(old, "hotels")
+            with self.assertRaises(PermissionError):
+                store.browser(cookie, "flights", allow_new=False)
+
+
+class TelegramTravelTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.seen = []
+        def factory(owner):
+            def respond(payload, key):
+                self.seen.append((owner, key, payload))
+                current = payload["current"]
+                if current["message"]["text"] == "Set budget to 1400":
+                    self.hub.set_proposal(owner, current["app_id"], current["event_id"], {"name": "trip.update_brief", "arguments": {"budget_cents": 140000}})
+                return {"text": f"[Fixture] {current['app_id']}; prior turns {len(payload['history'])}; saved total {self.hub.trips.get(owner)['total_cents']}"}
+            return respond
+        self.factory = factory
+        self.hub = Hub(self.root / "state", responder_factory=factory)
+        self.addCleanup(lambda: self.hub.close())
+        self.controller = TelegramDemo(self.hub)
+        self.webs, self.browsers, self.boot = {}, {}, {}
+        for site in SITES:
+            (self.root / site).mkdir()
+            (self.root / site / "index.html").write_text(f"<title>{site}</title>")
+            server = WebServer(("127.0.0.1", 0), self.hub, self.root, app_id=site)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            self.addCleanup(server.server_close)
+            self.addCleanup(server.shutdown)
+            self.webs[site] = server
+            self.browsers[site] = build_opener(HTTPCookieProcessor(CookieJar()))
+
+    def request(self, site, route, body=None, browser=None, csrf=None):
+        origin = self.webs[site].public_origin
+        headers = {}
+        if body is not None:
+            headers = {"Content-Type": "application/json", "Origin": origin, "X-CSRF-Token": csrf or self.boot[site]["csrf"]}
+        req = Request(origin + "/api/" + route, data=json.dumps(body).encode() if body is not None else None, headers=headers)
+        with (browser or self.browsers[site]).open(req, timeout=5) as response:
+            return json.load(response)
+
+    def connect(self, text, sites=SITES):
+        links = re.findall(r"http://[^\s]+", text)
+        self.assertEqual(len(links), 3)
+        self.assertEqual(len({urlsplit(link).netloc for link in links}), 3)
+        for site in sites:
+            link = next(link for link in links if link.startswith(self.webs[site].public_origin + "/"))
+            self.boot[site] = self.request(site, "session")
+            token = parse_qs(urlsplit(link).fragment)["connect"][0]
+            self.request(site, "connect", {"token": token})
+            self.boot[site] = self.request(site, "session")
+            self.assertEqual(set(self.boot[site]["catalog"]), {site})
+            self.assertTrue(self.boot[site]["linked"])
+        return links
+
+    def wait_reply(self, site, message_id):
+        for _ in range(100):
+            value = self.request(site, "conversation")
+            if any(o["in_reply_to"] == message_id and o["source_app"] == site for o in value["outputs"]):
+                return value
+            if value["error"]:
+                self.fail(value["error"])
+            time.sleep(.03)
+        self.fail("No reply")
+
+    def test_telegram_three_sites_and_back_share_conversation_and_trip(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        owners = {boot["visitor"] for boot in self.boot.values()}
+        self.assertEqual(len(owners), 1)
+        self.controller.handle(42, 42, 2, "I prefer quiet neighborhoods")
+        for site, kind, item in [("flights", "flight", "pacific-101"), ("hotels", "hotel", "kumo-house"), ("activities", "activity", "yanaka-walk")]:
+            self.request(site, "messages", {"app_id": site, "id": site, "session_id": self.boot[site]["session_id"], "text": "Does this fit?", "context": {"selected_id": item}})
+            self.wait_reply(site, site)
+            self.request(site, "action", {"id": "save-" + site, "kind": kind, "item_id": item})
+        reply = self.controller.handle(42, 42, 3, "What have we planned?")
+        self.assertIn("123500", reply)
+        self.assertEqual(len({key for _, key, _ in self.seen}), 1)
+        self.assertIn("quiet", self.seen[-1][2]["history"][0]["event"]["message"]["text"])
+        for site in SITES:
+            conversation = self.request(site, "conversation")
+            self.assertEqual([m["source_app"] for m in conversation["messages"]], ["telegram", "flights", "hotels", "activities", "telegram"])
+            self.assertEqual(self.request(site, "trip")["activity_id"], "yanaka-walk")
+
+    def test_new_browser_joins_same_channel_and_server_restart_preserves_it(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        self.controller.handle(42, 42, 2, "Remember our trip")
+        before = self.boot["hotels"]
+        self.browsers["hotels"] = build_opener(HTTPCookieProcessor(CookieJar()))
+        self.connect(self.controller.handle(42, 42, 3, "/traveldemo"), ["hotels"])
+        self.assertEqual(before["session_id"], self.boot["hotels"]["session_id"])
+        self.hub.close()
+        self.hub = Hub(self.root / "state", responder_factory=self.factory)
+        self.controller = TelegramDemo(self.hub)
+        for site, server in self.webs.items():
+            server.hub = self.hub
+            self.hub.origins[site] = server.public_origin
+        self.assertEqual(self.request("hotels", "session")["visitor"], before["visitor"])
+        self.assertIn("prior turns 1", self.controller.handle(42, 42, 4, "Continue"))
+
+    def test_cross_owner_and_cross_site_access_rejected(self):
+        links = self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        self.controller.handle(42, 42, 2, "A private preference")
+        other = build_opener(HTTPCookieProcessor(CookieJar()))
+        other_boot = self.request("flights", "session", browser=other)
+        self.assertEqual(self.request("flights", "conversation", browser=other)["messages"], [])
+        with self.assertRaises(HTTPError) as denied:
+            self.request("flights", "messages", {"app_id": "hotels", "id": "bad", "session_id": self.boot["hotels"]["session_id"], "text": "bad"})
+        self.assertEqual(denied.exception.code, 403)
+        with self.assertRaises(HTTPError):
+            self.request("flights", "messages", {"app_id": "flights", "id": "bad", "session_id": self.boot["flights"]["session_id"], "text": "bad"}, browser=other, csrf=other_boot["csrf"])
+        token = parse_qs(urlsplit(links[0]).fragment)["connect"][0]
+        with self.assertRaises(HTTPError):
+            self.request("flights", "connect", {"token": token})
+        with self.assertRaises(HTTPError):
+            self.request("flights", "action", {"id": "bad", "kind": "flight", "item_id": "pacific-101"}, csrf="bad")
+        with self.assertRaises(HTTPError) as denied:
+            self.browsers["flights"].open(self.webs["flights"].public_origin + "/hotels/index.html")
+        self.assertEqual(denied.exception.code, 404)
+
+    def test_confirm_in_telegram_or_web_does_not_allow_another_owner(self):
+        self.connect(self.controller.handle(42, 42, 1, "/traveldemo"))
+        reply = self.controller.handle(42, 42, 2, "Set budget to 1400")
+        self.assertIn("/travelconfirm tg-2", reply)
+        self.assertEqual(self.request("flights", "trip")["budget_cents"], 150000)
+        self.controller.handle(99, 99, 1, "/traveldemo")
+        self.assertIn("unavailable", self.controller.handle(99, 99, 2, "/travelconfirm tg-2"))
+        self.assertEqual(self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})["budget_cents"], 140000)
+        self.assertIn("Confirmed", self.controller.handle(42, 42, 3, "/travelconfirm tg-2"))
+        self.assertEqual(self.request("activities", "trip")["budget_cents"], 140000)
+        output = self.request("activities", "conversation")["outputs"][0]
+        self.assertTrue(output["confirmed"])
+        self.request("activities", "action", {"id": "later", "kind": "activity", "item_id": "yanaka-walk"})
+        replay = self.request("hotels", "confirm", {"source_app": "telegram", "event_id": "tg-2"})
+        self.assertEqual(replay["activity_id"], "yanaka-walk")
+
+    def test_stop_reset_private_chats_and_update_redelivery(self):
+        links = self.controller.handle(42, 42, 1, "/traveldemo")
+        self.assertEqual(links, self.controller.handle(42, 42, 1, "/traveldemo"))
+        self.connect(links)
+        original = self.boot["flights"]["visitor"]
+        self.controller.handle(42, 42, 2, "/traveldemo stop")
+        self.assertIsNone(self.controller.handle(42, 42, 3, "Normal agent chat"))
+        self.assertIsNone(self.controller.handle(-10, 42, 4, "/traveldemo"))
+        self.assertIsNone(self.controller.handle(42, 99, 4, "/traveldemo"))
+        reset = self.controller.handle(42, 42, 5, "/traveldemo reset")
+        self.assertEqual(reset, self.controller.handle(42, 42, 5, "/traveldemo reset"))
+        self.connect(reset)
+        self.assertNotEqual(original, self.boot["flights"]["visitor"])
+        self.assertEqual(self.request("flights", "conversation")["messages"], [])
+
+    def test_controller_redelivery_does_not_repeat_agent_work(self):
+        self.controller.handle(42, 42, 1, "/traveldemo")
+        reply = self.controller.handle(42, 42, 2, "Hello from Telegram")
+        replay = self.controller.handle(42, 42, 2, "Hello from Telegram")
+        self.assertEqual(reply, replay)
+        self.assertEqual(len(self.seen), 1)
+
+    def test_existing_bot_bridge_requires_bearer_and_returns_to_normal_mode(self):
+        server = ControlServer(self.controller)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        url = f"http://127.0.0.1:{server.server_port}/telegram"
+        config = self.root / "control.json"
+        config.write_text(json.dumps({"url": url, "token": server.token}))
+        with self.assertRaises(HTTPError) as denied:
+            build_opener().open(Request(url, data=b'{}'))
+        self.assertEqual(denied.exception.code, 403)
+        event = SimpleNamespace(message_id=1, text="/traveldemo", raw={"message": {"chat": {"id": 42, "type": "private"}, "from": {"id": 42}}})
+        with patch.dict("os.environ", {"ONEAGENT_TRAVEL_CONTROL_FILE": str(config)}):
+            self.assertIn("Airside", existing_bot_reply(event, self.root))
+            event.message_id, event.text = 2, "/traveldemo stop"
+            self.assertIn("off", existing_bot_reply(event, self.root))
+            event.message_id, event.text = 3, "Normal chat"
+            self.assertIsNone(existing_bot_reply(event, self.root))
+            config.unlink()
+            event.text = "/status"
+            self.assertIsNone(existing_bot_reply(event, self.root))
+            event.text = "/traveldemo"
+            self.assertIn("unavailable", existing_bot_reply(event, self.root))
+
+    def test_activity_budget_and_arrival_conflict(self):
+        self.hub.trips.update("alice", {"flight_id": "horizon-310"}, "flight")
+        result = self.hub.trips.update("alice", {"activity_id": "asakusa-evening"}, "activity")
+        self.assertEqual(result["total_cents"], 66500)
+        self.assertTrue(any("activity starts too soon" in warning for warning in result["warnings"]))
+        with self.assertRaises(ValueError):
+            self.hub.trips.update("alice", {"activity_id": "invented"}, "bad")
+
+
+if __name__ == "__main__":
+    unittest.main()

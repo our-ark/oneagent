@@ -559,6 +559,9 @@ class OneAgentApplication:
             self.authorization,
         )
         self._notification_order_lock = threading.RLock()
+        self._conversation_locks: dict[str, threading.RLock] = {}
+        self._conversation_locks_guard = threading.Lock()
+        self._travel_bridge = None
         self.workflow = validate_workflow_engine(
             workflow or LocalWorkflowEngine(root, epoch=self.daemon_epoch)
         )
@@ -670,28 +673,29 @@ class OneAgentApplication:
         )
         if not result.delivered:
             raise ChatProviderError(result.error or "Startup notification was not delivered.")
-        _sync_session_activity(
-            self.identity,
-            self.root,
-            chat_id,
-            "\n\n".join(
-                [
-                    startup_context_note(
-                        memory_for_prompt(
-                            self.root,
-                            identity=self.identity,
-                            identity_path=self.identity_path,
-                        )
-                    ),
-                    runtime_command_reference(
-                        command_prefix=self.command_prefix,
-                    ),
-                ]
-            ),
-            runtime=self.runtime,
-            session_key=self._session_key(chat_id),
-            effect_fence=self.effect_fence,
-        )
+        with self.conversation_lock(self._session_key(chat_id)):
+            _sync_session_activity(
+                self.identity,
+                self.root,
+                chat_id,
+                "\n\n".join(
+                    [
+                        startup_context_note(
+                            memory_for_prompt(
+                                self.root,
+                                identity=self.identity,
+                                identity_path=self.identity_path,
+                            )
+                        ),
+                        runtime_command_reference(
+                            command_prefix=self.command_prefix,
+                        ),
+                    ]
+                ),
+                runtime=self.runtime,
+                session_key=self._session_key(chat_id),
+                effect_fence=self.effect_fence,
+            )
 
     def start(self) -> None:
         """Run process-start hooks once, independently of chat notification."""
@@ -702,6 +706,12 @@ class OneAgentApplication:
                 self._startup_hooks_ran = True
                 run_hooks = True
         if run_hooks:
+            if self.channel_name == "telegram" and os.environ.get("ONEAGENT_TRAVEL_CONTROL_FILE"):
+                from oneagent.travel.telegram import connect_existing_bot
+                try:
+                    connect_existing_bot(self, os.environ["ONEAGENT_TRAVEL_CONTROL_FILE"])
+                except (OSError, ValueError, KeyError):
+                    print("Travel backend is unavailable; ordinary Telegram conversation remains available.")
             self._run_profile_hook("on_startup")
             self._run_extension_hooks("on_startup")
         self._drain_extension_task_events()
@@ -845,6 +855,11 @@ class OneAgentApplication:
         chat_id = event.conversation_id
         text = event.text.strip()
         self._safe_send_read_ack(chat_id, event.message_id)
+        if self.channel_name == "telegram" and os.environ.get("ONEAGENT_TRAVEL_CONTROL_FILE"):
+            from oneagent.travel.telegram import existing_bot_reply
+            travel_reply = existing_bot_reply(event, self.root, application=self)
+            if travel_reply is not None:
+                return travel_reply, text
         try:
             self.authorization.require(
                 "runtime.reset-usage",
@@ -1537,6 +1552,10 @@ class OneAgentApplication:
         provider = _chat_provider_name(self.client)
         return f"{provider}:{chat_id}"
 
+    def conversation_lock(self, session_key: str):
+        with self._conversation_locks_guard:
+            return self._conversation_locks.setdefault(session_key, threading.RLock())
+
     def _invoke_runtime_response(
         self,
         prompt: str,
@@ -1544,6 +1563,10 @@ class OneAgentApplication:
         execution: RuntimeExecutionControl,
         image_paths: tuple[Path, ...] = (),
     ):
+        with self.conversation_lock(execution.session_key):
+            return self._invoke_locked_runtime_response(prompt, execution=execution, image_paths=image_paths)
+
+    def _invoke_locked_runtime_response(self, prompt, *, execution, image_paths=()):
         return self.effect_fence.run_runtime_authorized(
             "runtime.respond",
             ("runtime.respond",),
@@ -1661,15 +1684,16 @@ class OneAgentApplication:
         pending = self._pending_session_syncs
         self._pending_session_syncs = []
         for chat_id, note in pending:
-            _sync_session_activity(
-                self.identity,
-                self.root,
-                chat_id,
-                note,
-                runtime=self.runtime,
-                session_key=self._session_key(chat_id),
-                effect_fence=self.effect_fence,
-            )
+            with self.conversation_lock(self._session_key(chat_id)):
+                _sync_session_activity(
+                    self.identity,
+                    self.root,
+                    chat_id,
+                    note,
+                    runtime=self.runtime,
+                    session_key=self._session_key(chat_id),
+                    effect_fence=self.effect_fence,
+                )
 
     def _natural(self, chat_id: ConversationId, text: str) -> str:
         return self._natural_with_session(chat_id, text, session_key=self._session_key(chat_id))
@@ -2129,6 +2153,10 @@ class OneAgentApplication:
 
     def stop_workers(self, timeout_seconds: float = 7.0) -> None:
         self._stopping = True
+        if self._travel_bridge is not None:
+            self._travel_bridge.shutdown()
+            self._travel_bridge.server_close()
+            self._travel_bridge = None
         deadline = time.monotonic() + max(0.0, timeout_seconds)
         self._stop_cron_scheduler(
             timeout_seconds=max(0.0, deadline - time.monotonic())

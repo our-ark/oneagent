@@ -1,15 +1,205 @@
 {
-  "destination": "Tokyo", "origin": "San Francisco", "check_in": "2026-11-06", "check_out": "2026-11-09", "nights": 3,
+  "destination": "Tokyo",
+  "origin": "San Francisco",
+  "check_in": "2026-11-06",
+  "check_out": "2026-11-09",
+  "nights": 3,
   "flights": [
-    {"id":"pacific-101","name":"Pacific Air","code":"PA 101","departure_airport":"SFO","arrival_airport":"HND","departure_at":"2026-11-05T10:45:00-08:00","arrival_at":"2026-11-06T15:10:00+09:00","duration":"11h 25m","price_cents":72000,"stops":0,"baggage":"1 checked bag","tag":"Easy arrival","description":"An afternoon arrival leaves time to settle in before dinner."},
-    {"id":"coast-208","name":"Coast Airways","code":"CA 208","departure_airport":"SFO","arrival_airport":"HND","departure_at":"2026-11-05T16:15:00-08:00","arrival_at":"2026-11-06T20:40:00+09:00","duration":"11h 25m","price_cents":64000,"stops":0,"baggage":"Carry-on only","tag":"Lowest Haneda fare","description":"A lower fare with an evening arrival. Check your hotel's late check-in policy."},
-    {"id":"horizon-310","name":"Horizon Pacific","code":"HP 310","departure_airport":"SFO","arrival_airport":"NRT","departure_at":"2026-11-05T18:30:00-08:00","arrival_at":"2026-11-06T23:05:00+09:00","duration":"11h 35m","price_cents":58000,"stops":0,"baggage":"Carry-on only","tag":"Late arrival","description":"The lowest fare arrives late at Narita, farther from central Tokyo."},
-    {"id":"pacific-115","name":"Pacific Air","code":"PA 115","departure_airport":"SFO","arrival_airport":"HND","departure_at":"2026-11-05T07:30:00-08:00","arrival_at":"2026-11-06T12:00:00+09:00","duration":"11h 30m","price_cents":86000,"stops":0,"baggage":"2 checked bags","tag":"More time in Tokyo","description":"Arrive at midday. Your room may not be ready until afternoon check-in."}
+    {
+      "id": "pacific-101",
+      "name": "Pacific Air",
+      "code": "PA 101",
+      "departure_airport": "SFO",
+      "arrival_airport": "HND",
+      "departure_at": "2026-11-05T10:45:00-08:00",
+      "arrival_at": "2026-11-06T15:10:00+09:00",
+      "duration": "11h 25m",
+      "price_cents": 72000,
+      "stops": 0,
+      "baggage": "1 checked bag",
+      "tag": "Easy arrival",
+      "description": "An afternoon arrival leaves time to settle in before dinner."
+    },
+    {
+      "id": "coast-208",
+      "name": "Coast Airways",
+      "code": "CA 208",
+      "departure_airport": "SFO",
+      "arrival_airport": "HND",
+      "departure_at": "2026-11-05T16:15:00-08:00",
+      "arrival_at": "2026-11-06T20:40:00+09:00",
+      "duration": "11h 25m",
+      "price_cents": 64000,
+      "stops": 0,
+      "baggage": "Carry-on only",
+      "tag": "Lowest Haneda fare",
+      "description": "A lower fare with an evening arrival. Check your hotel's late check-in policy."
+    },
+    {
+      "id": "horizon-310",
+      "name": "Horizon Pacific",
+      "code": "HP 310",
+      "departure_airport": "SFO",
+      "arrival_airport": "NRT",
+      "departure_at": "2026-11-05T18:30:00-08:00",
+      "arrival_at": "2026-11-06T23:05:00+09:00",
+      "duration": "11h 35m",
+      "price_cents": 58000,
+      "stops": 0,
+      "baggage": "Carry-on only",
+      "tag": "Late arrival",
+      "description": "The lowest fare arrives late at Narita, farther from central Tokyo."
+    },
+    {
+      "id": "pacific-115",
+      "name": "Pacific Air",
+      "code": "PA 115",
+      "departure_airport": "SFO",
+      "arrival_airport": "HND",
+      "departure_at": "2026-11-05T07:30:00-08:00",
+      "arrival_at": "2026-11-06T12:00:00+09:00",
+      "duration": "11h 30m",
+      "price_cents": 86000,
+      "stops": 0,
+      "baggage": "2 checked bags",
+      "tag": "More time in Tokyo",
+      "description": "Arrive at midday. Your room may not be ready until afternoon check-in."
+    }
   ],
   "hotels": [
-    {"id":"kumo-house","name":"Kumo House","neighborhood":"Yanaka","style":"Quiet neighborhood stay","nightly_cents":16000,"rating":4.8,"reviews":124,"check_in_from":"15:00","check_in_until":"22:00","late_check_in":false,"transfer_minutes":{"HND":55,"NRT":85},"amenities":["Breakfast included","Garden courtyard","Free Wi-Fi"],"quiet":true,"description":"A small neighborhood retreat with a courtyard and slow mornings. Reception closes at 10 pm.","image":"/images/room.jpg"},
-    {"id":"aoi-central","name":"Aoi Central","neighborhood":"Ginza","style":"A well-connected city base","nightly_cents":22000,"rating":4.7,"reviews":286,"check_in_from":"15:00","check_in_until":"23:59","late_check_in":true,"transfer_minutes":{"HND":35,"NRT":75},"amenities":["24-hour reception","Luggage storage","Near the metro"],"quiet":false,"description":"Stay close to the city's restaurants and transport. A 24-hour front desk makes late arrivals simple.","image":"/images/room.jpg"},
-    {"id":"sora-retreat","name":"Sora Retreat","neighborhood":"Kiyosumi","style":"Space to slow down","nightly_cents":26000,"rating":4.9,"reviews":93,"check_in_from":"15:00","check_in_until":"23:59","late_check_in":true,"transfer_minutes":{"HND":45,"NRT":80},"amenities":["24-hour reception","Riverside walks","Breakfast included"],"quiet":true,"description":"A peaceful base near gardens and independent cafés, with flexible arrival and a little more room.","image":"/images/room.jpg"},
-    {"id":"machi-stay","name":"Machi Stay","neighborhood":"Ueno","style":"Simple, central, good value","nightly_cents":12000,"rating":4.5,"reviews":342,"check_in_from":"16:00","check_in_until":"23:00","late_check_in":false,"transfer_minutes":{"HND":50,"NRT":65},"amenities":["Near the station","Free Wi-Fi","Luggage storage"],"quiet":false,"description":"A compact room near Ueno Station. A practical choice when you want to spend more on exploring.","image":"/images/room.jpg"}
+    {
+      "id": "kumo-house",
+      "name": "Kumo House",
+      "neighborhood": "Yanaka",
+      "style": "Quiet neighborhood stay",
+      "nightly_cents": 16000,
+      "rating": 4.8,
+      "reviews": 124,
+      "check_in_from": "15:00",
+      "check_in_until": "22:00",
+      "late_check_in": false,
+      "transfer_minutes": {
+        "HND": 55,
+        "NRT": 85
+      },
+      "amenities": ["Breakfast included", "Garden courtyard", "Free Wi-Fi"],
+      "quiet": true,
+      "description": "A small neighborhood retreat with a courtyard and slow mornings. Reception closes at 10 pm.",
+      "image": "/images/room.jpg"
+    },
+    {
+      "id": "aoi-central",
+      "name": "Aoi Central",
+      "neighborhood": "Ginza",
+      "style": "A well-connected city base",
+      "nightly_cents": 22000,
+      "rating": 4.7,
+      "reviews": 286,
+      "check_in_from": "15:00",
+      "check_in_until": "23:59",
+      "late_check_in": true,
+      "transfer_minutes": {
+        "HND": 35,
+        "NRT": 75
+      },
+      "amenities": ["24-hour reception", "Luggage storage", "Near the metro"],
+      "quiet": false,
+      "description": "Stay close to the city's restaurants and transport. A 24-hour front desk makes late arrivals simple.",
+      "image": "/images/room.jpg"
+    },
+    {
+      "id": "sora-retreat",
+      "name": "Sora Retreat",
+      "neighborhood": "Kiyosumi",
+      "style": "Space to slow down",
+      "nightly_cents": 26000,
+      "rating": 4.9,
+      "reviews": 93,
+      "check_in_from": "15:00",
+      "check_in_until": "23:59",
+      "late_check_in": true,
+      "transfer_minutes": {
+        "HND": 45,
+        "NRT": 80
+      },
+      "amenities": [
+        "24-hour reception",
+        "Riverside walks",
+        "Breakfast included"
+      ],
+      "quiet": true,
+      "description": "A peaceful base near gardens and independent caf\u00e9s, with flexible arrival and a little more room.",
+      "image": "/images/room.jpg"
+    },
+    {
+      "id": "machi-stay",
+      "name": "Machi Stay",
+      "neighborhood": "Ueno",
+      "style": "Simple, central, good value",
+      "nightly_cents": 12000,
+      "rating": 4.5,
+      "reviews": 342,
+      "check_in_from": "16:00",
+      "check_in_until": "23:00",
+      "late_check_in": false,
+      "transfer_minutes": {
+        "HND": 50,
+        "NRT": 65
+      },
+      "amenities": ["Near the station", "Free Wi-Fi", "Luggage storage"],
+      "quiet": false,
+      "description": "A compact room near Ueno Station. A practical choice when you want to spend more on exploring.",
+      "image": "/images/room.jpg"
+    }
+  ],
+  "activities": [
+    {
+      "id": "yanaka-walk",
+      "name": "Yanaka, one slow morning",
+      "neighborhood": "Yanaka",
+      "category": "Neighborhood walk",
+      "price_cents": 3500,
+      "starts_at": "2026-11-07T10:00:00+09:00",
+      "duration_minutes": 120,
+      "pace": "Relaxed",
+      "description": "A small-group walk through quiet lanes, independent shops, and a neighborhood coffee stop. Meet at Nippori Station; allow 15 minutes to arrive.",
+      "tag": "A gentle first full day"
+    },
+    {
+      "id": "asakusa-evening",
+      "name": "Asakusa after dark",
+      "neighborhood": "Asakusa",
+      "category": "Food & culture",
+      "price_cents": 8500,
+      "starts_at": "2026-11-06T18:00:00+09:00",
+      "duration_minutes": 150,
+      "pace": "Moderate",
+      "description": "An evening walk and tasting menu around Asakusa. Meet at Asakusa Station; allow 15 minutes to arrive. Same-day flights may leave little time to settle in.",
+      "tag": "Arrival-day option"
+    },
+    {
+      "id": "kiyosumi-tea",
+      "name": "Gardens & a tea ceremony",
+      "neighborhood": "Kiyosumi",
+      "category": "Gardens & tea",
+      "price_cents": 5500,
+      "starts_at": "2026-11-08T11:00:00+09:00",
+      "duration_minutes": 90,
+      "pace": "Relaxed",
+      "description": "A gentle garden visit followed by a small tea session. Meet at Kiyosumi-shirakawa Station; allow 15 minutes to arrive.",
+      "tag": "Time to slow down"
+    },
+    {
+      "id": "city-cycling",
+      "name": "Tokyo on two wheels",
+      "neighborhood": "Shibuya",
+      "category": "Cycling",
+      "price_cents": 11000,
+      "starts_at": "2026-11-07T08:00:00+09:00",
+      "duration_minutes": 240,
+      "pace": "Active",
+      "description": "A guided city cycling route for confident riders. Bike and helmet included. Meet at Shibuya Station; allow 15 minutes to arrive.",
+      "tag": "An early, energetic start"
+    }
   ]
 }

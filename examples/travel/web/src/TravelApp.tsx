@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
   ArrowUp,
@@ -21,8 +20,26 @@ import {
   X,
 } from "lucide-react";
 import "./style.css";
+import {
+  CompanionPanel,
+  type AgentOutput as Output,
+  type Conversation as Transcript,
+} from "./CompanionPanel";
 
-type AppId = "home" | "flights" | "hotels";
+type AppId = "home" | "flights" | "hotels" | "activities";
+export type SiteId = "flights" | "hotels" | "activities";
+type Activity = {
+  id: string;
+  name: string;
+  neighborhood: string;
+  category: string;
+  price_cents: number;
+  starts_at: string;
+  duration_minutes: number;
+  pace: string;
+  description: string;
+  tag: string;
+};
 type Flight = {
   id: string;
   name: string;
@@ -60,39 +77,23 @@ type Trip = {
   hotel_id: string | null;
   flight: Flight | null;
   hotel: Stay | null;
+  activity: Activity | null;
+  activity_id: string | null;
   total_cents: number;
   remaining_cents: number;
   warnings: string[];
   nights: number;
   estimated_hotel_arrival?: string;
 };
-type Proposal = {
-  name: string;
-  arguments: { id?: string; budget_cents?: number; preferences?: string };
-};
-type Output = {
-  id: string;
-  in_reply_to: string;
-  text: string;
-  shared_context: Record<string, unknown>;
-  proposal?: Proposal;
-};
-type Event = {
-  event_id: string;
-  message: { id: string; text: string };
-  context: { selected_object?: { name: string } };
-};
-type Transcript = {
-  messages: Event[];
-  outputs: Output[];
-  running: boolean;
-  error: string | null;
-};
 type Bootstrap = {
   visitor: string;
   csrf: string;
   trip: Trip;
-  catalog: { flights: Flight[]; hotels: Stay[] };
+  catalog: { flights?: Flight[]; hotels?: Stay[]; activities?: Activity[] };
+  app_id: SiteId;
+  linked: boolean;
+  session_id: string;
+  origins: Record<SiteId, string>;
   mode: string;
 };
 let csrfToken = "";
@@ -107,6 +108,7 @@ const titles: Record<AppId, string> = {
   home: "Your trip",
   flights: "Airside",
   hotels: "Staywell",
+  activities: "Daylight",
 };
 const emptyTranscript: Transcript = {
   messages: [],
@@ -129,30 +131,16 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
   return data;
 }
 const id = () => crypto.randomUUID();
-function readSessions(): Partial<Record<AppId, string>> {
-  try {
-    return JSON.parse(sessionStorage.getItem("oneagent-sessions") || "{}");
-  } catch {
-    return {};
-  }
-}
-function startingApp(): AppId {
-  const route = location.pathname.slice(1);
-  return route === "flights" || route === "hotels" ? route : "home";
-}
-
-function App() {
+export function TravelApp({ site }: { site: SiteId }) {
   const [boot, setBoot] = useState<Bootstrap | null>(null);
   const [trip, setTrip] = useState<Trip | null>(null);
-  const [app, setApp] = useState<AppId>(startingApp);
+  const app: AppId = site;
   const appRef = useRef(app);
-  appRef.current = app;
-  const [sessions, setSessions] =
-    useState<Partial<Record<AppId, string>>>(readSessions);
   const [selected, setSelected] = useState<Record<AppId, string | null>>({
     home: null,
     flights: null,
     hotels: null,
+    activities: null,
   });
   const [transcript, setTranscript] = useState<Transcript>(emptyTranscript);
   const [error, setError] = useState("");
@@ -166,64 +154,36 @@ function App() {
   const [sort, setSort] = useState("recommended");
   const [quietOnly, setQuietOnly] = useState(false);
   const [actionPending, setActionPending] = useState(false);
-  const logEnd = useRef<HTMLDivElement>(null);
-  const sessionPromise = useRef<Partial<Record<AppId, Promise<string>>>>({});
 
   useEffect(() => {
-    api<Bootstrap>("session")
-      .then((data) => {
+    const token = new URLSearchParams(location.hash.slice(1)).get("connect");
+    if (token) history.replaceState({}, "", location.pathname);
+    async function connect() {
+      let data = await api<Bootstrap>("session");
+      csrfToken = data.csrf;
+      if (token) {
+        await api("connect", { token });
+        data = await api<Bootstrap>("session");
         csrfToken = data.csrf;
-        if (sessionStorage.getItem("oneagent-visitor") !== data.visitor) {
-          sessionStorage.removeItem("oneagent-sessions");
-          setSessions({});
-          sessionPromise.current = {};
-          sessionStorage.setItem("oneagent-visitor", data.visitor);
-        }
-        setBoot(data);
-        setTrip(data.trip);
-        setBudget(String(data.trip.budget_cents / 100));
-        setPreferences(data.trip.preferences);
-      })
-      .catch((e) => setError(e.message));
-  }, []);
-  useEffect(() => {
-    const onPop = () => {
-      setApp(startingApp());
-      setTranscript(emptyTranscript);
-    };
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
+      }
+      if (data.app_id !== site)
+        throw new Error("Open this website using its own Telegram link.");
+      setBoot(data);
+      setTrip(data.trip);
+      setBudget(String(data.trip.budget_cents / 100));
+      setPreferences(data.trip.preferences);
+    }
+    connect().catch((e) => setError(e.message));
+  }, [site]);
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(""), 4500);
       return () => clearTimeout(timer);
     }
   }, [toast]);
-  useEffect(() => {
-    const log = logEnd.current?.parentElement;
-    if (log) log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
-  }, [transcript.messages.length, transcript.outputs.length, sending]);
-
-  async function ensureSession(target: AppId): Promise<string> {
-    if (sessions[target]) return sessions[target]!;
-    if (!sessionPromise.current[target])
-      sessionPromise.current[target] = api<{ session_id: string }>("sessions", {
-        app_id: target,
-      })
-        .then((data) => {
-          setSessions((previous) => {
-            const next = { ...previous, [target]: data.session_id };
-            sessionStorage.setItem("oneagent-sessions", JSON.stringify(next));
-            return next;
-          });
-          return data.session_id;
-        })
-        .catch((error) => {
-          delete sessionPromise.current[target];
-          throw error;
-        });
-    return sessionPromise.current[target]!;
+  async function ensureSession(_target: AppId): Promise<string> {
+    if (!boot) throw new Error("The agent is still connecting.");
+    return boot.session_id;
   }
 
   useEffect(() => {
@@ -232,9 +192,8 @@ function App() {
     let timer: ReturnType<typeof setTimeout>;
     async function refresh() {
       try {
-        const session = await ensureSession(app);
         const [messages, updated] = await Promise.all([
-          api<Transcript>(`transcript?app_id=${app}&session_id=${session}`),
+          api<Transcript>("conversation"),
           api<Trip>("trip"),
         ]);
         if (!cancelled) {
@@ -254,19 +213,21 @@ function App() {
     };
   }, [app, boot]);
 
-  function navigate(target: AppId) {
-    setApp(target);
-    setTranscript(emptyTranscript);
-    setSharing(false);
-    setSort("recommended");
-    history.pushState({}, "", target === "home" ? "/" : "/" + target);
+  async function navigate(target: AppId) {
+    if (target === "home" || target === app) return;
+    try {
+      const links = await api<Record<string, string>>("links", {});
+      location.assign(links[target]);
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
   const current =
     app === "flights"
-      ? boot?.catalog.flights.find((f) => f.id === selected.flights)
+      ? boot?.catalog.flights?.find((f) => f.id === selected.flights)
       : app === "hotels"
-        ? boot?.catalog.hotels.find((h) => h.id === selected.hotels)
-        : null;
+        ? boot?.catalog.hotels?.find((h) => h.id === selected.hotels)
+        : boot?.catalog.activities?.find((a) => a.id === selected.activities);
   async function send(text = draft) {
     if (!text.trim() || sending) return;
     const target = app;
@@ -293,6 +254,7 @@ function App() {
             ...previous.messages,
             {
               event_id: messageId,
+              source_app: target,
               message: { id: messageId, text: text.trim() },
               context: current
                 ? { selected_object: { name: current.name } }
@@ -307,7 +269,7 @@ function App() {
       setSending(false);
     }
   }
-  async function save(kind: "flight" | "hotel", itemId: string) {
+  async function save(kind: "flight" | "hotel" | "activity", itemId: string) {
     setActionPending(true);
     try {
       const updated = await api<Trip>("action", {
@@ -316,30 +278,26 @@ function App() {
         item_id: itemId,
       });
       setTrip(updated);
-      setToast(`${kind === "flight" ? "Flight" : "Hotel"} saved to your trip`);
+      setToast(
+        `${kind === "flight" ? "Flight" : kind === "hotel" ? "Hotel" : "Activity"} saved to your trip`,
+      );
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setActionPending(false);
     }
   }
-  async function confirmProposal(proposal: Proposal) {
-    if (proposal.name !== "trip.update_brief")
-      return save(
-        proposal.name.endsWith("flight") ? "flight" : "hotel",
-        proposal.arguments.id!,
-      );
+  async function confirmProposal(output: Output) {
     setActionPending(true);
     try {
-      const updated = await api<Trip>("action", {
-        id: id(),
-        kind: "brief",
-        changes: proposal.arguments,
+      const updated = await api<Trip>("confirm", {
+        source_app: output.source_app,
+        event_id: output.in_reply_to,
       });
       setTrip(updated);
       setBudget(String(updated.budget_cents / 100));
       setPreferences(updated.preferences);
-      setToast("Your trip brief is updated");
+      setToast("Confirmed. Your trip is updated.");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -367,16 +325,6 @@ function App() {
       setActionPending(false);
     }
   }
-  async function newTrip() {
-    if (!window.confirm("Start a fresh demo trip and conversation?")) return;
-    try {
-      await api("new-trip", {});
-      sessionStorage.removeItem("oneagent-sessions");
-      location.assign("/");
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
   if (!boot || !trip)
     return (
       <main className="loading">
@@ -389,222 +337,115 @@ function App() {
   const pending = transcript.messages.some(
     (message) =>
       !transcript.outputs.some(
-        (output) => output.in_reply_to === message.message.id,
+        (output) =>
+          output.in_reply_to === message.message.id &&
+          output.source_app === message.source_app,
       ),
   );
   const prompts =
-    app === "home"
+    app === "flights"
       ? [
-          "Help me plan a relaxed arrival day.",
-          "What should I consider before choosing a flight?",
+          "Would this flight work for my trip?",
+          "How does this compare with the previous flight?",
         ]
-      : app === "flights"
+      : app === "hotels"
         ? [
-            "Would this flight work for my trip?",
-            "How does this compare with the previous flight?",
-          ]
-        : [
             "Does this work with my saved flight?",
             "Is this better than the previous hotel?",
+          ]
+        : [
+            "Would this activity fit our trip?",
+            "Does this leave enough time after my flight?",
           ];
-  const flights = [...boot.catalog.flights].sort((a, b) =>
+  const flights = [...(boot.catalog.flights || [])].sort((a, b) =>
     sort === "price"
       ? a.price_cents - b.price_cents
       : sort === "arrival"
         ? a.arrival_at.localeCompare(b.arrival_at)
         : 0,
   );
-  const hotels = [...boot.catalog.hotels]
+  const hotels = [...(boot.catalog.hotels || [])]
     .filter((h) => !quietOnly || h.quiet)
     .sort((a, b) => (sort === "price" ? a.nightly_cents - b.nightly_cents : 0));
 
   return (
     <div className={`shell theme-${app}`}>
-      <header className="topbar">
-        <button
-          className="wordmark"
-          onClick={() => navigate("home")}
-          aria-label="OneAgent trip home"
-        >
-          <Orbit size={29} strokeWidth={1.7} />
-          oneagent<span className="demo-label">TRAVEL DEMO</span>
-        </button>
+      <header className="topbar site-topbar">
+        <a className="wordmark" href="/" aria-label={`${titles[app]} home`}>
+          {app === "flights" ? (
+            <Plane size={29} />
+          ) : app === "hotels" ? (
+            <Hotel size={29} />
+          ) : (
+            <Compass size={29} />
+          )}
+          {titles[app].toLowerCase()}
+          <span className="demo-label">DEMO</span>
+        </a>
         <div className="top-right">
           <span className="trip-location">
             <MapPin size={15} /> Tokyo, Japan
           </span>
-          <button className="text-button" onClick={newTrip}>
-            <Plus size={17} /> New trip
-          </button>
+          <span className="connected-badge">
+            <Orbit size={16} /> OneAgent connected
+          </span>
         </div>
       </header>
-      <nav className="app-nav" aria-label="Connected applications">
-        {(["home", "flights", "hotels"] as AppId[]).map((target, i) => (
-          <React.Fragment key={target}>
-            {i > 0 && <span className="nav-connector" />}
-            <button
-              className={target === app ? "nav-item active" : "nav-item"}
-              aria-current={target === app ? "page" : undefined}
-              onClick={() => navigate(target)}
-            >
-              {target === "home" ? (
-                <Compass size={19} />
-              ) : target === "flights" ? (
-                <Plane size={19} />
-              ) : (
-                <Hotel size={19} />
-              )}
-              <span>
-                {titles[target]}
-                <small>
-                  {target === "home"
-                    ? "Plan & preferences"
-                    : target === "flights"
-                      ? "Find a flight"
-                      : "Find a stay"}
-                </small>
-              </span>
-            </button>
-          </React.Fragment>
-        ))}
-        <span className="continuity">
-          <Orbit size={16} /> One agent, every app
-        </span>
-      </nav>
       <div className="workspace">
         <main className="main-content">
-          {app === "home" && (
-            <>
-              <section className="trip-hero">
-                <img
-                  src="/images/tokyo.jpg"
-                  alt="Tokyo skyline with Tokyo Tower"
-                />
-                <div className="hero-shade" />
-                <div className="hero-copy">
-                  <span className="eyebrow light">YOUR NEXT CHAPTER</span>
-                  <h1>
-                    A few days
-                    <br />
-                    in Tokyo.
-                  </h1>
-                  <div className="hero-details">
-                    <span>06 — 09 NOV 2026</span>
-                    <span>3 NIGHTS</span>
-                    <span>1 TRAVELER</span>
-                  </div>
+          <details className="trip-brief">
+            <summary>
+              <Wallet size={17} /> Your trip brief · {money(trip.budget_cents)}{" "}
+              budget
+            </summary>
+            <section className="brief-card">
+              <div className="brief-intro">
+                <div className="icon-box">
+                  <Wallet size={23} />
                 </div>
-                <span className="image-credit">
-                  Tokyo photograph · Enes / Unsplash
-                </span>
-              </section>
-              <div className="section-title">
-                <div>
-                  <span className="eyebrow">MAKE IT YOURS</span>
-                  <h2>A little context goes a long way.</h2>
-                </div>
-                <span className="step-pill">01 / THE BRIEF</span>
+                <h3>What matters to you?</h3>
+                <p>
+                  Your agent carries these details into every connected app.
+                </p>
               </div>
-              <section className="brief-card">
-                <div className="brief-intro">
-                  <div className="icon-box">
-                    <Wallet size={23} />
-                  </div>
-                  <h3>What matters to you?</h3>
-                  <p>
-                    Your agent carries these details into every connected app.
-                  </p>
-                </div>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    updateBrief();
-                  }}
-                  className="brief-form"
-                >
-                  <label>
-                    Flight + hotel budget{" "}
-                    <span className="field-note">USD</span>
-                    <div className="money-input">
-                      <span>$</span>
-                      <input
-                        aria-label="Trip budget in dollars"
-                        type="number"
-                        min="100"
-                        max="50000"
-                        step="1"
-                        value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
-                      />
-                    </div>
-                  </label>
-                  <label>
-                    Travel preferences
-                    <textarea
-                      maxLength={2000}
-                      value={preferences}
-                      onChange={(e) => setPreferences(e.target.value)}
-                      placeholder="Quiet neighborhoods, a relaxed first day, good coffee…"
-                      rows={2}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updateBrief();
+                }}
+                className="brief-form"
+              >
+                <label>
+                  Trip budget <span className="field-note">USD</span>
+                  <div className="money-input">
+                    <span>$</span>
+                    <input
+                      aria-label="Trip budget in dollars"
+                      type="number"
+                      min="100"
+                      max="50000"
+                      step="1"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
                     />
-                  </label>
-                  <button className="primary" disabled={actionPending}>
-                    Update trip brief <ArrowRight size={17} />
-                  </button>
-                </form>
-              </section>
-              <div className="section-title">
-                <div>
-                  <span className="eyebrow">PIECE BY PIECE</span>
-                  <h2>Your trip is taking shape.</h2>
-                </div>
-              </div>
-              <div className="saved-grid">
-                <button
-                  className="saved-card"
-                  onClick={() => navigate("flights")}
-                >
-                  <span className="saved-icon flight-icon">
-                    <Plane size={24} />
-                  </span>
-                  <span className="saved-copy">
-                    <small>YOUR FLIGHT</small>
-                    <strong>
-                      {trip.flight
-                        ? `${trip.flight.name} · ${trip.flight.code}`
-                        : "Find your way there"}
-                    </strong>
-                    <span>
-                      {trip.flight
-                        ? `${localTime(trip.flight.arrival_at)} arrival · ${trip.flight.arrival_airport} · ${money(trip.flight.price_cents)}`
-                        : "Explore 4 flights from San Francisco"}
-                    </span>
-                  </span>
-                  {trip.flight ? <Check size={20} /> : <ArrowRight size={20} />}
+                  </div>
+                </label>
+                <label>
+                  Travel preferences
+                  <textarea
+                    maxLength={2000}
+                    value={preferences}
+                    onChange={(e) => setPreferences(e.target.value)}
+                    placeholder="Quiet neighborhoods, a relaxed first day, good coffee…"
+                    rows={2}
+                  />
+                </label>
+                <button className="primary" disabled={actionPending}>
+                  Update trip brief <ArrowRight size={17} />
                 </button>
-                <button
-                  className="saved-card"
-                  onClick={() => navigate("hotels")}
-                >
-                  <span className="saved-icon hotel-icon">
-                    <Hotel size={24} />
-                  </span>
-                  <span className="saved-copy">
-                    <small>YOUR STAY</small>
-                    <strong>
-                      {trip.hotel?.name || "Find your place in the city"}
-                    </strong>
-                    <span>
-                      {trip.hotel
-                        ? `${trip.hotel.neighborhood} · 3 nights · ${money(trip.hotel.nightly_cents * 3)}`
-                        : "Explore 4 Tokyo neighborhood stays"}
-                    </span>
-                  </span>
-                  {trip.hotel ? <Check size={20} /> : <ArrowRight size={20} />}
-                </button>
-              </div>
-            </>
-          )}
+              </form>
+            </section>
+          </details>
           {app === "flights" && (
             <>
               <div className="app-heading">
@@ -895,6 +736,116 @@ function App() {
               </p>
             </>
           )}
+          {app === "activities" && (
+            <>
+              <section className="activity-hero">
+                <img
+                  src="/images/tokyo.jpg"
+                  alt="Tokyo skyline with Tokyo Tower"
+                />
+                <div>
+                  <span className="eyebrow light">TOKYO, AT YOUR OWN PACE</span>
+                  <h1>
+                    Make room for
+                    <br />a little discovery.
+                  </h1>
+                  <p>November 6–9 · One traveler</p>
+                </div>
+              </section>
+              <div className="results-heading">
+                <strong>Four ways to spend a day</strong>
+                <label>
+                  Sort by{" "}
+                  <select
+                    aria-label="Sort activities"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                  >
+                    <option value="recommended">Recommended</option>
+                    <option value="price">Lowest price</option>
+                  </select>
+                </label>
+              </div>
+              <div className="activity-list">
+                {[...(boot.catalog.activities || [])]
+                  .sort((a, b) =>
+                    sort === "price" ? a.price_cents - b.price_cents : 0,
+                  )
+                  .map((activity) => (
+                    <article
+                      className={`activity-card ${selected.activities === activity.id ? "selected" : ""}`}
+                      key={activity.id}
+                    >
+                      <button
+                        className="activity-select"
+                        onClick={() =>
+                          setSelected((p) => ({
+                            ...p,
+                            activities: activity.id,
+                          }))
+                        }
+                        aria-pressed={selected.activities === activity.id}
+                        aria-label={`View ${activity.name}`}
+                      >
+                        <span className="tag">{activity.category}</span>
+                        <h2>{activity.name}</h2>
+                        <p>
+                          <MapPin size={15} /> {activity.neighborhood} ·{" "}
+                          {activity.pace}
+                        </p>
+                        <div className="activity-facts">
+                          <span>
+                            <Clock3 size={15} /> Nov{" "}
+                            {Number(activity.starts_at.slice(8, 10))} ·{" "}
+                            {localTime(activity.starts_at)} ·{" "}
+                            {activity.duration_minutes} min
+                          </span>
+                          <strong>{money(activity.price_cents)}</strong>
+                        </div>
+                      </button>
+                      {selected.activities === activity.id && (
+                        <div className="selection-detail">
+                          <p>{activity.description}</p>
+                          <div>
+                            <button
+                              className="secondary"
+                              disabled={sending}
+                              onClick={() =>
+                                send("Would this activity fit our trip?")
+                              }
+                            >
+                              <MessageCircle size={16} /> Ask OneAgent
+                            </button>
+                            <button
+                              className="primary small"
+                              disabled={
+                                actionPending ||
+                                trip.activity_id === activity.id
+                              }
+                              onClick={() => save("activity", activity.id)}
+                            >
+                              {trip.activity_id === activity.id
+                                ? "Saved"
+                                : "Save activity"}
+                              <Check size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {trip.activity_id === activity.id && (
+                        <span className="saved-label activity-saved">
+                          <Check size={14} /> Saved to trip
+                        </span>
+                      )}
+                    </article>
+                  ))}
+              </div>
+              <p className="catalog-note">
+                Fictional activities. Prices include mock taxes. Times are local
+                to Tokyo.
+              </p>
+            </>
+          )}
           <section className="budget-strip">
             <div>
               <Wallet size={19} />
@@ -914,214 +865,65 @@ function App() {
             </div>
           ))}
           <footer className="footer">
-            <span>OneAgent Travel · A working prototype</span>
+            <span>{titles[app]} · Tokyo demo</span>
             <span>Demo data. Saved selections are not bookings.</span>
           </footer>
         </main>
-        <aside
-          className={`agent-panel ${mobileChat ? "mobile-open" : ""}`}
-          aria-label="OneAgent conversation"
+        <CompanionPanel
+          appName={titles[app]}
+          sources={{ ...titles, telegram: "Telegram" }}
+          linked={boot.linked}
+          selected={current}
+          conversation={transcript}
+          pending={pending}
+          sending={sending}
+          actionPending={actionPending}
+          draft={draft}
+          onDraft={setDraft}
+          onSend={send}
+          onConfirm={confirmProposal}
+          onRetry={() =>
+            api("retry", {})
+              .then(() =>
+                setTranscript((t) => ({ ...t, error: null, running: true })),
+              )
+              .catch((e) => setError(e.message))
+          }
+          suggestions={prompts}
+          sharing={sharing}
+          onSharing={setSharing}
+          mobileOpen={mobileChat}
+          onMobileOpen={setMobileChat}
+          testMode={boot.mode !== "live"}
         >
-          <div className="agent-header">
-            <div className="agent-avatar">
-              <Orbit size={25} />
-            </div>
-            <div>
-              <strong>OneAgent</strong>
-              <span>Your personal travel companion</span>
-            </div>
-            <button
-              className="close-chat icon-button"
-              aria-label="Close chat"
-              onClick={() => setMobileChat(false)}
-            >
-              <X size={21} />
-            </button>
+          <div
+            className="companion-sites"
+            aria-label="Continue on another website"
+          >
+            {(["flights", "hotels", "activities"] as SiteId[])
+              .filter((target) => target !== site)
+              .map((target) => (
+                <button key={target} onClick={() => navigate(target)}>
+                  Open {titles[target]} <ArrowRight size={13} />
+                </button>
+              ))}
           </div>
-          <div className="agent-context">
-            <span className="context-dot" />
+          <div className="saved-overview">
             <span>
-              With you in <strong>{titles[app]}</strong>
+              <Plane size={13} />{" "}
+              {trip.flight
+                ? `${trip.flight.code} · ${money(trip.flight.price_cents)}`
+                : "No saved flight"}
+            </span>
+            <span>
+              <Hotel size={13} /> {trip.hotel?.name || "No saved hotel"}
+            </span>
+            <span>
+              <Compass size={13} /> {trip.activity?.name || "No saved activity"}
             </span>
           </div>
-          {current && (
-            <div className="viewing">
-              <small>LOOKING AT</small>
-              <span>
-                {app === "flights" ? <Plane size={15} /> : <Hotel size={15} />}{" "}
-                {current.name}
-              </span>
-            </div>
-          )}
-          <div
-            className="chat-log"
-            role="log"
-            aria-label="Conversation messages"
-          >
-            <div className="agent-welcome">
-              <span className="mini-agent">
-                <Orbit size={18} />
-              </span>
-              <p>
-                {app === "home"
-                  ? "A good trip starts with what matters to you. Set your budget and preferences, then explore flights and stays. I’ll be with you in each app."
-                  : `Same agent, new place. I remember our conversation. ${current ? "Ask me about this option or how it compares." : `Select a ${app === "flights" ? "flight" : "hotel"} and ask me anything about it.`}`}
-              </p>
-            </div>
-            {transcript.messages.map((message) => {
-              const output = transcript.outputs.find(
-                (o) => o.in_reply_to === message.message.id,
-              );
-              return (
-                <React.Fragment key={message.event_id}>
-                  <div className="user-message">
-                    {message.context.selected_object && (
-                      <small>{message.context.selected_object.name}</small>
-                    )}
-                    <p>{message.message.text}</p>
-                  </div>
-                  {output && (
-                    <div className="agent-message">
-                      <span className="mini-agent">
-                        <Orbit size={18} />
-                      </span>
-                      <div>
-                        <p>{output.text}</p>
-                        {output.proposal && (
-                          <button
-                            className="proposal"
-                            disabled={actionPending}
-                            onClick={() => confirmProposal(output.proposal!)}
-                          >
-                            <Check size={16} />{" "}
-                            {output.proposal.name === "trip.update_brief"
-                              ? "Confirm trip brief update"
-                              : `Confirm ${output.proposal.name.endsWith("flight") ? "flight" : "hotel"} selection`}
-                          </button>
-                        )}
-                        {Object.keys(output.shared_context).length > 0 && (
-                          <span className="shared-label">
-                            <ShieldCheck size={13} /> Authorized preferences
-                            shared
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
-            {(pending || sending) && !transcript.error && (
-              <div className="thinking">
-                <Orbit size={17} className="spin" /> Thinking with your trip in
-                mind…
-              </div>
-            )}
-            {transcript.error && (
-              <div className="chat-error">
-                <p>{transcript.error}</p>
-                <button
-                  onClick={() =>
-                    api("retry", {})
-                      .then(() =>
-                        setTranscript((t) => ({
-                          ...t,
-                          error: null,
-                          running: true,
-                        })),
-                      )
-                      .catch((e) => setError(e.message))
-                  }
-                >
-                  <RotateCcw size={14} /> Retry reply
-                </button>
-              </div>
-            )}
-            <div ref={logEnd} />
-          </div>
-          <div className="chat-bottom">
-            {transcript.messages.length === 0 && (
-              <div className="suggestions">
-                {prompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => send(prompt)}
-                    disabled={sending || (app !== "home" && !current)}
-                  >
-                    {prompt}
-                    <ArrowUp size={14} />
-                  </button>
-                ))}
-              </div>
-            )}
-            <form
-              className="composer"
-              onSubmit={(e) => {
-                e.preventDefault();
-                send();
-              }}
-            >
-              <textarea
-                aria-label="Message OneAgent"
-                placeholder={
-                  current ? "Ask about this option…" : "Ask your agent…"
-                }
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                rows={2}
-                maxLength={16000}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === "Enter" &&
-                    !e.shiftKey &&
-                    !e.nativeEvent.isComposing
-                  ) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-              />
-              <div className="composer-bottom">
-                <span>
-                  <Sparkles size={13} /> Context comes with you
-                </span>
-                <button
-                  type="submit"
-                  aria-label="Send message"
-                  disabled={sending || !draft.trim()}
-                >
-                  <ArrowUp size={18} />
-                </button>
-              </div>
-            </form>
-            {app !== "home" && (
-              <label className="share-toggle">
-                <input
-                  type="checkbox"
-                  checked={sharing}
-                  onChange={(e) => setSharing(e.target.checked)}
-                />{" "}
-                Share budget & preferences with this app
-              </label>
-            )}
-            <div className="agent-footnote">
-              <ShieldCheck size={12} /> Your conversation stays with your agent
-            </div>
-            {boot.mode !== "live" && (
-              <div className="fixture-banner">
-                Test fixture mode · Responses are not live
-              </div>
-            )}
-          </div>
-        </aside>
+        </CompanionPanel>
       </div>
-      <button
-        className="mobile-chat-toggle"
-        onClick={() => setMobileChat(true)}
-      >
-        <Orbit size={20} /> Ask OneAgent
-        {pending && <span className="pending-dot" />}
-      </button>
       {toast && (
         <div role="status" className="toast">
           <Check size={18} />
@@ -1139,5 +941,3 @@ function App() {
     </div>
   );
 }
-
-createRoot(document.getElementById("root")!).render(<App />);

@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "format": "prettier --write src index.html vite.config.ts tsconfig.json"
+    "format": "prettier --write src flights hotels activities vite.config.ts tsconfig.json"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
